@@ -1,4 +1,4 @@
--- Mythblox game-01: glass bridge race prototype (server)
+-- Mythblox game-01: glass bridge race v0.8 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -6,6 +6,7 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
+local BUILD_VERSION = "v0.8"
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -56,6 +57,11 @@ command.Parent = network
 local stateEvent = Instance.new("RemoteEvent")
 stateEvent.Name = "State"
 stateEvent.Parent = network
+local buildTag = Instance.new("StringValue")
+buildTag.Name = "BuildVersion"
+buildTag.Value = BUILD_VERSION
+buildTag.Parent = network
+print("[Mythblox] SERVER RUNNING " .. BUILD_VERSION .. " (bridge race)")
 
 local function part(name, size, position, color, material, parent)
 	local p = Instance.new("Part")
@@ -521,7 +527,8 @@ local function markLane(tile, lane)
 	number.TextColor3 = Color3.fromRGB(24, 87, 139)
 	number.TextTransparency = 0.12
 	number.Font = Enum.Font.GothamBold
-	number.TextScaled = true
+	number.TextScaled = false
+	number.TextSize = 48
 	number.Parent = gui
 end
 
