@@ -19,6 +19,10 @@ Use this file to separate **confirmed project rules** from **ideas not yet appro
 - Rojo/code-first version-controlled workflow with Studio Assistant; optional local Studio MCP integration.
 - **First game concept APPROVED (2026-11-21):** an unnamed parallel glass-bridge voting race over lava. Fixed numbers 1–5, with a safe selection allowing **manual movement up to that many tiles**. The most-popular selected numbers (at least 2 votes) crack; all top-vote ties with 2+ selections are blocked. Three cracks eliminate. Illegal steps and failure to leave an eligible starting tile result in a fall. No spinner in MVP. See [Game 01 source](../games/game-01/README.md) and [concept memo](FIRST_GAME_GLASS_BRIDGE_CONCEPT.md).
 
+## Testing updates
+
+- **2026-11-21:** Initial Studio installer and **solo prototype** were tested successfully according to the owner, including several unspecified gameplay conditions. Multiplayer testing (two or more clients) is **not yet verified**. See [Game 01 test plan](../games/game-01/TEST_PLAN.md).
+
 ## Open decisions
 
 | Question | Options | Status |
