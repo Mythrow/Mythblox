@@ -33,6 +33,8 @@ Use this file to separate **confirmed project rules** from **ideas not yet appro
 
 - **2026-11-21:** Owner supplied three reference screenshots showing the desired bright social-hub style. Approved direction: **free-roam island, spectator access during matches, reserved shop/leaderboard/rewards areas, more attractive finish, smaller player labels**. The [Game 01 world-layout blueprint](../games/game-01/WORLD_LAYOUT_BLUEPRINT.md) records this design. **Refinement approved:** JOIN/READY and FRONT SPECTATOR are a **single shared phase-aware platform**; the main path starts at spawn, leaderboard sits near spawn, and shop spaces line both sides of the path. **The layout is planned, not implemented**; the previous v0.4 arena remains the installed build.
 
+- **2026-11-21:** **v0.5 island layout implemented in GitHub** with one phase-aware Join/Ready + spectator deck, spawn-first main path, two shop placeholders, near-spawn leaderboard, side viewing routes, new finish arch, and small lane markers. A shared in-world Join prompt uses existing server validation. **Studio verification pending**; underlying core game rules intentionally unchanged. See [v0.5 test plan](../games/game-01/TEST_PLAN.md).
+
 ## Open decisions
 
 | Question | Options | Status |
