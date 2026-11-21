@@ -91,7 +91,7 @@ local function textSign(parent, message, yOffset, width)
 	board.Anchored = true
 	board.CanCollide = false
 	board.CanTouch = false
-	board.Size = Vector3.new(math.clamp((width or 220) / 19, 9, 18), 2.7, 0.45)
+	board.Size = Vector3.new(math.clamp((width or 220) / 21, 8, 16), 2.35, 0.45)
 	board.Position = parent.Position + Vector3.new(0, yOffset or 3, 0)
 	board.Material = Enum.Material.SmoothPlastic
 	board.Color = Color3.fromRGB(250, 251, 255)
@@ -113,7 +113,7 @@ local function textSign(parent, message, yOffset, width)
 		label.BackgroundTransparency = 1
 		label.TextColor3 = Color3.fromRGB(33, 92, 150)
 		label.TextScaled = false
-		label.TextSize = subheading and 34 or 38
+		label.TextSize = subheading and 27 or 33
 		label.TextWrapped = false
 		label.TextTruncate = Enum.TextTruncate.AtEnd
 		label.TextXAlignment = Enum.TextXAlignment.Center
@@ -130,7 +130,7 @@ local function textSign(parent, message, yOffset, width)
 			subtitle.BackgroundTransparency = 1
 			subtitle.TextColor3 = Color3.fromRGB(112, 137, 165)
 			subtitle.TextScaled = false
-			subtitle.TextSize = 22
+			subtitle.TextSize = 18
 			subtitle.TextWrapped = false
 			subtitle.TextTruncate = Enum.TextTruncate.AtEnd
 			subtitle.TextXAlignment = Enum.TextXAlignment.Center
