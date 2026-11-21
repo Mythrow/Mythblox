@@ -21,9 +21,13 @@ Each game will have **its own name and Roblox experience**. Mythblox is the umbr
 
 ## Current status
 
-**Foundation stage (2026-11-21).** No individual game has been named or selected, and no Roblox game source files have been created in this repository yet.
+**First game selected (2026-11-21):** the unnamed **Glass Bridge Voting Race** prototype. Players choose 1–5 steps, matching popular numbers cause glass cracks, and players physically cross their own bridge over lava. The prototype scripts and one-paste Studio installer are ready for **local playtesting**, not yet verified in Roblox Studio.
 
-**Next:** choose the first multiplayer mechanic, finalize the game spec, then create its `games/<game-slug>/` folder and AI-produced prototype.
+- [Game 01 — instructions and source](games/game-01/README.md)
+- [One-paste Roblox Studio installer](games/game-01/INSTALL_STUDIO_COMMAND_BAR.luau)
+- [Multiplayer Studio test plan](games/game-01/TEST_PLAN.md)
+
+**Next:** install the prototype in Studio, run a two-player test, and iterate on any reported errors or gameplay issues.
 
 ## Stack
 
