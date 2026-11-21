@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-21):** Owner confirmed **v0.2 functionality works in Roblox Studio** after earlier solo and multiplayer playtests. Visual/UI polish is acknowledged as a later phase, not a blocker for the functional prototype.  
+**Status (2026-11-21):** Owner confirmed **v0.2 gameplay works in Roblox Studio**, in solo and multiplayer. **v0.3 visual-polish code** is now committed but has **not yet been playtested in Roblox Studio**. The game remains unnamed and unpublished.  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -35,7 +35,22 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 
 **Rewards are session-only in v0.1.** There is no DataStore persistence, no purchasable items, and no paid power-ups. Do not publish this as a monetized finished game without playtests and a reviewed commerce implementation.
 
-## v0.2 — feedback fixes (requires fresh install)
+## v0.3 — first visual polish pass (requires fresh install)
+
+These changes are **presentation only**: no voting, crack, movement, winning, or reward rules were intentionally changed.
+
+- **Arena atmosphere:** darker dusk lighting, glowing side rails under the glass, subtle lobby accent stripes, and glowing finish posts. Rails and decorations have collision disabled.
+- **Cracks and breakage:** glass now displays procedural crack strokes and particles for important eliminations, with simple fading for routine old-tile removal.
+- **Responsive HUD:** improved typography, high-contrast status/turn countdown, distance progress indicator, and desktop leaderboard. A compact layout applies to narrower windows.
+- **Voting tray:** five large consistent buttons with a visible selected number.
+- **Reveal/results:** five vote-count tiles, clear blocked numbers, individual player picks and MOVE/CRACK/OUT results, plus a larger winner card.
+- **Mobile considerations:** smaller layout hides the full breakdown during the walking phase to keep room for controls; it remains visible during the reveal. Further mobile testing is required.
+
+**Installation:** Stop Play; run the latest [Command Bar installer](INSTALL_STUDIO_COMMAND_BAR.luau) in Edit mode. It replaces the two `MythbloxGame` scripts, but **does not delete or overwrite other custom scripts**. If you modified either script by hand, make a copy first.
+
+**Verification:** all source files and generated installer should match, but no Roblox Studio engine test has been run for v0.3. Recheck a 2-client match before building more features.
+
+## v0.2 — feedback fixes (already tested)
 
 - **Spawning/respawning:** sets `Player.RespawnLocation` to the elevated Mythblox lobby, moves the lobby away from the lava, and adds guard rails so players do not spawn/die in the lava under the Baseplate's original spawn point.
 - **Correct lane count:** the glass lanes are generated **only after the 10-second ready window closes**. Exactly one lane is built for each match participant (1 for Studio solo practice, 2–8 for multiplayer). The old lanes are removed before the next join period.
@@ -101,6 +116,6 @@ For repeat development, clone `Mythrow/Mythblox`, install [Rojo](https://rojo.sp
 
 ## Next step
 
-Functional prototype confirmed by the owner. Next phase: **UI/visual refinement**, including readability and responsive layout, followed by mobile tests, persistence, cosmetic store, and release QA. See [TEST_PLAN.md](TEST_PLAN.md). Validate whether **5-second selection / 6-second walking / 20 tiles / 3 cracks** is enjoyable before adding features.
+Functional prototype v0.2 was confirmed by the owner. **Next: retest v0.3 graphics/UI** using [TEST_PLAN.md](TEST_PLAN.md). Once stable, review mobile controls, improve sound/camera if needed, and only then add persistent coins and cosmetics. Validate whether **5-second selection / 6-second walking / 20 tiles / 3 cracks** is enjoyable before adding features.
 
 See [the Mythblox game-design memo](../../docs/FIRST_GAME_GLASS_BRIDGE_CONCEPT.md) for earlier alternatives, including the spinner idea that was explicitly deferred.
