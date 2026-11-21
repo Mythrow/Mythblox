@@ -17,16 +17,16 @@ Use this file to separate **confirmed project rules** from **ideas not yet appro
 - 45–120-second matches; 5–10-second intermission.
 - Cosmetic-first monetization; no paid random items, and no pay-to-win.
 - Rojo/code-first version-controlled workflow with Studio Assistant; optional local Studio MCP integration.
-- **First-game concept under active design:** parallel glass-bridge voting over lava. Players manually advance up to the number selected (fixed choices 1–5) when safe, or stay when blocked. No spinner in MVP. See [concept memo](FIRST_GAME_GLASS_BRIDGE_CONCEPT.md).
+- **First game concept APPROVED (2026-11-21):** an unnamed parallel glass-bridge voting race over lava. Fixed numbers 1–5, with a safe selection allowing **manual movement up to that many tiles**. The most-popular selected numbers (at least 2 votes) crack; all top-vote ties with 2+ selections are blocked. Three cracks eliminate. Illegal steps and failure to leave an eligible starting tile result in a fall. No spinner in MVP. See [Game 01 source](../games/game-01/README.md) and [concept memo](FIRST_GAME_GLASS_BRIDGE_CONCEPT.md).
 
 ## Open decisions
 
 | Question | Options | Status |
 |---|---|---|
-| First game mechanic | Glass-bridge voting race over lava | Preferred concept; rules under review |
-| First game name | Chosen only after agreeing on mechanic | Not selected |
-| Two-player rule and tie-handling | Fixed 1–5 choices grant up to N steps when safe; tied most-popular groups of 2+ are blocked; no spinner | Current prototype proposal |
-| Bridge race parameters | 20 tiles, 3 cracks, 5s vote / 6s move | Suggested prototype defaults, untested |
+| First game mechanic | Glass-bridge voting race over lava | **Approved**; initial prototype committed |
+| First game name | Choose name after testing | Not selected |
+| Two-player rule and tie-handling | Fixed 1–5 choices grant up to N steps when safe; tied most-popular groups of 2+ are blocked; no spinner | **Approved for prototype** |
+| Bridge race parameters | 20 tiles, 3 cracks, 5s vote / 6s move | **Implemented**, requires Studio playtesting |
 | AI-to-Studio integration | Assistant/scripts, Rojo/code-first, local MCP-enabled client | To confirm |
 | First-store balance | Cosmetics only vs one tightly bounded optional perk | To confirm |
 | First target audience | Age-checked 16+ first vs expanded Kids/Select reach subject to eligibility | To confirm |
