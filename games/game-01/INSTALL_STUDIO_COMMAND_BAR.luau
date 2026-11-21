@@ -5,7 +5,7 @@
 assert(not game:GetService("RunService"):IsRunning(), "Stop the test session before installing.")
 
 local SERVER_SOURCE = [====[
--- Mythblox game-01: glass bridge race prototype (server)
+-- Mythblox game-01: glass bridge race v0.8 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -13,6 +13,7 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
+local BUILD_VERSION = "v0.8"
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -63,6 +64,11 @@ command.Parent = network
 local stateEvent = Instance.new("RemoteEvent")
 stateEvent.Name = "State"
 stateEvent.Parent = network
+local buildTag = Instance.new("StringValue")
+buildTag.Name = "BuildVersion"
+buildTag.Value = BUILD_VERSION
+buildTag.Parent = network
+print("[Mythblox] SERVER RUNNING " .. BUILD_VERSION .. " (bridge race)")
 
 local function part(name, size, position, color, material, parent)
 	local p = Instance.new("Part")
@@ -528,7 +534,8 @@ local function markLane(tile, lane)
 	number.TextColor3 = Color3.fromRGB(24, 87, 139)
 	number.TextTransparency = 0.12
 	number.Font = Enum.Font.GothamBold
-	number.TextScaled = true
+	number.TextScaled = false
+	number.TextSize = 48
 	number.Parent = gui
 end
 
@@ -1111,18 +1118,28 @@ end
 ]====]
 
 local CLIENT_SOURCE = [====[
--- Mythblox Game 01 · streamlined screen UI v0.7
+-- Mythblox Game 01 · clean verified client v0.8
 -- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local BUILD_VERSION = "v0.8"
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local network = ReplicatedStorage:WaitForChild("MythbloxGame01")
 local command = network:WaitForChild("Command")
 local stateEvent = network:WaitForChild("State")
+local remoteBuild = network:FindFirstChild("BuildVersion")
+if not remoteBuild or remoteBuild.Value ~= BUILD_VERSION then
+	warn("[Mythblox] Client " .. BUILD_VERSION .. " does not match server version; old scripts may still be running.")
+end
+print("[Mythblox] CLIENT RUNNING " .. BUILD_VERSION)
 
-local previous = playerGui:FindFirstChild("MythbloxGame01UI")
-if previous then previous:Destroy() end
+-- Remove all previous copies (not just the first) of this game's GUI.
+for _, child in ipairs(playerGui:GetChildren()) do
+	if child.Name == "MythbloxGame01UI" and child:IsA("ScreenGui") then
+		child:Destroy()
+	end
+end
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "MythbloxGame01UI"
@@ -1131,6 +1148,13 @@ gui.IgnoreGuiInset = false
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 gui.DisplayOrder = 10
 gui.Parent = playerGui
+-- If a legacy LocalScript creates an older copy later, remove only that copy.
+playerGui.ChildAdded:Connect(function(child)
+	if child ~= gui and child.Name == "MythbloxGame01UI" and child:IsA("ScreenGui") then
+		warn("[Mythblox] Removed duplicate UI from another script: " .. child:GetFullName())
+		child:Destroy()
+	end
+end)
 
 -- Bright white panels + colorful blue/green buttons, readable against daylight.
 local COLOR = {
@@ -1474,7 +1498,7 @@ local function update(state)
 		lastTurnRendered = -1
 	end
 	local mine = state.mine
-	phaseText.Text = ("ROUND %d  ·  %s"):format(state.turn or 0, phaseNames[phase] or phase)
+	phaseText.Text = ("v0.8 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
 	clockText.Text = tostring(state.time or 0) .. "s"
 	description.Text = state.message or ""
 
@@ -1483,7 +1507,7 @@ local function update(state)
 	movement.Visible = phase == "MOVE" and mine ~= nil and mine.alive == true
 
 	if phase == "JOIN" then
-		phaseText.Text = "NEXT MATCH"
+		phaseText.Text = "v0.8 · NEXT MATCH"
 		description.Text = state.queued and "You're queued for the next race."
 			or "Join at the gold pad or use the button below."
 		ownStats.Text = ("%d/%d PLAYERS READY"):format(state.ready or 0, state.capacity or 8)
@@ -1502,7 +1526,7 @@ local function update(state)
 	if phase == "RESULTS" then
 		-- Server sends winner/draw text in state.message; show it only in
 		-- the small status panel and avoid blocking the camera.
-		phaseText.Text = "ROUND OVER"
+		phaseText.Text = "v0.8 · ROUND OVER"
 		ownStats.Text = "NEXT MATCH STARTS SOON"
 	end
 
@@ -1547,18 +1571,58 @@ stateEvent.OnClientEvent:Connect(update)
 command:FireServer("Sync")
 ]====]
 
+-- Diagnostic/cleanup installer: v0.8
+-- Remove known legacy copies from services used by previous Mythblox builds.
+-- This intentionally does NOT remove scripts belonging to other games.
+local SERVER_FOLDER = game:GetService("ServerScriptService")
+local STARTER_PLAYER_SCRIPTS = game:GetService("StarterPlayer"):WaitForChild("StarterPlayerScripts")
+local STARTER_GUI = game:GetService("StarterGui")
+
+local removed = {}
+for _, service in ipairs({SERVER_FOLDER, STARTER_PLAYER_SCRIPTS, STARTER_GUI}) do
+	for _, child in ipairs(service:GetDescendants()) do
+		if child:IsA("LuaSourceContainer") and child.Name == "MythbloxGame" then
+			table.insert(removed, child:GetFullName())
+			child:Destroy()
+		end
+	end
+end
+for _, child in ipairs(STARTER_GUI:GetChildren()) do
+	if child:IsA("ScreenGui") and child.Name == "MythbloxGame01UI" then
+		table.insert(removed, child:GetFullName())
+		child:Destroy()
+	end
+end
+
 local function install(where, kind, name, source)
-	local existing = where:FindFirstChild(name)
-	if existing then existing:Destroy() end
 	local instance = Instance.new(kind)
 	instance.Name = name
 	instance.Enabled = false
 	instance.Source = source
 	instance.Parent = where
+	assert(instance.Source == source, "Studio did not store the expected source for " .. instance:GetFullName())
 	instance.Enabled = true
 	return instance
 end
 
-install(game:GetService("ServerScriptService"), "Script", "MythbloxGame", SERVER_SOURCE)
-install(game:GetService("StarterPlayer"):WaitForChild("StarterPlayerScripts"), "LocalScript", "MythbloxGame", CLIENT_SOURCE)
-print("[Mythblox] Game 01 v0.7 sign/results UI fixes installed. Test with Play, or Test > Server & Clients (2 clients). Bridges are generated only after the join countdown.")
+local liveServer = install(SERVER_FOLDER, "Script", "MythbloxGame", SERVER_SOURCE)
+local liveClient = install(STARTER_PLAYER_SCRIPTS, "LocalScript", "MythbloxGame", CLIENT_SOURCE)
+
+-- Warn about other Mythblox-named scripts that may run an old UI.
+local suspicious = {}
+for _, child in ipairs(game:GetDescendants()) do
+	if child:IsA("LuaSourceContainer") and child ~= liveServer and child ~= liveClient then
+		if string.find(string.lower(child.Name), "mythblox", 1, true) then
+			table.insert(suspicious, child:GetFullName())
+		end
+	end
+end
+
+print("[Mythblox INSTALL] v0.8 VERIFIED: 2 scripts installed and Source checked.")
+print("[Mythblox INSTALL] Server: " .. liveServer:GetFullName() .. " | Build v0.8")
+print("[Mythblox INSTALL] Client: " .. liveClient:GetFullName() .. " | Build v0.8")
+print("[Mythblox INSTALL] Cleaned " .. #removed .. " previous Mythblox script/UI objects.")
+if #suspicious > 0 then
+	warn("[Mythblox INSTALL] Other Mythblox scripts still exist: " .. table.concat(suspicious, "; "))
+end
+print("[Mythblox INSTALL] NOW START A FRESH PLAY SESSION. Confirm the top HUD visibly says v0.8, and check Output for SERVER RUNNING v0.8 and CLIENT RUNNING v0.8.")
