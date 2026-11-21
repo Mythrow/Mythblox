@@ -74,52 +74,76 @@ end
 -- World-space signage: a fixed 3D board, NOT a BillboardGui overlay.
 -- The old AlwaysOnTop Billboards made labels enormous at a distance and
 -- overlapped one another in the shared ready/spectator area.
+-- Fixed-size world boards: no TextScaled or automatic wrapping.
+-- Billboard-style text scaling previously made labels fill the entire screen.
 local function textSign(parent, message, yOffset, width)
+	local heading, subheading = string.match(message, "^(.-)%s*|%s*(.+)$")
+	heading = heading or message
+
 	local board = Instance.new("Part")
 	board.Name = "WorldSign_" .. parent.Name
 	board.Anchored = true
 	board.CanCollide = false
 	board.CanTouch = false
-	board.Size = Vector3.new(math.clamp((width or 220) / 16, 9, 22), 3.2, 0.55)
+	board.Size = Vector3.new(math.clamp((width or 220) / 19, 9, 18), 2.7, 0.45)
 	board.Position = parent.Position + Vector3.new(0, yOffset or 3, 0)
 	board.Material = Enum.Material.SmoothPlastic
 	board.Color = Color3.fromRGB(250, 251, 255)
 	board.Parent = parent.Parent or world
 
-	local surface = Instance.new("SurfaceGui")
-	surface.Name = "WorldText"
-	surface.Face = Enum.NormalId.Front
-	surface.PixelsPerStud = 38
-	surface.AlwaysOnTop = false
-	surface.LightInfluence = 0
-	surface.Parent = board
+	local function face(side, name)
+		local surface = Instance.new("SurfaceGui")
+		surface.Name = name
+		surface.Face = side
+		surface.PixelsPerStud = 48
+		surface.AlwaysOnTop = false
+		surface.LightInfluence = 0
+		surface.Parent = board
 
-	local label = Instance.new("TextLabel")
-	label.Position = UDim2.fromScale(0.03, 0.04)
-	label.Size = UDim2.fromScale(0.94, 0.92)
-	label.BackgroundTransparency = 1
-	label.TextColor3 = Color3.fromRGB(33, 92, 150)
-	label.TextScaled = true
-	label.TextWrapped = true
-	label.Font = Enum.Font.GothamBold
-	label.Text = message
-	label.Parent = surface
+		local label = Instance.new("TextLabel")
+		label.Name = "Heading"
+		label.Position = UDim2.fromScale(0.04, subheading and 0.12 or 0.08)
+		label.Size = UDim2.fromScale(0.92, subheading and 0.51 or 0.84)
+		label.BackgroundTransparency = 1
+		label.TextColor3 = Color3.fromRGB(33, 92, 150)
+		label.TextScaled = false
+		label.TextSize = subheading and 34 or 38
+		label.TextWrapped = false
+		label.TextTruncate = Enum.TextTruncate.AtEnd
+		label.TextXAlignment = Enum.TextXAlignment.Center
+		label.TextYAlignment = Enum.TextYAlignment.Center
+		label.Font = Enum.Font.GothamBold
+		label.Text = heading
+		label.Parent = surface
 
-	-- Back-facing signs remain readable to people walking in from either side.
-	local back = Instance.new("SurfaceGui")
-	back.Name = "WorldTextBack"
-	back.Face = Enum.NormalId.Back
-	back.PixelsPerStud = 38
-	back.AlwaysOnTop = false
-	back.LightInfluence = 0
-	back.Parent = board
-	local backLabel = label:Clone()
-	backLabel.Name = "BackLabel"
-	backLabel.Parent = back
-	label:GetPropertyChangedSignal("Text"):Connect(function()
-		if backLabel.Parent then backLabel.Text = label.Text end
+		if subheading then
+			local subtitle = Instance.new("TextLabel")
+			subtitle.Name = "Subtitle"
+			subtitle.Position = UDim2.fromScale(0.04, 0.64)
+			subtitle.Size = UDim2.fromScale(0.92, 0.25)
+			subtitle.BackgroundTransparency = 1
+			subtitle.TextColor3 = Color3.fromRGB(112, 137, 165)
+			subtitle.TextScaled = false
+			subtitle.TextSize = 22
+			subtitle.TextWrapped = false
+			subtitle.TextTruncate = Enum.TextTruncate.AtEnd
+			subtitle.TextXAlignment = Enum.TextXAlignment.Center
+			subtitle.Font = Enum.Font.GothamMedium
+			subtitle.Text = subheading
+			subtitle.Parent = surface
+		end
+		return surface, label
+	end
+
+	local front, frontLabel = face(Enum.NormalId.Front, "WorldText")
+	local _, backLabel = face(Enum.NormalId.Back, "WorldTextBack")
+	-- A single changing status label updates both sides of the join deck.
+	frontLabel:GetPropertyChangedSignal("Text"):Connect(function()
+		if backLabel.Parent then
+			backLabel.Text = frontLabel.Text
+		end
 	end)
-	return surface
+	return front
 end
 
 -- Persistent social island and phase-aware shared ready/spectator platform.
