@@ -1,3 +1,5 @@
+> **Status update (2026-11-21):** The first unnamed game is now an approved **glass-bridge voting race**. Source, Studio installer and test plan are in [games/game-01](../games/game-01/README.md). The original candidate archetypes and selection process below are retained as portfolio guidance; the first game needs local Studio playtesting before any release.
+
 # Mythblox — Project Blueprint
 
 **Version:** 0.1 (foundation)  
