@@ -1,6 +1,6 @@
 # Game 01 — Mini-Game Island / Spectator Arena Blueprint
 
-**Status (2026-11-21):** v0.5 implemented the approved overall layout; user supplied a v0.5 screenshot identifying signage/UI/ready-platform issues. **v0.6 code introduces world-space signage, slight deck elevation and minimal HUD; v0.6 Studio verification remains pending**. User approved one shared ready/spectator platform, leaderboard near spawn and shops on both sides of the main path. Coordinates below are design targets; the game source is authoritative for exact Part positions.  
+**Status (2026-11-22):** The approved island design is implemented through v0.9, with Studio screenshots confirming the layout and readable world labels. **v0.10 removes the unused low Baseplate spawn and turns the near-spawn leaderboard into a current-server Wins/Coins board; this build still needs testing.** User approved one shared ready/spectator platform, leaderboard near spawn and shops on both sides of the main path. Coordinates below are design targets; the game source is authoritative for exact Part positions.  
 **Game title:** Unnamed (Game 01 is only the internal development label).  
 **References:** Three Roblox game screenshots supplied by the owner in the conversation (2026-11-21), showing bright social hubs, green island terrain, colorful blocky scenery, decorative paths/fences, shop/leaderboard landmarks, and clear game-viewing areas. **Copy the design vocabulary, not their exact map, asset artwork, logos, or UI.**
 
@@ -114,7 +114,7 @@ All playable horizontal surfaces remain near **Y ≈ 24**, compatible with the e
 
 - **Left side of the main path:** compact shop stall / cosmetic glass-skin displays, clearly labeled `COMING SOON`.
 - **Right side of the main path:** another storefront for potential trails, effects or other cosmetics; these are **physical placeholders only**, with no invented live purchase menus.
-- **Leaderboard near the spawn plaza:** simple board explaining future Wins / Coins support, without pretending global records or DataStore saving exist.
+- **Leaderboard near the spawn plaza:** an actual current-server-only Wins/Coins board (up to four players, ranked by wins). It makes no claims of DataStore persistence or global rankings.
 - **Rewards placeholder near spawn**, opposite the leaderboard, if the space remains uncluttered.
 - Place signs, benches and decorative props off the central path. Keep plenty of room for people walking between spawn and the shared viewing/ready area.
 
