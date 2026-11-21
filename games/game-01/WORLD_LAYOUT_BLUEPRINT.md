@@ -1,6 +1,6 @@
 # Game 01 — Mini-Game Island / Spectator Arena Blueprint
 
-**Status:** Revised world-layout blueprint, **not yet implemented**. User approved the social-island direction and then specifically consolidated the Join/Ready and front spectator areas, located the leaderboard near spawn, and placed shop spaces on both sides of the main path (2026-11-21). Coordinates below are proposed build targets, not confirmed Studio measurements.  
+**Status (2026-11-21):** **v0.5 source and Studio installer now implement the approved overall layout**; **Studio playtest remains pending**. User approved one shared ready/spectator platform, leaderboard near spawn and shops on both sides of the main path. Coordinates below are design targets; the game source is authoritative for exact Part positions.  
 **Game title:** Unnamed (Game 01 is only the internal development label).  
 **References:** Three Roblox game screenshots supplied by the owner in the conversation (2026-11-21), showing bright social hubs, green island terrain, colorful blocky scenery, decorative paths/fences, shop/leaderboard landmarks, and clear game-viewing areas. **Copy the design vocabulary, not their exact map, asset artwork, logos, or UI.**
 
@@ -183,7 +183,7 @@ Workspace
         └── SingleFinishArch
 ```
 
-**Important:** Current v0.4 world source builds a small fenced spawn platform and a decorative grass floor, then generates dynamic bridges. The environment redesign must replace or rearrange those **static** objects, not change the dynamic voting, cracks, finish, death, respawn or anti-skip validation. Keep `player.RespawnLocation` pointing to the safe lobby spawn. Glass and arch generation occurs only after the queue closes and removes content between matches.
+**v0.5 implementation:** The server script now creates a persistent `HubIsland` containing the island, safe spawn, path, dual-purpose deck, side promenades, shops/leaderboard/rewards placeholders and decoration. `CurrentMatchBridges` remains dynamic. The match rules and anti-skip checks are preserved. The latest installer must be run in Studio before these additions are visible; engine behavior and exact geometry are unverified.
 
 ### Performance / build scope
 
@@ -192,7 +192,7 @@ Workspace
 - Create everything through reusable Luau constructors so the Studio one-paste installer remains usable.
 - Shop screens and global leaderboards are *placeholders* and not hooked up to Roblox purchases or DataStores in this phase.
 
-## 7. Recommended implementation sequence — **not yet authorized code changes**
+## 7. Implementation worklist — initial v0.5 code committed, playtests pending
 
 1. Refactor world creation into persistent `HubIsland` and persistent `LavaAndEnvironment`, keeping `CurrentMatchBridges` dynamic.
 2. Build the safe spawn plaza as the **beginning of the main path**; place leaderboard and optional rewards zone beside spawn. Verify respawns and a clear path forward.
@@ -222,4 +222,5 @@ No production shop, coins persistence, publishing, or title selection is part of
 
 - **Approved by owner:** colorful social hub, **one dual-use Join/Ready + Front Spectator platform**, main path starting at spawn plaza, leaderboard near spawn, shops/features on both sides of the path, optional side viewing promenades, clearer finish and smaller player-name tags.
 - **Blueprint proposal for implementation:** coordinates, specific zones, materials and acceptance checks above.
-- **Not completed yet:** implementation of this world redesign or in-Studio testing.
+- **Implemented in GitHub v0.5:** initial world redesign, prompt, spectator checks, arch, lane markers and synced installer.
+- **Not completed yet:** in-Studio visual review, actual spectator isolation testing and gameplay regression checks.
