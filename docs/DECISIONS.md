@@ -51,6 +51,8 @@ Use this file to separate **confirmed project rules** from **ideas not yet appro
 
 - **2026-11-22:** Owner approved **v0.12 gameplay-feedback polish** after confirming v0.11 works. Source and installer updated with subtle built-in click/tick/reveal/crack/fall/win sounds, short personal safe/crack feedback, vote urgency, personal vote-row highlighting, small transient glass shards, and confetti for all win paths. No map, match time, voting, crack, movement or reward rule changes intended. **Studio verification pending**; source consistency is not engine testing.
 
+- **2026-11-22:** Owner confirms **v0.12 gameplay polish works** in Roblox Studio, and requests to save progress and resume development tomorrow. The GitHub scripts/installer are committed, but the Roblox Studio place must also be saved separately by the owner. **Next candidate phase:** permanent wins/coins and data persistence; do not start until user resumes.
+
 ## Open decisions
 
 | Question | Options | Status |
