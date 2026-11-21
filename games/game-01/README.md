@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-21):** Owner confirmed **v0.2 gameplay works in Roblox Studio**, in solo and multiplayer. **v0.3 visual-polish code** is now committed but has **not yet been playtested in Roblox Studio**. The game remains unnamed and unpublished.  
+**Status (2026-11-21):** Owner confirmed **v0.2 gameplay works in Roblox Studio**, in solo and multiplayer. The dark visual treatment of v0.3 was rejected. **v0.4 bright Roblox-style visuals** are committed but **not yet tested in Studio**. The game remains unnamed and unpublished.  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -35,7 +35,20 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 
 **Rewards are session-only in v0.1.** There is no DataStore persistence, no purchasable items, and no paid power-ups. Do not publish this as a monetized finished game without playtests and a reviewed commerce implementation.
 
-## v0.3 — first visual polish pass (requires fresh install)
+## v0.4 — bright Roblox-style visual revision (requires fresh install)
+
+User feedback on v0.3: the neon/dusk appearance was too dark and did not match the familiar bright Roblox aesthetic.
+
+**v0.4 changes (visual-only):**
+- Sunny daytime with bright blue sky/fog and a grassy green area around the orange lava.
+- Light-blue transparent glass bridges, cheerful blue rails, bright yellow finish accents, a blue lobby, and clean white in-world signs.
+- White UI cards with dark text, bright blue number buttons, green JOIN button, yellow selection highlight, and light green/red movement notices.
+- Preserves the v0.3 vote-tally, player results, progress, responsive layout, and crack effects.
+- Leaves all v0.2 tested gameplay rules, timings, movement logic, and purchasing behavior unchanged.
+
+**Retest needed:** Install the latest [one-paste Studio installer](INSTALL_STUDIO_COMMAND_BAR.luau) while not playing, then verify the brighter look in Play and with two clients. The installer replaces both scripts named `MythbloxGame`.
+
+## v0.3 — earlier visual polish pass (superseded dark theme)
 
 These changes are **presentation only**: no voting, crack, movement, winning, or reward rules were intentionally changed.
 
@@ -116,6 +129,6 @@ For repeat development, clone `Mythrow/Mythblox`, install [Rojo](https://rojo.sp
 
 ## Next step
 
-Functional prototype v0.2 was confirmed by the owner. **Next: retest v0.3 graphics/UI** using [TEST_PLAN.md](TEST_PLAN.md). Once stable, review mobile controls, improve sound/camera if needed, and only then add persistent coins and cosmetics. Validate whether **5-second selection / 6-second walking / 20 tiles / 3 cracks** is enjoyable before adding features.
+Functional prototype v0.2 was confirmed by the owner. **Next: retest v0.4 bright graphics/UI** using [TEST_PLAN.md](TEST_PLAN.md). Once stable, review mobile controls, improve sound/camera if needed, and only then add persistent coins and cosmetics. Validate whether **5-second selection / 6-second walking / 20 tiles / 3 cracks** is enjoyable before adding features.
 
 See [the Mythblox game-design memo](../../docs/FIRST_GAME_GLASS_BRIDGE_CONCEPT.md) for earlier alternatives, including the spinner idea that was explicitly deferred.
