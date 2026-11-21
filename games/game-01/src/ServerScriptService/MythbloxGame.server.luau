@@ -92,48 +92,196 @@ local function textSign(parent, text, yOffset, width)
 	return gui
 end
 
+-- Persistent social island and phase-aware shared ready/spectator platform.
+local hub = Instance.new("Model")
+hub.Name = "HubIsland"
+hub.Parent = world
+
+local GRASS = Color3.fromRGB(101, 204, 91)
+local CREAM = Color3.fromRGB(246, 226, 171)
+local WOOD = Color3.fromRGB(170, 111, 58)
+local ROOF_BLUE = Color3.fromRGB(52, 157, 244)
+local ROOF_PINK = Color3.fromRGB(252, 107, 150)
+local WHITE = Color3.fromRGB(253, 251, 238)
+
+local function decorative(name, size, position, color, material)
+	return part(name, size, position, color, material or Enum.Material.SmoothPlastic, hub)
+end
+
+local ground = decorative("HubGrassIsland", Vector3.new(130, 4, 91), Vector3.new(0, 22, -59), GRASS, Enum.Material.Grass)
+local plaza = decorative("SpawnPlaza", Vector3.new(26, 0.4, 23), Vector3.new(0, 24.2, -76), CREAM)
+local path = decorative("MainWalkPath", Vector3.new(11, 0.25, 36), Vector3.new(0, 24.14, -53), CREAM)
+local spurLeft = decorative("LeftShopPath", Vector3.new(27, 0.22, 7), Vector3.new(-19, 24.13, -48), CREAM)
+local spurRight = decorative("RightShopPath", Vector3.new(27, 0.22, 7), Vector3.new(19, 24.13, -48), CREAM)
+
+-- The platform is BOTH ready and spectator space. It persists for the whole
+-- server session; we change its message, never create a second front deck.
+local sharedDeck = decorative(
+	"SharedReadyAndSpectatorDeck",
+	Vector3.new(90, 1, 24),
+	Vector3.new(0, 23.5, -22),
+	Color3.fromRGB(228, 245, 254)
+)
+local deckCenter = decorative(
+	"JoinAndWatchFloorMarking",
+	Vector3.new(19, 0.17, 9),
+	Vector3.new(0, 24.11, -25),
+	Color3.fromRGB(255, 207, 67)
+)
+deckCenter.CanCollide = false
+local deckPrompt = Instance.new("ProximityPrompt")
+deckPrompt.Name = "JoinRoundPrompt"
+deckPrompt.ActionText = "Join next round"
+deckPrompt.ObjectText = "Glass Bridge Race"
+deckPrompt.KeyboardKeyCode = Enum.KeyCode.E
+deckPrompt.HoldDuration = 0
+deckPrompt.MaxActivationDistance = 15
+deckPrompt.RequiresLineOfSight = false
+deckPrompt.Parent = deckCenter
+
+local sharedDeckSignAnchor = decorative(
+	"SharedPlatformSign",
+	Vector3.new(1, 1, 1),
+	Vector3.new(0, 30, -25),
+	CREAM
+)
+sharedDeckSignAnchor.Transparency = 1
+sharedDeckSignAnchor.CanCollide = false
+local deckSignGui = textSign(sharedDeckSignAnchor, "JOIN NEXT ROUND", 3, 310)
+local deckSignText = deckSignGui:FindFirstChildOfClass("TextLabel")
+
+-- One transparent front barrier lets spectators see the bridges but stops
+-- jumping into an active lane. A spectator who bypasses it is also returned
+-- to this deck by an additional server-side bounds check.
+local barrier = decorative(
+	"FrontSpectatorGlassBarrier",
+	Vector3.new(91, 14, 1.5),
+	Vector3.new(0, 31, -9.6),
+	Color3.fromRGB(177, 238, 252),
+	Enum.Material.Glass
+)
+barrier.Transparency = 0.73
+
+local function makePromenade(side)
+	local x = side * 49
+	local walkway = decorative(
+		side < 0 and "LeftSpectatorWalkway" or "RightSpectatorWalkway",
+		Vector3.new(9, 1, 95),
+		Vector3.new(x, 23.5, 22.5),
+		Color3.fromRGB(226, 244, 252)
+	)
+	local connector = decorative(
+		side < 0 and "LeftSpectatorConnector" or "RightSpectatorConnector",
+		Vector3.new(12, 1, 15),
+		Vector3.new(side * 44, 23.5, -17.5),
+		Color3.fromRGB(226, 244, 252)
+	)
+	local inner = decorative(
+		"InnerViewingSafetyGlass",
+		Vector3.new(1.5, 14, 84),
+		Vector3.new(side * 43.75, 31, 31),
+		Color3.fromRGB(177, 238, 252),
+		Enum.Material.Glass
+	)
+	inner.Transparency = 0.72
+	local outer = decorative(
+		"OuterViewingFence",
+		Vector3.new(1.5, 7, 95),
+		Vector3.new(side * 54.1, 27.5, 22.5),
+		WOOD,
+		Enum.Material.Wood
+	)
+	outer.Transparency = 0.05
+	local endRail = decorative(
+		"ViewingEndFence",
+		Vector3.new(11, 7, 1.4),
+		Vector3.new(x, 27.5, 70),
+		WOOD,
+		Enum.Material.Wood
+	)
+	return walkway
+end
+makePromenade(-1)
+makePromenade(1)
+
+-- Invisible, noninteractive spawn pad. Its parent location is deliberately
+-- well clear of the lava. Existing respawn code still points here.
 local lobby = Instance.new("SpawnLocation")
 lobby.Name = "MythbloxLobbySpawn"
 lobby.Neutral = true
 lobby.Duration = 0
 lobby.Anchored = true
-lobby.Size = Vector3.new(34, 1.5, 24)
-lobby.Position = Vector3.new(0, SETTINGS.BridgeY, -70)
+lobby.Size = Vector3.new(18, 0.4, 13)
+lobby.Position = Vector3.new(0, 24.5, -76)
 lobby.Material = Enum.Material.SmoothPlastic
-lobby.Color = Color3.fromRGB(85, 175, 255)
-lobby.Parent = world
-textSign(lobby, "MYTHBLOX | GLASS RACE", 8, 350)
--- Subtle lobby lights and floor markings; no additional paths to the lava.
-for _, side in ipairs({-1, 1}) do
-	local stripe = part(
-		"LobbyColorStripe",
-		Vector3.new(1, 0.15, 19),
-		Vector3.new(side * 14, SETTINGS.BridgeY + 0.83, -70),
-		AMBER, Enum.Material.SmoothPlastic
-	)
-	stripe.CanCollide = false
+lobby.Color = CREAM
+lobby.Transparency = 0.4
+lobby.Parent = hub
+
+-- Decorative low-poly store fronts: deliberately no paid products yet.
+local function makeStall(name, x, z, roofColor, line1, line2)
+	local group = Instance.new("Model")
+	group.Name = name
+	group.Parent = hub
+	part("DisplayFloor", Vector3.new(17, 0.6, 14), Vector3.new(x, 24.4, z), WHITE, Enum.Material.WoodPlanks, group)
+	part("BackWall", Vector3.new(17, 8, 1), Vector3.new(x, 28.4, z + 6), WOOD, Enum.Material.WoodPlanks, group)
+	for _, side in ipairs({-1, 1}) do
+		part("CornerPost", Vector3.new(1.2, 8.5, 1.2), Vector3.new(x + side * 7.2, 28.4, z - 4.5), WOOD, Enum.Material.Wood, group)
+	end
+	local roof = part("ColorfulRoof", Vector3.new(19, 1.3, 17), Vector3.new(x, 33.2, z), roofColor, Enum.Material.SmoothPlastic, group)
+	local header = part("StallSignAnchor", Vector3.new(1, 1, 1), Vector3.new(x, 31, z - 6.5), WHITE, Enum.Material.SmoothPlastic, group)
+	header.Transparency = 1
+	header.CanCollide = false
+	textSign(header, line1 .. " | " .. line2, 2, 210)
 end
-local instructionAnchor = part(
-	"LobbyInstructionAnchor",
-	Vector3.new(1, 1, 1),
-	Vector3.new(0, SETTINGS.BridgeY + 7, -58),
-	VIOLET, Enum.Material.Neon
-)
-instructionAnchor.Transparency = 1
-instructionAnchor.CanCollide = false
-textSign(instructionAnchor, "JOIN · PICK 1–5 · WALK ONLY ON GREEN", 2, 410)
--- Guard rails keep the waiting area safely away from the lava.
-for _, rail in ipairs({
-	{ "Back", Vector3.new(36, 5, 1), Vector3.new(0, SETTINGS.BridgeY + 3, -82) },
-	{ "Front", Vector3.new(36, 5, 1), Vector3.new(0, SETTINGS.BridgeY + 3, -58) },
-	{ "Left", Vector3.new(1, 5, 24), Vector3.new(-17, SETTINGS.BridgeY + 3, -70) },
-	{ "Right", Vector3.new(1, 5, 24), Vector3.new(17, SETTINGS.BridgeY + 3, -70) },
+makeStall("LeftShopComingSoon", -25, -49, ROOF_BLUE, "SHOP", "COMING SOON")
+makeStall("RightCosmeticsComingSoon", 25, -49, ROOF_PINK, "COSMETICS", "COMING SOON")
+
+-- Near-spawn board: do not invent global data or live purchase controls.
+local boardPost = decorative("LeaderboardPost", Vector3.new(1.4, 10, 1.4), Vector3.new(33, 29, -82), WOOD, Enum.Material.Wood)
+local board = decorative("LeaderboardBoard", Vector3.new(15, 10, 1.3), Vector3.new(33, 34, -82), ROOF_BLUE)
+textSign(board, "LEADERBOARD | COMING SOON", 1.5, 245)
+local rewardsBase = decorative("FutureRewardsPodium", Vector3.new(12, 1.5, 10), Vector3.new(-33, 24.75, -82), Color3.fromRGB(255, 195, 91))
+local rewardSign = decorative("FutureRewardsSignAnchor", Vector3.new(1, 1, 1), Vector3.new(-33, 27, -82), WHITE)
+rewardSign.CanCollide = false
+rewardSign.Transparency = 1
+textSign(rewardSign, "REWARDS | COMING SOON", 2.5, 226)
+
+-- Small cartoony trees and bushes around the EDGE, leaving sightlines open.
+local function makeTree(x, z, height)
+	local trunk = decorative("BlockyTreeTrunk", Vector3.new(2, height, 2), Vector3.new(x, 24 + height / 2, z), WOOD, Enum.Material.Wood)
+	for dx = -1, 1 do
+		for dz = -1, 1 do
+			if dx == 0 or dz == 0 then
+				local leaf = decorative(
+					"BlockyTreeLeaves",
+					Vector3.new(5, 3, 5),
+					Vector3.new(x + dx * 3.2, 24 + height + (dx == 0 and 2.5 or 1), z + dz * 3.2),
+					Color3.fromRGB(65 + (dx + 1) * 10, 190 + (dz + 1) * 6, 80),
+					Enum.Material.Grass
+				)
+				leaf.CanCollide = false
+			end
+		end
+	end
+end
+for _, spot in ipairs({
+	{-56, -88, 9}, {-56, -53, 10}, {-56, -24, 8},
+	{56, -88, 9}, {56, -53, 10}, {56, -24, 8}
 }) do
-	local wall = part(rail[1] .. "LobbyRail", rail[2], rail[3], Color3.fromRGB(181, 231, 255), Enum.Material.Glass)
-	wall.Transparency = 0.35
+	makeTree(spot[1], spot[2], spot[3])
+end
+for _, spot in ipairs({{-49,-92},{-43,-92},{45,-92},{50,-93},{-50,-39},{50,-39}}) do
+	local bush = decorative("HubBush", Vector3.new(5, 3, 5), Vector3.new(spot[1], 25.5, spot[2]), Color3.fromRGB(77, 198, 99), Enum.Material.Grass)
+	bush.CanCollide = false
+end
+for _, side in ipairs({-1, 1}) do
+	for _, z in ipairs({-89, -74, -59, -44}) do
+		local post = decorative("IslandEdgeFencePost", Vector3.new(1.5, 5, 1.5), Vector3.new(side * 63, 26.5, z), WOOD, Enum.Material.Wood)
+	end
 end
 
--- Sunny green ground is scenery only; the lava and match checks still eliminate falls.
+-- Under-island lawn and lava are scenery/physics separate from the hub.
 local grass = part(
 	"GrassSurround", Vector3.new(190, 2, 320),
 	Vector3.new(0, 0, 58), Color3.fromRGB(103, 205, 88), Enum.Material.Grass
