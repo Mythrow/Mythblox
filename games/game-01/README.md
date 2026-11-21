@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-21):** Owner confirmed v0.2 functional gameplay and provided a screenshot of v0.5. The screenshot revealed oversized floating signboards, redundant HUD leaderboard, and visual issues in the shared join area. **v0.6 fixes have been committed and packaged, but not yet verified in Studio.** The game remains unnamed and unpublished.  
+**Status (2026-11-22):** Owner verified the newer island layout in Studio but reported **stretched/oversized physical board text** and an intrusive **center-screen round results popup**. **v0.7 fixes** are committed and packaged; **Studio retest remains pending**. The game remains unnamed and unpublished.  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -34,6 +34,21 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 | Reward | Win +25 coins, participation +5 coins |
 
 **Rewards are session-only in v0.1.** There is no DataStore persistence, no purchasable items, and no paid power-ups. Do not publish this as a monetized finished game without playtests and a reviewed commerce implementation.
+
+## v0.7 — properly sized signs and nonblocking results (Studio retest pending)
+
+Owner screenshot of v0.6 showed that `TextScaled = true` enlarged storefront lettering to fill its `SurfaceGui` signboard, producing distorted, oversized text. The center-screen `ROUND COMPLETE` overlay also blocked the view at the end of every match.
+
+**Changes made:**
+- World signs now use **fixed font sizes**, no TextScaled and no automatic wrapping. Dimensions are reduced slightly; text can truncate instead of becoming huge.
+- Storefronts and leaderboards use **two levels**: `COSMETICS` / `COMING SOON`, etc., with a smaller secondary line.
+- Shop, finish, deck and reward signs retain **two-sided** readable world boards; the deck's live status still updates both faces.
+- Removed the centered `ROUND COMPLETE` result card entirely. During `RESULTS`, the compact top HUD shows **ROUND OVER** and the existing server-sent winner/draw message.
+- No change to selected-number rules, movement permissions, cracks, lava, spawn, shop placeholders, dynamic bridge counts, or winning/rewards.
+
+**Installation:** Stop Play, open the latest [Studio Command Bar installer](INSTALL_STUDIO_COMMAND_BAR.luau), choose Raw, copy everything and Run while in Edit mode. Output should say **v0.7 sign/results UI fixes installed**.
+
+**Engine verification:** v0.7 is not tested in Studio yet; inspect boards from close and far away, complete one round to see the result without a centered popup, and check Output.
 
 ## v0.6 — join-area readability and streamlined HUD (Studio test pending)
 
@@ -166,6 +181,6 @@ For repeat development, clone `Mythrow/Mythblox`, install [Rojo](https://rojo.sp
 
 ## Next step
 
-Functional prototype v0.2 was confirmed by the owner. **Next: retest v0.6 signage, deck floors and compact HUD**, then confirm spectator safety and unchanged mechanics using [TEST_PLAN.md](TEST_PLAN.md). Review mobile controls and map sightlines before considering persistence and cosmetics. Validate whether **5-second selection / 6-second walking / 20 tiles / 3 cracks** is enjoyable before adding features.
+Functional prototype v0.2 was confirmed by the owner. **Next: retest v0.7 fixed sign typography and top-only results**, then confirm spectator safety and unchanged mechanics using [TEST_PLAN.md](TEST_PLAN.md). Review mobile controls and map sightlines before considering persistence and cosmetics. Validate whether **5-second selection / 6-second walking / 20 tiles / 3 cracks** is enjoyable before adding features.
 
 See [the Mythblox game-design memo](../../docs/FIRST_GAME_GLASS_BRIDGE_CONCEPT.md) for earlier alternatives, including the spinner idea that was explicitly deferred.
