@@ -322,64 +322,71 @@ end
 makeStall("LeftShopComingSoon", -25, -49, ROOF_BLUE, "SHOP", "COMING SOON")
 makeStall("RightCosmeticsComingSoon", 25, -49, ROOF_PINK, "COSMETICS", "COMING SOON")
 
--- World leaderboard: genuine session stats only. No DataStore/global rankings.
-local boardPost = decorative("LeaderboardPost", Vector3.new(1.4, 10, 1.4), Vector3.new(33, 29, -82), WOOD, Enum.Material.Wood)
-local board = decorative("LeaderboardBoard", Vector3.new(15, 10, 1.3), Vector3.new(33, 34, -82), ROOF_BLUE)
+-- Compact single-face leaderboard. Its front for arriving lobby visitors
+-- points toward +Z (Back face in Roblox part-local coordinates).
+local boardPost = decorative(
+	"LeaderboardPost",
+	Vector3.new(1.4, 8.5, 1.2),
+	Vector3.new(33, 26.25, -83.4),
+	WOOD, Enum.Material.Wood
+)
+local board = decorative(
+	"LeaderboardBoard",
+	Vector3.new(13, 8, 1.1),
+	Vector3.new(33, 32.2, -82),
+	ROOF_BLUE
+)
+local boardGui = Instance.new("SurfaceGui")
+boardGui.Name = "ServerLeaderboard"
+boardGui.Face = Enum.NormalId.Back
+boardGui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+boardGui.PixelsPerStud = 34
+boardGui.LightInfluence = 0
+boardGui.AlwaysOnTop = false
+boardGui.Parent = board
 
-local boardFaces = {}
-local function makeScoreFace(side)
-	local surface = Instance.new("SurfaceGui")
-	surface.Name = "ServerLeaderboard"
-	surface.Face = side
-	surface.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-	surface.PixelsPerStud = 30
-	surface.LightInfluence = 0
-	surface.AlwaysOnTop = false
-	surface.Parent = board
+local card = Instance.new("Frame")
+card.Name = "ScoreCard"
+card.Position = UDim2.fromScale(0.04, 0.055)
+card.Size = UDim2.fromScale(0.92, 0.89)
+card.BackgroundColor3 = WHITE
+card.BorderSizePixel = 0
+card.Parent = boardGui
+local cardCorner = Instance.new("UICorner")
+cardCorner.CornerRadius = UDim.new(0, 10)
+cardCorner.Parent = card
 
-	local card = Instance.new("Frame")
-	card.Name = "WhiteScoreCard"
-	card.Position = UDim2.fromScale(0.04, 0.045)
-	card.Size = UDim2.fromScale(0.92, 0.91)
-	card.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	card.BorderSizePixel = 0
-	card.Parent = surface
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 12)
-	corner.Parent = card
-
-	local function makeLabel(name, content, y, h, fontSize, color, bold)
-		local t = Instance.new("TextLabel")
-		t.Name = name
-		t.Position = UDim2.new(0.04, 0, y, 0)
-		t.Size = UDim2.new(0.92, 0, h, 0)
-		t.BackgroundTransparency = 1
-		t.Text = content
-		t.TextColor3 = color
-		t.TextSize = fontSize
-		t.TextScaled = false
-		t.TextWrapped = false
-		t.TextTruncate = Enum.TextTruncate.AtEnd
-		t.TextXAlignment = Enum.TextXAlignment.Left
-		t.Font = bold and Enum.Font.GothamBold or Enum.Font.Gotham
-		t.Parent = card
-		return t
-	end
-
-	makeLabel("Title", "TOP RACERS", 0.04, 0.14, 31, Color3.fromRGB(33, 101, 183), true)
-	makeLabel("Scope", "THIS SERVER ONLY", 0.20, 0.09, 19, Color3.fromRGB(102, 124, 143), true)
-	local rows = {}
-	for i = 1, 4 do
-		rows[i] = makeLabel(
-			"Rank" .. i, "", 0.34 + (i - 1) * 0.142, 0.115,
-			24, Color3.fromRGB(35, 73, 111), i == 1
-		)
-	end
-	makeLabel("Note", "Resets when server closes", 0.92, 0.06, 16, Color3.fromRGB(114, 134, 154), false)
-	table.insert(boardFaces, rows)
+local function scoreLabel(name, message, position, height, size, isBold)
+	local text = Instance.new("TextLabel")
+	text.Name = name
+	text.Position = UDim2.new(0.055, 0, position, 0)
+	text.Size = UDim2.new(0.89, 0, height, 0)
+	text.BackgroundTransparency = 1
+	text.Text = message
+	text.TextColor3 = Color3.fromRGB(41, 91, 147)
+	text.TextSize = size
+	text.TextScaled = false
+	text.TextWrapped = false
+	text.TextTruncate = Enum.TextTruncate.AtEnd
+	text.TextXAlignment = Enum.TextXAlignment.Left
+	text.TextYAlignment = Enum.TextYAlignment.Center
+	text.Font = isBold and Enum.Font.GothamBold or Enum.Font.GothamMedium
+	text.Parent = card
+	return text
 end
-makeScoreFace(Enum.NormalId.Front)
-makeScoreFace(Enum.NormalId.Back)
+
+scoreLabel("Title", "TOP RACERS", 0.065, 0.18, 32, true)
+local boardRows = {}
+for i = 1, 4 do
+	boardRows[i] = scoreLabel(
+		"Player" .. i,
+		"",
+		0.29 + (i - 1) * 0.165,
+		0.12,
+		23,
+		i == 1
+	)
+end
 
 local lastLeaderboardText = ""
 local function refreshSessionLeaderboard()
@@ -397,23 +404,21 @@ local function refreshSessionLeaderboard()
 		if ac ~= bc then return ac > bc end
 		return a.UserId < b.UserId
 	end)
-	local textRows = {}
+	local rows = {}
 	for i = 1, 4 do
 		local player = contestants[i]
 		if player then
 			local wins, coins = values(player)
-			textRows[i] = string.format("%d. %s  ·  %dW  %dC", i, player.DisplayName, wins, coins)
+			rows[i] = string.format("%d. %s  ·  %dW  %dC", i, player.DisplayName, wins, coins)
 		else
-			textRows[i] = i == 1 and "No players yet" or ""
+			rows[i] = ""
 		end
 	end
-	local key = table.concat(textRows, "\n")
+	local key = table.concat(rows, "\n")
 	if key == lastLeaderboardText then return end
 	lastLeaderboardText = key
-	for _, rows in ipairs(boardFaces) do
-		for i, label in ipairs(rows) do
-			label.Text = textRows[i]
-		end
+	for i, textLabel in ipairs(boardRows) do
+		textLabel.Text = rows[i]
 	end
 end
 local rewardsBase = decorative("FutureRewardsPodium", Vector3.new(12, 1.5, 10), Vector3.new(-33, 24.75, -82), Color3.fromRGB(255, 195, 91))
