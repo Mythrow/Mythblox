@@ -1182,6 +1182,10 @@ local phaseNames = {
 
 local function update(state)
 	local phase = state.phase or "JOIN"
+	-- Turn numbers restart every match; never reuse a previous match's vote rows.
+	if phase == "JOIN" or phase == "VOTE" then
+		lastTurnRendered = -1
+	end
 	local mine = state.mine
 	phaseText.Text = ("ROUND %d  ·  %s"):format(state.turn or 0, phaseNames[phase] or phase)
 	clockText.Text = tostring(state.time or 0) .. "s"
