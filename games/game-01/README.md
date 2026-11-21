@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-22):** Owner confirms **v0.11 works in Roblox Studio**. The approved **v0.12 gameplay-feedback pass** is committed (source scripts and installer), **but not yet tested in Studio**. The game remains unnamed and unpublished.  
+**Status (2026-11-22):** Owner confirms **v0.12 works in Roblox Studio**. This is an owner-reported functional pass, not exhaustive mobile, performance, or release QA. **Development paused at v0.12** until the next session; the game remains unnamed and unpublished.  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -52,7 +52,7 @@ Approved after v0.11 was confirmed working. Focus: make the existing game rules 
 
 **Install:** Stop Play in Roblox Studio and run the latest [Studio Command Bar installer](INSTALL_STUDIO_COMMAND_BAR.luau) while in Edit mode. It will replace the existing Mythblox scripts. Confirm Output prints **v0.12 VERIFIED** and the game HUD shows **v0.12**.
 
-**Next validation:** Test one solo session then at least two clients. Check vote sounds, crack/fall sounds, visible results, no duplicated sounds, player movement and spectator visibility, and no Output errors. The v0.12 package passes GitHub source/installer consistency checks only, **not Roblox Studio engine QA**.
+**Checkpoint:** Owner reports v0.12 gameplay works after Studio testing. Individual regression cases were not enumerated; deeper multiplayer, mobile, audio and release QA remain outstanding. **Next planned phase:** persistent coins and wins, subject to reconfirmation when development resumes.
 
 ## v0.11 — four environment fixes (awaiting Studio test)
 
