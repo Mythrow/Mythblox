@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-22):** Owner's v0.9 Studio screenshot shows correctly proportioned in-world lettering and identifies an unused **default Baseplate spawn marker beneath the lava**. **v0.10 removes the stock spawn and adds a live, current-server wins/coins board near the hub plaza.** v0.10 is committed but has not been playtested in Studio. The game remains unnamed and unpublished.  
+**Status (2026-11-22):** Owner's v0.10 Studio screenshots highlighted four remaining environment issues: cluttered finish, flat island edge, protruding glass barriers, and oversized two-sided leaderboard with unnecessary text. **v0.11 implements all four visual changes in source and the one-paste installer, but has not yet been tested in Studio.** The individual experience remains unnamed and unpublished.  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -34,6 +34,17 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 | Reward | Win +25 coins, participation +5 coins |
 
 **Rewards are session-only in v0.1.** There is no DataStore persistence, no purchasable items, and no paid power-ups. Do not publish this as a monetized finished game without playtests and a reviewed commerce implementation.
+
+## v0.11 — four environment fixes (awaiting Studio test)
+
+Owner approved four targeted changes after reviewing v0.10 screenshots. **No game rules were changed.**
+
+- **Finish:** Replaced the bulky, multicolored, stacked arch with a simple two-blue-pillar white FINISH beam and a compact checker strip on each last glass tile. One integrated sign, no floating sign above the gate, no side flags.
+- **Glass edges:** Recalculated decorative bridge rails to end exactly at tile edges. Aligned the front spectator barrier to the ready deck and shortened/repositioned the inner/outer promenade barriers to meet their walkway ends without protrusions. Maintained server-side spectator boundary checks.
+- **Leaderboard:** Reduced physical size, moved support post behind the board, and put the data on **one face only**, facing arrivals from the spawn plaza. Only `TOP RACERS` and player wins/coins rows remain. Removed `THIS SERVER ONLY` and `Resets when server closes` from the display. Scores **remain current-server-only and temporary**, regardless of the stripped-down presentation.
+- **Island edge:** Added brown soil and stone layers beneath the grassy hub to avoid a flat grass slab from bridge views. Replaced the low gray/green backdrop with a blue, noncolliding sea plane. Neither changes player progress or lane geometry.
+
+Install the newest [Studio Command Bar installer](INSTALL_STUDIO_COMMAND_BAR.luau) in **Edit mode**, then start Play and confirm the HUD shows **v0.11**. Check the finish from the last tile, the leaderboard from spawn, barrier ends from both promenades, and the island silhouette looking back from the bridge. A new Studio test is required before visual signoff.
 
 ## v0.10 — clean spawning and current-server leaderboard (Studio test pending)
 
@@ -231,6 +242,6 @@ For repeat development, clone `Mythrow/Mythblox`, install [Rojo](https://rojo.sp
 
 ## Next step
 
-Functional prototype v0.2 was confirmed by the owner. **Next: verify v0.10 in Studio, specifically the removal of the under-lava spawn and the live current-server leaderboard**, then proceed to spectator/mobile regression testing in [TEST_PLAN.md](TEST_PLAN.md). Review mobile controls and map sightlines before considering persistence and cosmetics. Validate whether **5-second selection / 6-second walking / 20 tiles / 3 cracks** is enjoyable before adding features.
+Functional prototype v0.2 was confirmed by the owner. **Next: install and review v0.11's finish, smaller one-sided leaderboard, flush glass ends, and layered island edge**; then continue spectator/mobile regression testing in [TEST_PLAN.md](TEST_PLAN.md). Review mobile controls and map sightlines before considering persistence and cosmetics. Validate whether **5-second selection / 6-second walking / 20 tiles / 3 cracks** is enjoyable before adding features.
 
 See [the Mythblox game-design memo](../../docs/FIRST_GAME_GLASS_BRIDGE_CONCEPT.md) for earlier alternatives, including the spinner idea that was explicitly deferred.
