@@ -1,6 +1,6 @@
 # Game 01 — Mini-Game Island / Spectator Arena Blueprint
 
-**Status (2026-11-22):** The approved island design is implemented through v0.9, with Studio screenshots confirming the layout and readable world labels. **v0.10 removes the unused low Baseplate spawn and turns the near-spawn leaderboard into a current-server Wins/Coins board; this build still needs testing.** User approved one shared ready/spectator platform, leaderboard near spawn and shops on both sides of the main path. Coordinates below are design targets; the game source is authoritative for exact Part positions.  
+**Status (2026-11-22):** The approved social island is implemented. Following owner review of v0.10 screenshots, **v0.11 updates the finish, barrier alignment, one-sided compact leaderboard, and visible layered island edge**. The updated installer exists; **Roblox Studio testing remains outstanding**. Coordinates in this document are initial planning targets, while current script positions are authoritative.  
 **Game title:** Unnamed (Game 01 is only the internal development label).  
 **References:** Three Roblox game screenshots supplied by the owner in the conversation (2026-11-21), showing bright social hubs, green island terrain, colorful blocky scenery, decorative paths/fences, shop/leaderboard landmarks, and clear game-viewing areas. **Copy the design vocabulary, not their exact map, asset artwork, logos, or UI.**
 
