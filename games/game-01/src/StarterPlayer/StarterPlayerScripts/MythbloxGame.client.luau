@@ -1,4 +1,4 @@
--- Mythblox Game 01 · bright Roblox-style visuals v0.4
+-- Mythblox Game 01 · streamlined screen UI v0.6
 -- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -97,19 +97,19 @@ local function button(parent, name, content, bg)
 	return b
 end
 
--- Top status panel: always visible and readable on narrow screens.
+-- Compact phase/countdown HUD with personal progress and no leaderboard.
 local top = panel("StatusPanel")
 top.AnchorPoint = Vector2.new(0.5, 0)
 top.Position = UDim2.new(0.5, 0, 0, 8)
-local phaseText = label(top, "Phase", "JOINING", 16, 7, -125, 25, 17, COLOR.Purple, true)
-local clockText = label(top, "Clock", "10s", 16, 7, -32, 26, 21, COLOR.Purple, true)
+local phaseText = label(top, "Phase", "NEXT MATCH", 14, 6, -112, 22, 15, COLOR.Purple, true)
+local clockText = label(top, "Clock", "10s", 14, 6, -28, 23, 19, COLOR.Purple, true)
 clockText.TextXAlignment = Enum.TextXAlignment.Right
-local description = label(top, "Guidance", "Join the next round.", 16, 36, -32, 47, 15, COLOR.Text, false)
-local ownStats = label(top, "Progress", "", 16, 86, -32, 24, 14, COLOR.Muted, true)
+local description = label(top, "Guidance", "", 14, 29, -28, 21, 13, COLOR.Text, false)
+local ownStats = label(top, "Progress", "", 14, 53, -28, 19, 12, COLOR.Muted, true)
 local progressBackground = Instance.new("Frame")
 progressBackground.Name = "ProgressTrack"
-progressBackground.Position = UDim2.new(0, 16, 1, -12)
-progressBackground.Size = UDim2.new(1, -32, 0, 5)
+progressBackground.Position = UDim2.new(0, 14, 1, -7)
+progressBackground.Size = UDim2.new(1, -28, 0, 4)
 progressBackground.BorderSizePixel = 0
 progressBackground.BackgroundColor3 = COLOR.InkBright
 progressBackground.Parent = top
@@ -122,12 +122,7 @@ progressFill.BorderSizePixel = 0
 progressFill.Parent = progressBackground
 addCorner(progressFill, 4)
 
--- Optional standings on desktop; hidden on smaller screens.
-local standings = panel("Standings")
-standings.AnchorPoint = Vector2.new(1, 0)
-local standingsHeader = label(standings, "Header", "LEADERBOARD", 12, 7, -24, 27, 15, COLOR.Purple, true)
-local standingsRows = label(standings, "Rows", "Waiting for racers", 12, 40, -24, 128, 13, COLOR.Text)
-standingsRows.TextYAlignment = Enum.TextYAlignment.Top
+-- Leaderboard lives in the world near spawn, not as a duplicate HUD overlay.
 
 -- Join prompt: does not cover touch movement controls during a match.
 local join = button(gui, "JoinButton", "JOIN BRIDGE RACE", COLOR.Green)
@@ -307,17 +302,18 @@ local function layoutForViewport()
 	isCompact = compact
 	local shortScreen = height < 570
 
-	local topW = math.min(width - 16, compact and 530 or 610)
-	top.Size = UDim2.fromOffset(topW, compact and 120 or 132)
-	phaseText.Size = UDim2.new(1, -116, 0, 25)
-	clockText.Position = UDim2.new(1, -103, 0, 7)
-	clockText.Size = UDim2.fromOffset(86, 26)
-	description.Position = UDim2.fromOffset(16, 35)
-	description.Size = UDim2.new(1, -32, 0, compact and 43 or 48)
-	description.TextSize = compact and 13 or 15
-	ownStats.Position = UDim2.new(0, 16, 1, -38)
-	ownStats.Size = UDim2.new(1, -32, 0, 20)
-	ownStats.TextSize = compact and 12 or 14
+	local topW = math.min(width - 20, compact and 410 or 470)
+	top.Size = UDim2.fromOffset(topW, 83)
+	phaseText.Size = UDim2.new(1, -107, 0, 23)
+	phaseText.TextSize = compact and 13 or 15
+	clockText.Position = UDim2.new(1, -82, 0, 6)
+	clockText.Size = UDim2.fromOffset(68, 23)
+	description.Position = UDim2.fromOffset(14, 30)
+	description.Size = UDim2.new(1, -28, 0, 20)
+	description.TextSize = compact and 12 or 13
+	ownStats.Position = UDim2.fromOffset(14, 53)
+	ownStats.Size = UDim2.new(1, -28, 0, 18)
+	ownStats.TextSize = compact and 11 or 12
 
 	local voteW = math.min(width - 18, 535)
 	voting.Size = UDim2.fromOffset(voteW, shortScreen and 121 or 140)
@@ -340,14 +336,10 @@ local function layoutForViewport()
 	result.Size = UDim2.fromOffset(math.min(width - 18, 550), 135)
 	resultMessage.TextSize = compact and 17 or 22
 
-	standings.Visible = not compact
-	standings.Position = UDim2.new(1, -10, 0, 148)
-	standings.Size = UDim2.fromOffset(232, 186)
-
 	local revealW = math.min(compact and width - 16 or 322, 322)
 	local revealH = math.max(165, math.min(compact and 242 or 388, height - (compact and 156 or 171)))
 	reveal.Size = UDim2.fromOffset(revealW, revealH)
-	reveal.Position = UDim2.fromOffset(compact and 8 or 11, compact and 136 or 150)
+	reveal.Position = UDim2.fromOffset(compact and 8 or 11, compact and 103 or 107)
 	revealHeader.TextSize = compact and 14 or 16
 	revealSubtitle.TextSize = compact and 11 or 13
 end
@@ -364,11 +356,11 @@ end)
 hookCamera(workspace.CurrentCamera)
 
 local phaseNames = {
-	JOIN = "JOIN THE ROUND",
+	JOIN = "NEXT MATCH",
 	VOTE = "SECRET VOTE",
-	REVEAL = "THE NUMBERS ARE IN",
+	REVEAL = "VOTE RESULTS",
 	MOVE = "MOVE OR STAY",
-	RESULTS = "MATCH RESULTS",
+	RESULTS = "RESULTS",
 }
 
 local function update(state)
@@ -388,9 +380,10 @@ local function update(state)
 	result.Visible = phase == "RESULTS"
 
 	if phase == "JOIN" then
-		phaseText.Text = ("JOIN THE ROUND  ·  %d/%d READY"):format(state.ready or 0, state.capacity or 8)
-		ownStats.Text = state.queued and "You're in! The match starts after the countdown."
-			or "Press JOIN to reserve your bridge."
+		phaseText.Text = "NEXT MATCH"
+		description.Text = state.queued and "You're queued for the next race."
+			or "Join at the gold pad or use the button below."
+		ownStats.Text = ("%d/%d PLAYERS READY"):format(state.ready or 0, state.capacity or 8)
 		progressFill.Size = UDim2.fromScale(0, 1)
 	elseif mine then
 		local selection = mine.vote and tostring(mine.vote) or "—"
@@ -400,7 +393,7 @@ local function update(state)
 		)
 		progressFill.Size = UDim2.fromScale(math.clamp((mine.position or 0) / 20, 0, 1), 1)
 	else
-		ownStats.Text = "SPECTATING  ·  Join when the next countdown begins."
+		ownStats.Text = "SPECTATING  ·  WATCH FROM THE FRONT DECK"
 		progressFill.Size = UDim2.fromScale(0, 1)
 	end
 
@@ -433,18 +426,12 @@ local function update(state)
 
 	-- Make the full breakdown visible on desktop during walking. On mobile,
 	-- display it during REVEAL only, so controls/gameplay remain unobstructed.
-	reveal.Visible = phase == "REVEAL" or (phase == "MOVE" and not isCompact)
+	-- Keep racers' walking camera clear, show extended results to observers.
+	local observing = mine == nil or mine.alive ~= true
+	reveal.Visible = phase == "REVEAL" or (phase == "MOVE" and observing and not isCompact)
 	if reveal.Visible then drawOutcomes(state) end
 
-	local rows = {}
-	for index, entry in ipairs(state.roster or {}) do
-		if index > 6 then break end
-		local status = entry.alive and ("· " .. tostring(entry.cracks or 0) .. " cracks") or "· OUT"
-		table.insert(rows, ("%d. %s  ·  %d/20 %s"):format(
-			index, tostring(entry.name or "Player"), entry.position or 0, status
-		))
-	end
-	standingsRows.Text = #rows > 0 and table.concat(rows, "\n") or "Waiting for racers..."
+
 end
 
 join.Visible = false
