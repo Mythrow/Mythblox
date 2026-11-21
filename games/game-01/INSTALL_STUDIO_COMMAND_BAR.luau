@@ -11,6 +11,8 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
+local Debris = game:GetService("Debris")
+local Lighting = game:GetService("Lighting")
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -33,6 +35,15 @@ local GREEN = Color3.fromRGB(64, 235, 142)
 local RED = Color3.fromRGB(255, 85, 84)
 local GLASS = Color3.fromRGB(105, 201, 240)
 local AMBER = Color3.fromRGB(255, 192, 85)
+local VIOLET = Color3.fromRGB(145, 110, 255)
+
+-- Visual-only lighting adjustments (these do not affect voting or movement).
+Lighting.ClockTime = 18.7
+Lighting.Brightness = 2
+Lighting.Ambient = Color3.fromRGB(71, 85, 128)
+Lighting.OutdoorAmbient = Color3.fromRGB(85, 90, 125)
+Lighting.FogColor = Color3.fromRGB(30, 32, 70)
+Lighting.FogEnd = 500
 
 local oldWorld = workspace:FindFirstChild("MythbloxGame01")
 if oldWorld then oldWorld:Destroy() end
@@ -98,6 +109,25 @@ lobby.Material = Enum.Material.SmoothPlastic
 lobby.Color = Color3.fromRGB(47, 61, 100)
 lobby.Parent = world
 textSign(lobby, "MYTHBLOX | GLASS RACE", 8, 350)
+-- Subtle lobby lights and floor markings; no additional paths to the lava.
+for _, side in ipairs({-1, 1}) do
+	local stripe = part(
+		"LobbyGlowStrip",
+		Vector3.new(1, 0.15, 19),
+		Vector3.new(side * 14, SETTINGS.BridgeY + 0.83, -70),
+		VIOLET, Enum.Material.Neon
+	)
+	stripe.CanCollide = false
+end
+local instructionAnchor = part(
+	"LobbyInstructionAnchor",
+	Vector3.new(1, 1, 1),
+	Vector3.new(0, SETTINGS.BridgeY + 7, -58),
+	VIOLET, Enum.Material.Neon
+)
+instructionAnchor.Transparency = 1
+instructionAnchor.CanCollide = false
+textSign(instructionAnchor, "JOIN · PICK 1–5 · WALK ONLY ON GREEN", 2, 410)
 -- Guard rails keep the waiting area safely away from the lava.
 for _, rail in ipairs({
 	{ "Back", Vector3.new(36, 5, 1), Vector3.new(0, SETTINGS.BridgeY + 3, -82) },
@@ -149,6 +179,19 @@ local function buildBridges(count)
 			tile.Transparency = 0.22
 			lanes[lane].tiles[index] = tile
 		end
+		-- Decorative glowing rails sit below the glass and cannot be stood on.
+		-- Only two rails per player, keeping the world small on mobile devices.
+		for _, edge in ipairs({-1, 1}) do
+			local rail = part(
+				("Lane%02d_EdgeGlow"):format(lane),
+				Vector3.new(0.35, 0.35, SETTINGS.TileSpacing * SETTINGS.BridgeLength + 7),
+				Vector3.new(x + edge * 3.25, SETTINGS.BridgeY - 1.1, SETTINGS.BridgeLength * SETTINGS.TileSpacing / 2),
+				VIOLET, Enum.Material.Neon, bridgeModel
+			)
+			rail.CanCollide = false
+			rail.CanTouch = false
+			rail.Transparency = 0.32
+		end
 	end
 
 	-- One shared finish banner, rather than a floating FINISH label per lane.
@@ -161,6 +204,15 @@ local function buildBridges(count)
 	)
 	banner.CanCollide = false
 	textSign(banner, "FINISH", 2, 180)
+	for _, edge in ipairs({-1, 1}) do
+		local post = part(
+			"FinishGlowPost",
+			Vector3.new(1.5, 13, 1.5),
+			Vector3.new(edge * (bannerWidth / 2 - 1), SETTINGS.BridgeY + 6, SETTINGS.BridgeLength * SETTINGS.TileSpacing),
+			AMBER, Enum.Material.Neon, bridgeModel
+		)
+		post.CanCollide = false
+	end
 end
 
 local phase = "JOIN"
@@ -236,8 +288,54 @@ local function prepareMatchLabels()
 	labelFolder.Parent = bridgeModel
 end
 
-local function shatter(tile)
+-- Optional particles for important falls. Routine old-tile removal stays lightweight.
+local function glassBurst(tile, shade, amount)
+	if not tile then return end
+	local particles = Instance.new("ParticleEmitter")
+	particles.Name = "GlassBurst"
+	particles.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	particles.Rate = 0
+	particles.Lifetime = NumberRange.new(0.25, 0.65)
+	particles.Speed = NumberRange.new(8, 16)
+	particles.SpreadAngle = Vector2.new(160, 160)
+	particles.Size = NumberSequence.new(0.35)
+	particles.Color = ColorSequence.new(shade)
+	particles.LightEmission = 0.8
+	particles.EmissionDirection = Enum.NormalId.Top
+	particles.Parent = tile
+	particles:Emit(amount or 10)
+	Debris:AddItem(particles, 1.5)
+end
+
+local function showCrackLines(tile, count)
+	if not tile then return end
+	local overlay = tile:FindFirstChild("DamageLines")
+	if not overlay then
+		overlay = Instance.new("SurfaceGui")
+		overlay.Name = "DamageLines"
+		overlay.Face = Enum.NormalId.Top
+		overlay.PixelsPerStud = 40
+		overlay.AlwaysOnTop = false
+		overlay.Parent = tile
+	end
+	for _, child in ipairs(overlay:GetChildren()) do child:Destroy() end
+	for index = 1, count do
+		-- Flat UI crack stripes: lightweight and readable from above.
+		local line = Instance.new("Frame")
+		line.Name = "Crack" .. index
+		line.AnchorPoint = Vector2.new(0.5, 0.5)
+		line.Position = UDim2.fromScale(0.5 + ((index % 2) * 0.13 - 0.06), 0.5)
+		line.Size = UDim2.fromScale(0.012, 0.78)
+		line.Rotation = ({33, -48, 73})[index] or 20
+		line.BackgroundColor3 = Color3.fromRGB(30, 36, 56)
+		line.BorderSizePixel = 0
+		line.Parent = overlay
+	end
+end
+
+local function shatter(tile, dramatic)
 	if not tile or not tile.CanCollide then return end
+	if dramatic then glassBurst(tile, RED, 16) end
 	tile.CanCollide = false
 	tile.CanTouch = false
 	tile.Color = RED
@@ -251,10 +349,10 @@ local function eliminate(player, reason, tileToBreak)
 	info.elimination = reason
 	info.allowed = 0
 	setWalking(player, false)
-	if tileToBreak then shatter(tileToBreak) end
+	if tileToBreak then shatter(tileToBreak, true) end
 	-- Remove their supporting panel too, so an invalid step always causes a visible fall.
 	local standingTile = lanes[info.lane].tiles[info.index]
-	if standingTile ~= tileToBreak then shatter(standingTile) end
+	if standingTile ~= tileToBreak then shatter(standingTile, true) end
 	message = player.DisplayName .. " fell! (" .. reason .. ")"
 	if publish then publish() end
 end
@@ -269,6 +367,8 @@ local function crack(player)
 		eliminate(player, "three cracks", currentTile)
 	else
 		currentTile.Color = info.cracks == 1 and AMBER or RED
+		showCrackLines(currentTile, info.cracks)
+		glassBurst(currentTile, AMBER, 6)
 	end
 end
 
@@ -711,8 +811,8 @@ end
 ]====]
 
 local CLIENT_SOURCE = [====[
--- Mythblox game-01: glass bridge race prototype (client)
--- Client only renders UI and submits requests; the server decides all outcomes.
+-- Mythblox Game 01 · visual polish v0.3
+-- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = Players.LocalPlayer
@@ -721,299 +821,439 @@ local network = ReplicatedStorage:WaitForChild("MythbloxGame01")
 local command = network:WaitForChild("Command")
 local stateEvent = network:WaitForChild("State")
 
-local old = playerGui:FindFirstChild("MythbloxGame01UI")
-if old then old:Destroy() end
+local previous = playerGui:FindFirstChild("MythbloxGame01UI")
+if previous then previous:Destroy() end
+
 local gui = Instance.new("ScreenGui")
 gui.Name = "MythbloxGame01UI"
 gui.ResetOnSpawn = false
 gui.IgnoreGuiInset = false
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+gui.DisplayOrder = 10
 gui.Parent = playerGui
 
-local WHITE = Color3.fromRGB(245, 248, 255)
-local MUTED = Color3.fromRGB(183, 197, 219)
-local BLUE = Color3.fromRGB(52, 122, 223)
-local GREEN = Color3.fromRGB(44, 166, 104)
-local GOLD = Color3.fromRGB(232, 164, 49)
-local DARK = Color3.fromRGB(21, 30, 52)
+local COLOR = {
+	Ink = Color3.fromRGB(18, 24, 45),
+	InkBright = Color3.fromRGB(29, 40, 71),
+	Text = Color3.fromRGB(248, 250, 255),
+	Muted = Color3.fromRGB(177, 198, 219),
+	Blue = Color3.fromRGB(66, 141, 245),
+	Green = Color3.fromRGB(42, 189, 128),
+	Red = Color3.fromRGB(234, 89, 98),
+	Gold = Color3.fromRGB(247, 194, 94),
+	Purple = Color3.fromRGB(158, 122, 255),
+}
 
-local function rounded(frame, pixels)
+local function addCorner(parent, radius)
 	local c = Instance.new("UICorner")
-	c.CornerRadius = UDim.new(0, pixels)
-	c.Parent = frame
+	c.CornerRadius = UDim.new(0, radius)
+	c.Parent = parent
+	return c
 end
 
-local function panel(name, position, size, anchor)
-	local f = Instance.new("Frame")
-	f.Name = name
-	f.Position = position
-	f.Size = size
-	f.AnchorPoint = anchor or Vector2.zero
-	f.BackgroundColor3 = DARK
-	f.BackgroundTransparency = 0.1
-	f.BorderSizePixel = 0
-	f.Parent = gui
-	rounded(f, 14)
-	return f
+local function addStroke(parent, color, thickness)
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = color or COLOR.Purple
+	stroke.Thickness = thickness or 1
+	stroke.Transparency = 0.52
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	stroke.Parent = parent
+	return stroke
 end
 
-local function text(parent, name, content, position, size, font, color)
-	local label = Instance.new("TextLabel")
-	label.Name = name
-	label.Text = content
-	label.Position = position
-	label.Size = size
-	label.BackgroundTransparency = 1
-	label.TextColor3 = color or WHITE
-	label.Font = font or Enum.Font.Gotham
-	label.TextScaled = true
-	label.TextWrapped = true
-	label.Parent = parent
-	return label
+local function panel(name)
+	local frame = Instance.new("Frame")
+	frame.Name = name
+	frame.BackgroundColor3 = COLOR.Ink
+	frame.BackgroundTransparency = 0.055
+	frame.BorderSizePixel = 0
+	frame.Parent = gui
+	addCorner(frame, 13)
+	addStroke(frame, COLOR.Purple, 1)
+	return frame
 end
 
-local function button(parent, name, content, color)
+local function label(parent, name, content, x, y, w, h, size, color, bold)
+	local l = Instance.new("TextLabel")
+	l.Name = name
+	l.Text = content
+	l.Position = UDim2.new(0, x, 0, y)
+	l.Size = UDim2.new(1, w, 0, h)
+	l.BackgroundTransparency = 1
+	l.BorderSizePixel = 0
+	l.TextColor3 = color or COLOR.Text
+	l.Font = bold and Enum.Font.GothamBold or Enum.Font.GothamMedium
+	l.TextSize = size or 15
+	l.TextWrapped = true
+	l.TextXAlignment = Enum.TextXAlignment.Left
+	l.TextYAlignment = Enum.TextYAlignment.Center
+	l.Parent = parent
+	return l
+end
+
+local function button(parent, name, content, bg)
 	local b = Instance.new("TextButton")
 	b.Name = name
 	b.Text = content
+	b.TextColor3 = COLOR.Text
 	b.Font = Enum.Font.GothamBold
-	b.TextScaled = true
-	b.TextColor3 = WHITE
-	b.BackgroundColor3 = color or BLUE
+	b.TextSize = 23
+	b.BackgroundColor3 = bg or COLOR.Blue
 	b.BorderSizePixel = 0
 	b.AutoButtonColor = true
 	b.Parent = parent
-	rounded(b, 10)
+	addCorner(b, 11)
+	addStroke(b, COLOR.Text, 1)
 	return b
 end
 
-local top = panel("MainHUD", UDim2.new(0.5, 0, 0, 10), UDim2.new(0.9, 0, 0, 130), Vector2.new(0.5, 0))
-local topConstraint = Instance.new("UISizeConstraint")
-topConstraint.MaxSize = Vector2.new(610, 130)
-topConstraint.Parent = top
-local title = text(top, "Title", "GLASS BRIDGE · PROTOTYPE", UDim2.new(0.04, 0, 0.04, 0), UDim2.new(0.92, 0, 0, 26), Enum.Font.GothamBold)
-local timer = text(top, "Timer", "", UDim2.new(0.04, 0, 0.30, 0), UDim2.new(0.92, 0, 0, 25), Enum.Font.GothamBold, GOLD)
-local description = text(top, "Description", "Press JOIN to enter the next race.", UDim2.new(0.04, 0, 0.50, 0), UDim2.new(0.92, 0, 0, 33), Enum.Font.Gotham, WHITE)
-local personal = text(top, "MyProgress", "", UDim2.new(0.04, 0, 0.79, 0), UDim2.new(0.92, 0, 0, 20), Enum.Font.GothamBold, MUTED)
+-- Top status panel: always visible and readable on narrow screens.
+local top = panel("StatusPanel")
+top.AnchorPoint = Vector2.new(0.5, 0)
+top.Position = UDim2.new(0.5, 0, 0, 8)
+local phaseText = label(top, "Phase", "JOINING", 16, 7, -125, 25, 17, COLOR.Purple, true)
+local clockText = label(top, "Clock", "10s", 16, 7, -32, 26, 21, COLOR.Gold, true)
+clockText.TextXAlignment = Enum.TextXAlignment.Right
+local description = label(top, "Guidance", "Join the next round.", 16, 36, -32, 47, 15, COLOR.Text, false)
+local ownStats = label(top, "Progress", "", 16, 86, -32, 24, 14, COLOR.Muted, true)
+local progressBackground = Instance.new("Frame")
+progressBackground.Name = "ProgressTrack"
+progressBackground.Position = UDim2.new(0, 16, 1, -12)
+progressBackground.Size = UDim2.new(1, -32, 0, 5)
+progressBackground.BorderSizePixel = 0
+progressBackground.BackgroundColor3 = COLOR.InkBright
+progressBackground.Parent = top
+addCorner(progressBackground, 4)
+local progressFill = Instance.new("Frame")
+progressFill.Name = "ProgressFill"
+progressFill.Size = UDim2.fromScale(0, 1)
+progressFill.BackgroundColor3 = COLOR.Green
+progressFill.BorderSizePixel = 0
+progressFill.Parent = progressBackground
+addCorner(progressFill, 4)
 
-local ranks = panel("Standings", UDim2.new(1, -8, 0, 150), UDim2.fromOffset(200, 125), Vector2.new(1, 0))
-ranks.BackgroundTransparency = 0.24
-local ranksTitle = text(ranks, "Header", "BRIDGE POSITIONS", UDim2.new(0.06, 0, 0.06, 0), UDim2.new(0.88, 0, 0, 20), Enum.Font.GothamBold, GOLD)
-local ranksBody = text(ranks, "Entries", "Waiting for players...", UDim2.new(0.06, 0, 0.26, 0), UDim2.new(0.88, 0, 0, 88), Enum.Font.Gotham, WHITE)
-ranksBody.TextYAlignment = Enum.TextYAlignment.Top
-ranksBody.TextXAlignment = Enum.TextXAlignment.Left
+-- Optional standings on desktop; hidden on smaller screens.
+local standings = panel("Standings")
+standings.AnchorPoint = Vector2.new(1, 0)
+local standingsHeader = label(standings, "Header", "LEADERBOARD", 12, 7, -24, 27, 15, COLOR.Gold, true)
+local standingsRows = label(standings, "Rows", "Waiting for racers", 12, 40, -24, 128, 13, COLOR.Text)
+standingsRows.TextYAlignment = Enum.TextYAlignment.Top
 
-local join = button(gui, "JoinButton", "JOIN NEXT MATCH", GREEN)
-join.Size = UDim2.new(0.74, 0, 0, 58)
-join.Position = UDim2.new(0.5, 0, 0.78, 0)
-join.AnchorPoint = Vector2.new(0.5, 0)
-local joinConstraint = Instance.new("UISizeConstraint")
-joinConstraint.MaxSize = Vector2.new(370, 58)
-joinConstraint.Parent = join
+-- Join prompt: does not cover touch movement controls during a match.
+local join = button(gui, "JoinButton", "JOIN BRIDGE RACE", COLOR.Green)
+join.AnchorPoint = Vector2.new(0.5, 1)
+join.TextSize = 21
 join.MouseButton1Click:Connect(function()
 	command:FireServer("Join")
 	join.Visible = false
 end)
 
-local choicePanel = panel("ChooseNumber", UDim2.new(0.5, 0, 0.72, 0), UDim2.new(0.91, 0, 0, 123), Vector2.new(0.5, 0))
-local choiceConstraint = Instance.new("UISizeConstraint")
-choiceConstraint.MaxSize = Vector2.new(510, 123)
-choiceConstraint.Parent = choicePanel
-local instructions = text(choicePanel, "Instructions", "CHOOSE 1–5 STEPS · POPULAR PICKS CRACK", UDim2.new(0.04, 0, 0.03, 0), UDim2.new(0.92, 0, 0, 30), Enum.Font.GothamBold, WHITE)
+-- Selection tray: five consistently sized targets, regardless of player count.
+local voting = panel("VotePanel")
+voting.AnchorPoint = Vector2.new(0.5, 1)
+local voteTitle = label(voting, "VoteTitle", "PICK YOUR STEPS  ·  1–5", 14, 7, -28, 25, 18, COLOR.Text, true)
+local voteHint = label(voting, "VoteHint", "Most-picked numbers crack. Select before time runs out.", 14, 34, -28, 24, 13, COLOR.Muted)
+local choiceRow = Instance.new("Frame")
+choiceRow.Name = "Choices"
+choiceRow.BackgroundTransparency = 1
+choiceRow.Position = UDim2.new(0, 12, 0, 65)
+choiceRow.Size = UDim2.new(1, -24, 0, 63)
+choiceRow.Parent = voting
+local chooseLayout = Instance.new("UIListLayout")
+chooseLayout.FillDirection = Enum.FillDirection.Horizontal
+chooseLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+chooseLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+chooseLayout.SortOrder = Enum.SortOrder.LayoutOrder
+chooseLayout.Padding = UDim.new(0.012, 0)
+chooseLayout.Parent = choiceRow
 
-local numberRow = Instance.new("Frame")
-numberRow.BackgroundTransparency = 1
-numberRow.Position = UDim2.new(0.03, 0, 0.30, 0)
-numberRow.Size = UDim2.new(0.94, 0, 0, 75)
-numberRow.Parent = choicePanel
-local layout = Instance.new("UIListLayout")
-layout.FillDirection = Enum.FillDirection.Horizontal
-layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-layout.VerticalAlignment = Enum.VerticalAlignment.Center
-layout.SortOrder = Enum.SortOrder.LayoutOrder
-layout.Padding = UDim.new(0.015, 0)
-layout.Parent = numberRow
-
-local buttons = {}
-local lastVote = nil
+local choiceButtons = {}
 for n = 1, 5 do
-	local b = button(numberRow, "Choice" .. n, tostring(n), BLUE)
+	local number = n
+	local b = button(choiceRow, "Choice" .. n, tostring(n), COLOR.Blue)
 	b.LayoutOrder = n
-	b.Size = UDim2.new(0.185, 0, 0, 65)
-	buttons[n] = b
+	b.Size = UDim2.new(0.19, 0, 0, 61)
 	b.MouseButton1Click:Connect(function()
-		lastVote = n
-		command:FireServer("Vote", n)
-		for choice, other in pairs(buttons) do
-			other.BackgroundColor3 = choice == n and GOLD or BLUE
+		command:FireServer("Vote", number)
+		for chosen, other in ipairs(choiceButtons) do
+			other.BackgroundColor3 = chosen == number and COLOR.Gold or COLOR.Blue
 		end
+		voteHint.Text = "Choice " .. number .. " selected · you can change it before time ends"
 	end)
+	choiceButtons[n] = b
 end
 
-local hint = panel("MovementHint", UDim2.new(0.5, 0, 0.76, 0), UDim2.new(0.91, 0, 0, 58), Vector2.new(0.5, 0))
-local hintConstraint = Instance.new("UISizeConstraint")
-hintConstraint.MaxSize = Vector2.new(510, 58)
-hintConstraint.Parent = hint
-local hintText = text(hint, "Hint", "", UDim2.new(0.04, 0, 0.12, 0), UDim2.new(0.92, 0, 0.76, 0), Enum.Font.GothamBold, WHITE)
+-- Movement warning: big enough to read but kept near the bottom.
+local movement = panel("MovementPanel")
+movement.AnchorPoint = Vector2.new(0.5, 1)
+local movementText = label(movement, "MovementText", "", 14, 8, -28, 50, 16, COLOR.Text, true)
+movementText.TextXAlignment = Enum.TextXAlignment.Center
 
--- During the reveal and movement phases, show exactly how every player voted.
--- This is read-only: all vote counts/outcomes come from the server.
-local revealPanel = panel("VoteReveal", UDim2.fromOffset(10, 150), UDim2.fromOffset(265, 270))
-revealPanel.BackgroundTransparency = 0.05
+-- A strong result banner, instead of using only small status text.
+local result = panel("ResultPanel")
+result.AnchorPoint = Vector2.new(0.5, 0.5)
+result.Position = UDim2.fromScale(0.5, 0.48)
+local resultKicker = label(result, "Kicker", "ROUND COMPLETE", 18, 10, -36, 30, 17, COLOR.Gold, true)
+resultKicker.TextXAlignment = Enum.TextXAlignment.Center
+local resultMessage = label(result, "Winner", "", 18, 43, -36, 76, 22, COLOR.Text, true)
+resultMessage.TextXAlignment = Enum.TextXAlignment.Center
 
-local revealTitle = text(revealPanel, "RevealTitle", "VOTE RESULTS", UDim2.new(0, 10, 0, 8), UDim2.new(1, -20, 0, 26), Enum.Font.GothamBold, GOLD)
-revealTitle.TextXAlignment = Enum.TextXAlignment.Left
-revealTitle.TextScaled = false
-revealTitle.TextSize = 17
+-- Reveal panel displays every player's number, risk and permitted movement.
+-- No one can see choices during secret voting; the server only publishes after.
+local reveal = panel("RevealPanel")
+local revealHeader = label(reveal, "Heading", "NUMBER REVEAL", 13, 7, -26, 26, 16, COLOR.Gold, true)
+local revealSubtitle = label(reveal, "Rule", "MOST PICKED = CRACK", 13, 34, -26, 25, 13, COLOR.Muted)
+local countsRow = Instance.new("Frame")
+countsRow.Name = "CountRow"
+countsRow.BackgroundTransparency = 1
+countsRow.Position = UDim2.new(0, 12, 0, 67)
+countsRow.Size = UDim2.new(1, -24, 0, 54)
+countsRow.Parent = reveal
+local countLayout = Instance.new("UIListLayout")
+countLayout.FillDirection = Enum.FillDirection.Horizontal
+countLayout.SortOrder = Enum.SortOrder.LayoutOrder
+countLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+countLayout.Padding = UDim.new(0.01, 0)
+countLayout.Parent = countsRow
+local countCards = {}
+for n = 1, 5 do
+	local card = Instance.new("Frame")
+	card.Name = "Number" .. n
+	card.LayoutOrder = n
+	card.Size = UDim2.new(0.19, 0, 0, 52)
+	card.BackgroundColor3 = COLOR.InkBright
+	card.BorderSizePixel = 0
+	card.Parent = countsRow
+	addCorner(card, 7)
+	local numberLabel = label(card, "Number", tostring(n), 0, 2, 0, 24, 18, COLOR.Text, true)
+	numberLabel.Size = UDim2.fromScale(1, 0.51)
+	numberLabel.TextXAlignment = Enum.TextXAlignment.Center
+	local countLabel = label(card, "Votes", "0 votes", 0, 28, 0, 19, 12, COLOR.Muted, true)
+	countLabel.Size = UDim2.new(1, 0, 0, 19)
+	countLabel.TextXAlignment = Enum.TextXAlignment.Center
+	countCards[n] = {frame = card, number = numberLabel, votes = countLabel}
+end
 
-local countLine = text(revealPanel, "VoteCounts", "1:0  2:0  3:0  4:0  5:0", UDim2.new(0, 10, 0, 39), UDim2.new(1, -20, 0, 26), Enum.Font.GothamBold, WHITE)
-countLine.TextXAlignment = Enum.TextXAlignment.Left
-countLine.TextScaled = false
-countLine.TextSize = 15
+local revealList = Instance.new("ScrollingFrame")
+revealList.Name = "PlayerOutcomes"
+revealList.BackgroundTransparency = 1
+revealList.BorderSizePixel = 0
+revealList.Position = UDim2.new(0, 12, 0, 132)
+revealList.Size = UDim2.new(1, -24, 1, -143)
+revealList.ScrollBarThickness = 3
+revealList.ScrollingDirection = Enum.ScrollingDirection.Y
+revealList.CanvasSize = UDim2.fromOffset(0, 0)
+revealList.Parent = reveal
+local outcomesLayout = Instance.new("UIListLayout")
+outcomesLayout.FillDirection = Enum.FillDirection.Vertical
+outcomesLayout.SortOrder = Enum.SortOrder.LayoutOrder
+outcomesLayout.Padding = UDim.new(0, 4)
+outcomesLayout.Parent = revealList
 
-local nameRows = Instance.new("Frame")
-nameRows.Name = "PlayersAndPicks"
-nameRows.BackgroundTransparency = 1
-nameRows.Position = UDim2.new(0, 10, 0, 75)
-nameRows.Size = UDim2.new(1, -20, 1, -85)
-nameRows.Parent = revealPanel
-
-local rowLayout = Instance.new("UIListLayout")
-rowLayout.FillDirection = Enum.FillDirection.Vertical
-rowLayout.Padding = UDim.new(0, 2)
-rowLayout.SortOrder = Enum.SortOrder.LayoutOrder
-rowLayout.Parent = nameRows
-
-local cachedRevealKey = ""
-local function updateRevealBoard(state)
-	local visible = state.phase == "REVEAL" or state.phase == "MOVE" or state.phase == "RESULTS"
-	revealPanel.Visible = visible and state.turn > 0
-	if not revealPanel.Visible then return end
-
-	local viewport = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1200, 700)
-	local compact = viewport.X < 700
-	revealPanel.Size = UDim2.fromOffset(compact and 193 or 265, 270)
-	countLine.TextSize = compact and 12 or 15
-
+local lastTurnRendered = -1
+local function drawOutcomes(state)
 	local counts = state.voteCounts or {}
-	local nums = {}
-	for n = 1, 5 do
-		table.insert(nums, ("%d:%d"):format(n, counts[n] or 0))
-	end
-	countLine.Text = table.concat(nums, "   ")
 	local blocked = {}
 	for n = 1, 5 do
-		if state.unsafe and state.unsafe[n] then
-			table.insert(blocked, tostring(n))
-		end
+		local hit = state.unsafe and state.unsafe[n] == true
+		local card = countCards[n]
+		card.frame.BackgroundColor3 = hit and Color3.fromRGB(100, 39, 53) or COLOR.InkBright
+		card.number.TextColor3 = hit and COLOR.Red or COLOR.Text
+		card.votes.Text = tostring(counts[n] or 0) .. " picked"
+		if hit then table.insert(blocked, tostring(n)) end
 	end
-	revealTitle.Text = "VOTES · BLOCKED: " .. (#blocked > 0 and table.concat(blocked, ", ") or "NONE")
+	revealSubtitle.Text = #blocked > 0
+		and ("BLOCKED: " .. table.concat(blocked, ", ") .. "  ·  SAME PICK = CRACK")
+		or "NO COLLISION · EVERYONE CAN WALK"
 
-	local cacheKey = tostring(state.turn) .. ":" .. tostring(state.phase == "RESULTS")
-	if cachedRevealKey == cacheKey then return end
-	cachedRevealKey = cacheKey
-	for _, child in ipairs(nameRows:GetChildren()) do
-		if child:IsA("TextLabel") then child:Destroy() end
+	if lastTurnRendered == state.turn then return end
+	lastTurnRendered = state.turn
+	for _, child in ipairs(revealList:GetChildren()) do
+		if child:IsA("Frame") then child:Destroy() end
 	end
+	local entries = state.voteOutcomes or {}
+	for idx, entry in ipairs(entries) do
+		local row = Instance.new("Frame")
+		row.Name = "Outcome" .. idx
+		row.Size = UDim2.new(1, -3, 0, 29)
+		row.LayoutOrder = idx
+		row.BackgroundColor3 = idx % 2 == 0 and COLOR.InkBright or Color3.fromRGB(32, 43, 75)
+		row.BorderSizePixel = 0
+		row.Parent = revealList
+		addCorner(row, 7)
 
-	for i, result in ipairs(state.voteOutcomes or {}) do
-		local label = Instance.new("TextLabel")
-		label.Name = "VoteRow" .. i
-		label.LayoutOrder = i
-		label.BackgroundTransparency = 1
-		label.Size = UDim2.new(1, 0, 0, 21)
-		label.TextXAlignment = Enum.TextXAlignment.Left
-		label.TextScaled = false
-		label.TextSize = compact and 12 or 14
-		label.TextTruncate = Enum.TextTruncate.AtEnd
-		label.Font = Enum.Font.GothamMedium
-		label.TextColor3 = result.status == "GO" and Color3.fromRGB(95, 245, 154) or Color3.fromRGB(255, 121, 111)
-		local name = tostring(result.name or "Player")
-		local selection = result.number and tostring(result.number) or "-"
-		local outcome
-		if result.status == "GO" then
-			outcome = "MOVE " .. tostring(result.steps or 0)
-		elseif result.status == "NO_VOTE" then
-			outcome = "NO PICK · CRACK"
+		local safe = entry.status == "GO"
+		local number = entry.number and tostring(entry.number) or "–"
+		local entryName = tostring(entry.name or "Player")
+		local outcomeText
+		if safe then
+			outcomeText = "GO +" .. tostring(entry.steps or 0)
+		elseif entry.out then
+			outcomeText = "ELIMINATED"
+		elseif entry.status == "NO_VOTE" then
+			outcomeText = "NO PICK"
 		else
-			outcome = result.out and "OUT" or "CRACK " .. tostring(result.cracks or 0) .. "/3"
+			outcomeText = "CRACK " .. tostring(entry.cracks or 0) .. "/3"
 		end
-		label.Text = name .. "  [" .. selection .. "]  " .. outcome
-		label.Parent = nameRows
+		local who = label(row, "Name", entryName .. "  [" .. number .. "]", 9, 2, -102, 25, 13, COLOR.Text, true)
+		who.TextTruncate = Enum.TextTruncate.AtEnd
+		local outcome = label(row, "Outcome", outcomeText, 0, 2, -9, 25, 12, safe and COLOR.Green or COLOR.Red, true)
+		outcome.AnchorPoint = Vector2.new(1, 0)
+		outcome.Position = UDim2.new(1, -8, 0, 2)
+		outcome.Size = UDim2.fromOffset(95, 25)
+		outcome.TextXAlignment = Enum.TextXAlignment.Right
 	end
+	revealList.CanvasSize = UDim2.fromOffset(0, #entries * 33)
 end
 
-local phaseLabels = {
-	JOIN = "JOINING",
+local isCompact = false
+local function layoutForViewport()
+	local cam = workspace.CurrentCamera
+	local view = cam and cam.ViewportSize or Vector2.new(1100, 700)
+	local width = math.max(300, view.X)
+	local height = math.max(320, view.Y)
+	local compact = width < 760
+	isCompact = compact
+	local shortScreen = height < 570
+
+	local topW = math.min(width - 16, compact and 530 or 610)
+	top.Size = UDim2.fromOffset(topW, compact and 120 or 132)
+	phaseText.Size = UDim2.new(1, -116, 0, 25)
+	clockText.Position = UDim2.new(1, -103, 0, 7)
+	clockText.Size = UDim2.fromOffset(86, 26)
+	description.Position = UDim2.fromOffset(16, 35)
+	description.Size = UDim2.new(1, -32, 0, compact and 43 or 48)
+	description.TextSize = compact and 13 or 15
+	ownStats.Position = UDim2.new(0, 16, 1, -38)
+	ownStats.Size = UDim2.new(1, -32, 0, 20)
+	ownStats.TextSize = compact and 12 or 14
+
+	local voteW = math.min(width - 18, 535)
+	voting.Size = UDim2.fromOffset(voteW, shortScreen and 121 or 140)
+	voting.Position = UDim2.new(0.5, 0, 1, -18)
+	voteTitle.TextSize = compact and 15 or 18
+	voteHint.TextSize = compact and 11 or 13
+	choiceRow.Position = UDim2.new(0, 12, 0, shortScreen and 57 or 66)
+	choiceRow.Size = UDim2.new(1, -24, 0, shortScreen and 53 or 64)
+	for _, b in ipairs(choiceButtons) do
+		b.Size = UDim2.new(0.19, 0, 0, shortScreen and 50 or 61)
+		b.TextSize = compact and 19 or 23
+	end
+
+	join.Size = UDim2.fromOffset(math.min(width - 28, 345), 58)
+	join.Position = UDim2.new(0.5, 0, 1, -26)
+	movement.Size = UDim2.fromOffset(math.min(width - 18, 545), 66)
+	movement.Position = UDim2.new(0.5, 0, 1, -26)
+	movementText.TextSize = compact and 14 or 17
+
+	result.Size = UDim2.fromOffset(math.min(width - 18, 550), 135)
+	resultMessage.TextSize = compact and 17 or 22
+
+	standings.Visible = not compact
+	standings.Position = UDim2.new(1, -10, 0, 148)
+	standings.Size = UDim2.fromOffset(232, 186)
+
+	local revealW = math.min(compact and width - 16 or 322, 322)
+	local revealH = math.max(165, math.min(compact and 242 or 388, height - (compact and 156 or 171)))
+	reveal.Size = UDim2.fromOffset(revealW, revealH)
+	reveal.Position = UDim2.fromOffset(compact and 8 or 11, compact and 136 or 150)
+	revealHeader.TextSize = compact and 14 or 16
+	revealSubtitle.TextSize = compact and 11 or 13
+end
+
+local function hookCamera(camera)
+	if camera then
+		camera:GetPropertyChangedSignal("ViewportSize"):Connect(layoutForViewport)
+	end
+	layoutForViewport()
+end
+workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
+	hookCamera(workspace.CurrentCamera)
+end)
+hookCamera(workspace.CurrentCamera)
+
+local phaseNames = {
+	JOIN = "JOIN THE ROUND",
 	VOTE = "SECRET VOTE",
-	REVEAL = "REVEAL",
-	MOVE = "MOVE / STAY",
-	RESULTS = "RESULT",
+	REVEAL = "THE NUMBERS ARE IN",
+	MOVE = "MOVE OR STAY",
+	RESULTS = "MATCH RESULTS",
 }
 
 local function update(state)
 	local phase = state.phase or "JOIN"
-	updateRevealBoard(state)
 	local mine = state.mine
-	timer.Text = ("%s  ·  %ds  ·  Turn %d"):format(phaseLabels[phase] or phase, state.time or 0, state.turn or 0)
+	phaseText.Text = ("ROUND %d  ·  %s"):format(state.turn or 0, phaseNames[phase] or phase)
+	clockText.Text = tostring(state.time or 0) .. "s"
 	description.Text = state.message or ""
-	join.Visible = phase == "JOIN" and not state.queued and (state.ready or 0) < (state.capacity or 8)
-	choicePanel.Visible = phase == "VOTE" and mine ~= nil and mine.alive == true
-	hint.Visible = phase == "MOVE" and mine ~= nil and mine.alive == true
-	ranks.Visible = phase ~= "JOIN" and phase ~= "RESULTS"
+
+	join.Visible = phase == "JOIN" and state.queued ~= true and (state.ready or 0) < (state.capacity or 8)
+	voting.Visible = phase == "VOTE" and mine ~= nil and mine.alive == true
+	movement.Visible = phase == "MOVE" and mine ~= nil and mine.alive == true
+	result.Visible = phase == "RESULTS"
 
 	if phase == "JOIN" then
-		timer.Text = ("JOINING · %ds · %d/%d ready"):format(state.time or 0, state.ready or 0, state.capacity or 8)
-		if state.queued then
-			personal.Text = "Joined! Waiting for countdown..."
-		else
-			personal.Text = "Join for the next bridge race."
-		end
+		phaseText.Text = ("JOIN THE ROUND  ·  %d/%d READY"):format(state.ready or 0, state.capacity or 8)
+		ownStats.Text = state.queued and "You're in! The match starts after the countdown."
+			or "Press JOIN to reserve your bridge."
+		progressFill.Size = UDim2.fromScale(0, 1)
 	elseif mine then
-		local vote = mine.vote and tostring(mine.vote) or "—"
-		personal.Text = ("Tiles: %d/20   ·   Cracks: %d/3   ·   Pick: %s"):format(mine.position or 0, mine.cracks or 0, vote)
-		if not mine.alive then
-			personal.Text = personal.Text .. "   ·   ELIMINATED"
-		end
+		local selection = mine.vote and tostring(mine.vote) or "—"
+		local marker = mine.alive and "" or "   ·   ELIMINATED"
+		ownStats.Text = ("DISTANCE %d/20   ·   CRACKS %d/3   ·   PICK %s%s"):format(
+			mine.position or 0, mine.cracks or 0, selection, marker
+		)
+		progressFill.Size = UDim2.fromScale(math.clamp((mine.position or 0) / 20, 0, 1), 1)
 	else
-		personal.Text = "Spectating · join during the next countdown."
+		ownStats.Text = "SPECTATING  ·  Join when the next countdown begins."
+		progressFill.Size = UDim2.fromScale(0, 1)
 	end
 
-	if phase == "VOTE" and mine then
-		lastVote = mine.vote or lastVote
-		for n, b in pairs(buttons) do
-			b.BackgroundColor3 = mine.vote == n and GOLD or BLUE
+	if voting.Visible and mine then
+		for n, b in ipairs(choiceButtons) do
+			b.BackgroundColor3 = mine.vote == n and COLOR.Gold or COLOR.Blue
 		end
-	else
-		lastVote = nil
+		voteHint.Text = mine.vote
+			and ("Number " .. mine.vote .. " locked in · tap another to change")
+			or "Most picked numbers crack · choose before time ends!"
 	end
 
-	if hint.Visible and mine then
-		if (mine.allowed or 0) > 0 then
-			hint.BackgroundColor3 = Color3.fromRGB(20, 88, 58)
-			hintText.Text = ("GO! Walk 1–%d green tiles before time runs out."):format(mine.allowed)
+	if movement.Visible and mine then
+		local allowed = mine.allowed or 0
+		if allowed > 0 then
+			movement.BackgroundColor3 = Color3.fromRGB(17, 88, 64)
+			movementText.Text = ("GO! Walk 1–%d GREEN tiles. Leave your old tile!"):format(allowed)
 		else
-			hint.BackgroundColor3 = Color3.fromRGB(115, 40, 41)
-			hintText.Text = "STAY! Your next tile is unsafe. Do not step ahead."
+			movement.BackgroundColor3 = Color3.fromRGB(102, 39, 51)
+			movementText.Text = "STAY! Your next tile is unsafe. Do not walk forward."
 		end
 	end
 
-	local entries = {}
-	for index, info in ipairs(state.roster or {}) do
-		if index > 5 then break end
-		table.insert(entries, ("%s  ·  %d/20%s"):format(
-			info.name or "Player",
-			info.position or 0,
-			not info.alive and " (OUT)" or ""
+	if result.Visible then
+		resultMessage.Text = state.message or "Next race starts soon."
+	end
+
+	-- Make the full breakdown visible on desktop during walking. On mobile,
+	-- display it during REVEAL only, so controls/gameplay remain unobstructed.
+	reveal.Visible = phase == "REVEAL" or (phase == "MOVE" and not isCompact)
+	if reveal.Visible then drawOutcomes(state) end
+
+	local rows = {}
+	for index, entry in ipairs(state.roster or {}) do
+		if index > 6 then break end
+		local status = entry.alive and ("· " .. tostring(entry.cracks or 0) .. " cracks") or "· OUT"
+		table.insert(rows, ("%d. %s  ·  %d/20 %s"):format(
+			index, tostring(entry.name or "Player"), entry.position or 0, status
 		))
 	end
-	ranksBody.Text = #entries > 0 and table.concat(entries, "\n") or "Waiting..."
+	standingsRows.Text = #rows > 0 and table.concat(rows, "\n") or "Waiting for racers..."
 end
 
 join.Visible = false
-choicePanel.Visible = false
-hint.Visible = false
-revealPanel.Visible = false
+voting.Visible = false
+movement.Visible = false
+result.Visible = false
+reveal.Visible = false
 stateEvent.OnClientEvent:Connect(update)
 command:FireServer("Sync")
 ]====]
@@ -1032,4 +1272,4 @@ end
 
 install(game:GetService("ServerScriptService"), "Script", "MythbloxGame", SERVER_SOURCE)
 install(game:GetService("StarterPlayer"):WaitForChild("StarterPlayerScripts"), "LocalScript", "MythbloxGame", CLIENT_SOURCE)
-print("[Mythblox] Game 01 v0.2 installed. Test with Play, or Test > Server & Clients (2 clients). Bridges are generated only after the join countdown.")
+print("[Mythblox] Game 01 v0.3 installed. Test with Play, or Test > Server & Clients (2 clients). Bridges are generated only after the join countdown.")
