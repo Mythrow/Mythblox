@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-22):** Owner reports **v0.11 works in Studio** after implementing the finish gate, leaderboard, barrier alignment and island-edge fixes. This confirms an overall test pass, but the owner did not enumerate each acceptance case. Mobile/spectator stress tests and release QA remain pending.
+**Status (2026-11-22):** Owner reports **v0.11 works in Studio**. Approved **v0.12 gameplay feedback** is now in GitHub (server/client/installer) but **has not been tested in Studio**. Mobile/spectator stress tests and release QA remain pending.
 
 ## Playtest log
 
@@ -32,6 +32,24 @@
 6. Repeat with 3–4 clients if the two-player flow works.
 
 
+
+## v0.12 — gameplay feedback and sound regression
+
+- [ ] Stop Play, run the latest [installer](INSTALL_STUDIO_COMMAND_BAR.luau) in Edit mode, confirm `v0.12 VERIFIED` in Output, then start a fresh Play session showing `v0.12` in the top HUD.
+- [ ] During vote, tap 1–5 repeatedly. Selection highlights correctly, switches remain server-approved, and each tap gives a **subtle sound**, not a loud repeating loop.
+- [ ] During the final three voting seconds, hear a short gentle countdown cue; the last two seconds highlight the vote title/timer. No extra button covers mobile controls.
+- [ ] Two-player case A=5, B=3: both are safe. Their personal feedback reads `SAFE PICK` and their own rows are highlighted green in the reveal panel; then they see WALK/GO.
+- [ ] Two-player case A=5, B=5: both gain one crack, hear the crack cue, see blocked numbers and their own red-tinted results. Both must stay.
+- [ ] Play a full match with a deliberate illegal move. The player hears a fall sound, sees a short red feedback strip (desktop), and the current glass spawns a few fragments that vanish quickly. No lasting physical debris remains.
+- [ ] Get a third crack; check immediate fall, safe respawn, no duplicate audio, and no return to a broken glass tile.
+- [ ] Walk 1–N eligible tiles manually; unchanged green/red rules and 6-second window.
+- [ ] Win by **first reaching tile 20**: existing finish arch displays confetti and game result stays only in compact top HUD.
+- [ ] Win by **last survivor**: finish confetti also appears. Confirm no double confetti when someone already crossed the finish first.
+- [ ] Test a full match as an **unqueued spectator**, confirming votes remain secret until reveal and glass fragments do not obstruct walking on spectator decks.
+- [ ] Test Studio **Device Emulator**/narrow viewport: top status, five-number buttons and GO/STAY warning are readable; the extra feedback chip must not cover movement controls.
+- [ ] Check Audio Output for missing built-in sound paths, server/client Output for errors, and desktop/mobile performance when multiple players fall at once.
+
+**Status:** Planned tests, **not yet executed in Roblox Studio**. All gameplay changes in this phase are visual/audio only.
 
 ## v0.11 — visual fix verification
 
