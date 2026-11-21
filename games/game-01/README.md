@@ -35,6 +35,15 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 
 **Rewards are session-only in v0.1.** There is no DataStore persistence, no purchasable items, and no paid power-ups. Do not publish this as a monetized finished game without playtests and a reviewed commerce implementation.
 
+## Approved world-layout direction — blueprint created (not built)
+
+The owner supplied three bright Roblox lobby/mini-game screenshots and approved a **compact, cheerful social island with spectator visibility**, reserved future shop and leaderboard areas, a more prominent finish, and reduced player-name labels.
+
+- **[Game 01 world-layout blueprint](WORLD_LAYOUT_BLUEPRINT.md)** — top-down map, precise Roblox-stud layout targets, spectator safety, future landmarks, model architecture, visual palette and acceptance checks.
+- **No environment redesign has been coded yet.** Existing v0.4 Studio installer still installs the earlier simple world. Do not describe the blueprint as an installed update.
+- Recommended next implementation: static hub + front/side protected spectator decks + compact future-commerce landmarks + dynamic bridge arena + one finish arch + small lane markers; then rebuild installer and run gameplay regressions.
+- Gameplay rules, server-led permissions and session rewards remain unchanged.
+
 ## v0.4 — bright Roblox-style visual revision (requires fresh install)
 
 User feedback on v0.3: the neon/dusk appearance was too dark and did not match the familiar bright Roblox aesthetic.
