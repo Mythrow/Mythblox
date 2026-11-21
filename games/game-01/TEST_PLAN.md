@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-22):** Owner reports **both bugs persist** despite prior code changes. Since v0.7 GitHub code no longer has a centered result card, a stale/duplicate running Studio script is a credible possibility, not yet proven. **v0.8 adds verified clean installation, server/client version logs and a visible build marker. Studio test pending.**
+**Status (2026-11-22):** Owner's v0.8 Studio screenshot confirms the updated client is running, but sign letters are still tiny and horizontally distorted. Investigation found that the `SurfaceGui` was not explicitly set to `PixelsPerStud` sizing mode and could inherit a fixed 800×600 canvas on wide, shallow Parts. **v0.9 fixes this mode and requires a Studio retest**; no gameplay changes.
 
 ## Playtest log
 
@@ -31,6 +31,19 @@
 6. Repeat with 3–4 clients if the two-player flow works.
 
 
+
+## v0.9 — sign aspect-ratio fix: targeted regression
+
+- [ ] Stop Play. Install the latest [one-paste Command Bar installer](INSTALL_STUDIO_COMMAND_BAR.luau), which should print **v0.9 VERIFIED**; restart Play.
+- [ ] Top HUD must visibly say **v0.9**, and Output should print `SERVER RUNNING v0.9` and `CLIENT RUNNING v0.9`.
+- [ ] Stand directly in front of the **COSMETICS** sign in the same position as the owner's v0.8 screenshot. The heading should occupy a meaningful part of the board and look normal, **not extremely wide and flat or tiny**; the subtitle should be legible.
+- [ ] Check the other two-sided boards: SHOP, REWARDS, LEADERBOARD, JOIN/WATCH, and FINISH.
+- [ ] Walk around to see the back of a world sign. The text should keep normal proportions and join-board phase changes should update both sides.
+- [ ] Start a match and verify crack markings, lane numbers and colored tiles remain readable.
+- [ ] Confirm round-end winner/draw result appears in the small top HUD, with no centered popup.
+- [ ] Verify gameplay is unchanged. Check Output for GUI or runtime errors.
+
+The failure mode was specifically a **SurfaceGui CanvasSize aspect ratio mismatch**; v0.9 now sets `SizingMode = PixelsPerStud` explicitly instead of relying on defaults. Studio verification remains outstanding.
 
 ## v0.8 — verify which code actually runs BEFORE checking appearance
 
