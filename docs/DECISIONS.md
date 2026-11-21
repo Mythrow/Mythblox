@@ -49,6 +49,8 @@ Use this file to separate **confirmed project rules** from **ideas not yet appro
 
 - **2026-11-22:** Owner confirms **v0.11 works** in Roblox Studio. Environment changes are now the functional/visual baseline; further layout redesign deferred unless a specific issue appears. Proposed next development stage: **v0.12 gameplay presentation and feedback**, then permanent wins/coins, cosmetics, and release testing. This proposed sequence is a recommendation, **not yet approval to implement v0.12**.
 
+- **2026-11-22:** Owner approved **v0.12 gameplay-feedback polish** after confirming v0.11 works. Source and installer updated with subtle built-in click/tick/reveal/crack/fall/win sounds, short personal safe/crack feedback, vote urgency, personal vote-row highlighting, small transient glass shards, and confetti for all win paths. No map, match time, voting, crack, movement or reward rule changes intended. **Studio verification pending**; source consistency is not engine testing.
+
 ## Open decisions
 
 | Question | Options | Status |
