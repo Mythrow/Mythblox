@@ -17,14 +17,16 @@ Use this file to separate **confirmed project rules** from **ideas not yet appro
 - 45–120-second matches; 5–10-second intermission.
 - Cosmetic-first monetization; no paid random items, and no pay-to-win.
 - Rojo/code-first version-controlled workflow with Studio Assistant; optional local Studio MCP integration.
-- Prototype either safe-tile survival or shrinking-floor survival first.
+- **First-game concept under active design:** parallel glass-bridge voting over lava. Players manually step one panel on a safe selection, or stay when blocked. Five choices every turn. See [concept memo](FIRST_GAME_GLASS_BRIDGE_CONCEPT.md).
 
 ## Open decisions
 
 | Question | Options | Status |
 |---|---|---|
-| First game mechanic | Safe tiles, shrinking floor, push-out, crown chase, hot-object pass, other | Not selected |
+| First game mechanic | Glass-bridge voting race over lava | Preferred concept; rules under review |
 | First game name | Chosen only after agreeing on mechanic | Not selected |
+| Tie-handling and 2-player play | Original popularity vs tied-vote wheel and other variants | Not final; simulated in concept memo |
+| Bridge race parameters | 6 tiles, 3 cracks, 5s vote / 4s move | Suggested prototype defaults |
 | AI-to-Studio integration | Assistant/scripts, Rojo/code-first, local MCP-enabled client | To confirm |
 | First-store balance | Cosmetics only vs one tightly bounded optional perk | To confirm |
 | First target audience | Age-checked 16+ first vs expanded Kids/Select reach subject to eligibility | To confirm |
