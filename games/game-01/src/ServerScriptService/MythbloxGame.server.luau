@@ -95,6 +95,11 @@ textSign(lobby, "MYTHBLOX | GLASS RACE", 8, 350)
 local lava = part("Lava", Vector3.new(105, 2, 235), Vector3.new(0, 7, 68), Color3.fromRGB(255, 91, 30), Enum.Material.Neon)
 lava.CanCollide = false
 lava.Transparency = 0.12
+lava.Touched:Connect(function(hit)
+	local character = hit:FindFirstAncestorOfClass("Model")
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if humanoid then humanoid.Health = 0 end
+end)
 
 local lanes = {}
 for lane = 1, SETTINGS.MaxPlayers do
@@ -122,6 +127,7 @@ local active = {}
 local unsafe = {}
 local message = "Join the next match!"
 local winnerPlayer = nil
+local initialMatchCount = 0
 local labelFolder = nil
 local publish
 
@@ -209,6 +215,9 @@ local function eliminate(player, reason, tileToBreak)
 	info.allowed = 0
 	setWalking(player, false)
 	if tileToBreak then shatter(tileToBreak) end
+	-- Remove their supporting panel too, so an invalid step always causes a visible fall.
+	local standingTile = lanes[info.lane].tiles[info.index]
+	if standingTile ~= tileToBreak then shatter(standingTile) end
 	message = player.DisplayName .. " fell! (" .. reason .. ")"
 	if publish then publish() end
 end
@@ -393,7 +402,7 @@ end
 local function finishersOrSurvivor()
 	if winnerPlayer then return {winnerPlayer} end
 	local alive = survivors()
-	if #alive == 1 then return {alive[1]} end
+	if #alive == 1 and initialMatchCount >= 2 then return {alive[1]} end
 	if #alive == 0 then return {} end
 	return nil
 end
@@ -446,6 +455,7 @@ RunService.Heartbeat:Connect(function(dt)
 end)
 
 local function beginMatch(participants)
+	initialMatchCount = #participants
 	active = {}
 	unsafe = {}
 	winnerPlayer = nil
@@ -585,7 +595,10 @@ while true do
 		phase = "MOVE"
 		message = "GREEN = walk forward up to your number. RED = STAY!"
 		for player, info in pairs(active) do
-			if info.alive then setWalking(player, info.allowed > 0) end
+			if info.alive then
+				-- Players who must STAY may still walk; stepping onto red glass is the joke.
+				setWalking(player, true)
+			end
 		end
 		paintAllowedTiles()
 		countdown(SETTINGS.MoveSeconds, true)
