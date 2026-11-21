@@ -94,13 +94,9 @@ local function textSign(parent, message, yOffset, width)
 	surface.LightInfluence = 0
 	surface.Parent = board
 
-	local padding = Instance.new("UIPadding")
-	padding.PaddingLeft = UDim.new(0.03, 0)
-	padding.PaddingRight = UDim.new(0.03, 0)
-	padding.Parent = surface
-
 	local label = Instance.new("TextLabel")
-	label.Size = UDim2.fromScale(1, 1)
+	label.Position = UDim2.fromScale(0.03, 0.04)
+	label.Size = UDim2.fromScale(0.94, 0.92)
 	label.BackgroundTransparency = 1
 	label.TextColor3 = Color3.fromRGB(33, 92, 150)
 	label.TextScaled = true
@@ -108,6 +104,21 @@ local function textSign(parent, message, yOffset, width)
 	label.Font = Enum.Font.GothamBold
 	label.Text = message
 	label.Parent = surface
+
+	-- Back-facing signs remain readable to people walking in from either side.
+	local back = Instance.new("SurfaceGui")
+	back.Name = "WorldTextBack"
+	back.Face = Enum.NormalId.Back
+	back.PixelsPerStud = 38
+	back.AlwaysOnTop = false
+	back.LightInfluence = 0
+	back.Parent = board
+	local backLabel = label:Clone()
+	backLabel.Name = "BackLabel"
+	backLabel.Parent = back
+	label:GetPropertyChangedSignal("Text"):Connect(function()
+		if backLabel.Parent then backLabel.Text = label.Text end
+	end)
 	return surface
 end
 
