@@ -5,7 +5,7 @@
 assert(not game:GetService("RunService"):IsRunning(), "Stop the test session before installing.")
 
 local SERVER_SOURCE = [====[
--- Mythblox game-01: glass bridge race v0.11 (server)
+-- Mythblox game-01: glass bridge race v0.12 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -13,7 +13,7 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
-local BUILD_VERSION = "v0.11"
+local BUILD_VERSION = "v0.12"
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -700,7 +700,11 @@ local function glassBurst(tile, shade, amount)
 	particles.Lifetime = NumberRange.new(0.25, 0.65)
 	particles.Speed = NumberRange.new(8, 16)
 	particles.SpreadAngle = Vector2.new(160, 160)
-	particles.Size = NumberSequence.new(0.35)
+	particles.Size = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.6),
+		NumberSequenceKeypoint.new(0.55, 0.3),
+		NumberSequenceKeypoint.new(1, 0)
+	})
 	particles.Color = ColorSequence.new(shade)
 	particles.LightEmission = 0.8
 	particles.EmissionDirection = Enum.NormalId.Top
@@ -709,8 +713,10 @@ local function glassBurst(tile, shade, amount)
 	Debris:AddItem(particles, 1.5)
 end
 
+local finishCelebrated = false
 local function finishConfetti()
-	if not finishCenter or not finishCenter.Parent then return end
+	if finishCelebrated or not finishCenter or not finishCenter.Parent then return end
+	finishCelebrated = true
 	local emitter = Instance.new("ParticleEmitter")
 	emitter.Name = "WinnerConfetti"
 	emitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
@@ -759,7 +765,31 @@ end
 
 local function shatter(tile, dramatic)
 	if not tile or not tile.CanCollide then return end
-	if dramatic then glassBurst(tile, RED, 16) end
+	if dramatic then
+		glassBurst(tile, Color3.fromRGB(180, 237, 255), 23)
+		-- A few temporary, harmless glass fragments make the fall visible
+		-- to spectators without changing any collision or movement rules.
+		for index = 1, 7 do
+			local shard = Instance.new("Part")
+			shard.Name = "GlassFragment"
+			shard.Size = Vector3.new(0.45, 0.18, 0.75)
+			shard.Color = GLASS
+			shard.Material = Enum.Material.Glass
+			shard.Transparency = 0.18
+			shard.CanCollide = false
+			shard.CanTouch = false
+			shard.CanQuery = false
+			shard.Position = tile.Position + Vector3.new(
+				math.cos(index * 2.4) * 1.2, 0.5, math.sin(index * 2.4) * 1.2
+			)
+			shard.Parent = world
+			shard.AssemblyLinearVelocity = Vector3.new(
+				math.cos(index * 2.4) * 11, math.random(11, 18),
+				math.sin(index * 2.4) * 11
+			)
+			Debris:AddItem(shard, 1.3)
+		end
+	end
 	tile.CanCollide = false
 	tile.CanTouch = false
 	tile.Color = RED
@@ -854,6 +884,7 @@ local function snapshot(player)
 			vote = mine.vote,
 			allowed = mine.allowed,
 			start = mine.startIndex,
+			elimination = mine.elimination,
 		} or nil,
 		unsafe = unsafe,
 		voteCounts = phase == "VOTE" and {} or voteCounts,
@@ -1125,6 +1156,7 @@ local function resolveVotes()
 			end
 			table.insert(outcomes, {
 				name = player.DisplayName,
+				userId = player.UserId,
 				number = info.vote,
 				status = status,
 				steps = info.allowed,
@@ -1199,6 +1231,7 @@ while true do
 	end
 
 	beginMatch(participants)
+	finishCelebrated = false
 	local winners = nil
 	for turn = 1, SETTINGS.MaxTurns do
 		turnNumber = turn
@@ -1254,6 +1287,7 @@ while true do
 
 	phase = "RESULTS"
 	unsafe = {}
+	if #winners > 0 then finishConfetti() end
 	if #winners == 0 then
 		message = "DRAW — every bridge fell! Next race soon."
 	elseif #winners == 1 then
@@ -1271,11 +1305,13 @@ end
 ]====]
 
 local CLIENT_SOURCE = [====[
--- Mythblox Game 01 · clean verified client v0.11
+-- Mythblox Game 01 · gameplay feedback v0.12
 -- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local BUILD_VERSION = "v0.11"
+local TweenService = game:GetService("TweenService")
+local SoundService = game:GetService("SoundService")
+local BUILD_VERSION = "v0.12"
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local network = ReplicatedStorage:WaitForChild("MythbloxGame01")
@@ -1371,6 +1407,36 @@ local function label(parent, name, content, x, y, w, h, size, color, bold)
 	return l
 end
 
+-- Short, low-volume classic Roblox cues. The game stays playable if an
+-- audio file is unavailable or the player has muted sound.
+local soundIds = {
+	pick = "rbxasset://sounds/switch.wav",
+	tick = "rbxasset://sounds/electronicpingshort.mp3",
+	safe = "rbxasset://sounds/electronicpingshort.mp3",
+	crack = "rbxasset://sounds/snap.mp3",
+	fall = "rbxasset://sounds/collide.mp3",
+	win = "rbxasset://sounds/electronicpingshort.mp3",
+}
+local sounds = {}
+for kind, asset in pairs(soundIds) do
+	local audio = Instance.new("Sound")
+	audio.Name = "GlassRace_" .. kind
+	audio.SoundId = asset
+	audio.Volume = kind == "fall" and 0.36 or (kind == "tick" and 0.13 or 0.22)
+	audio.PlaybackSpeed = kind == "safe" and 1.35 or (kind == "tick" and 1.15 or (kind == "win" and 0.85 or 1))
+	audio.Parent = SoundService
+	sounds[kind] = audio
+end
+gui.Destroying:Connect(function()
+	for _, audio in pairs(sounds) do audio:Destroy() end
+end)
+local function cue(kind)
+	local audio = sounds[kind]
+	if not audio then return end
+	audio.TimePosition = 0
+	audio:Play()
+end
+
 local function button(parent, name, content, bg)
 	local b = Instance.new("TextButton")
 	b.Name = name
@@ -1414,6 +1480,38 @@ addCorner(progressFill, 4)
 
 -- Leaderboard lives in the world near spawn, not as a duplicate HUD overlay.
 
+-- Brief nonmodal feedback chip below the compact HUD. Hidden on small screens
+-- to keep the play view, controls and two-second vote reveal unobstructed.
+local feedback = panel("FeedbackChip")
+feedback.AnchorPoint = Vector2.new(0.5, 0)
+feedback.Position = UDim2.new(0.5, 0, 0, 98)
+feedback.Size = UDim2.fromOffset(334, 42)
+feedback.BackgroundTransparency = 0.02
+feedback.Visible = false
+local feedbackText = label(feedback, "FeedbackText", "", 11, 4, -22, 33, 15, COLOR.Text, true)
+feedbackText.TextXAlignment = Enum.TextXAlignment.Center
+local feedbackGeneration = 0
+local isCompact = false
+local function showFeedback(message, isGood)
+	if isCompact then return end
+	feedbackGeneration += 1
+	local generation = feedbackGeneration
+	feedback.BackgroundColor3 = isGood and Color3.fromRGB(224, 251, 235) or Color3.fromRGB(255, 227, 227)
+	feedbackText.TextColor3 = isGood and Color3.fromRGB(25, 133, 77) or Color3.fromRGB(192, 52, 72)
+	feedbackText.Text = message
+	feedback.Visible = true
+	feedback.BackgroundTransparency = 0.02
+	feedbackText.TextTransparency = 0
+	task.delay(1.05, function()
+		if generation ~= feedbackGeneration or not feedback.Parent then return end
+		TweenService:Create(feedback, TweenInfo.new(0.22), {BackgroundTransparency = 1}):Play()
+		TweenService:Create(feedbackText, TweenInfo.new(0.22), {TextTransparency = 1}):Play()
+		task.delay(0.24, function()
+			if generation == feedbackGeneration and feedback.Parent then feedback.Visible = false end
+		end)
+	end)
+end
+
 -- Join prompt: does not cover touch movement controls during a match.
 local join = button(gui, "JoinButton", "JOIN BRIDGE RACE", COLOR.Green)
 join.AnchorPoint = Vector2.new(0.5, 1)
@@ -1448,7 +1546,13 @@ for n = 1, 5 do
 	local b = button(choiceRow, "Choice" .. n, tostring(n), COLOR.Blue)
 	b.LayoutOrder = n
 	b.Size = UDim2.new(0.19, 0, 0, 61)
+	local scale = Instance.new("UIScale")
+	scale.Scale = 1
+	scale.Parent = b
 	b.MouseButton1Click:Connect(function()
+		cue("pick")
+		scale.Scale = 1.06
+		TweenService:Create(scale, TweenInfo.new(0.14), {Scale = 1}):Play()
 		command:FireServer("Vote", number)
 		for chosen, other in ipairs(choiceButtons) do
 			other.BackgroundColor3 = chosen == number and COLOR.Gold or COLOR.Blue
@@ -1547,14 +1651,17 @@ local function drawOutcomes(state)
 		row.Name = "Outcome" .. idx
 		row.Size = UDim2.new(1, -3, 0, 29)
 		row.LayoutOrder = idx
-		row.BackgroundColor3 = idx % 2 == 0 and COLOR.InkBright or Color3.fromRGB(248, 252, 255)
+		local isMe = entry.userId == player.UserId
+		row.BackgroundColor3 = isMe
+			and (entry.status == "GO" and Color3.fromRGB(223, 249, 231) or Color3.fromRGB(255, 234, 236))
+			or (idx % 2 == 0 and COLOR.InkBright or Color3.fromRGB(248, 252, 255))
 		row.BorderSizePixel = 0
 		row.Parent = revealList
 		addCorner(row, 7)
 
 		local safe = entry.status == "GO"
 		local number = entry.number and tostring(entry.number) or "–"
-		local entryName = tostring(entry.name or "Player")
+		local entryName = isMe and "YOU" or tostring(entry.name or "Player")
 		local outcomeText
 		if safe then
 			outcomeText = "GO +" .. tostring(entry.steps or 0)
@@ -1576,7 +1683,6 @@ local function drawOutcomes(state)
 	revealList.CanvasSize = UDim2.fromOffset(0, #entries * 33)
 end
 
-local isCompact = false
 local function layoutForViewport()
 	local cam = workspace.CurrentCamera
 	local view = cam and cam.ViewportSize or Vector2.new(1100, 700)
@@ -1584,6 +1690,7 @@ local function layoutForViewport()
 	local height = math.max(320, view.Y)
 	local compact = width < 760
 	isCompact = compact
+	if compact then feedback.Visible = false end
 	local shortScreen = height < 570
 
 	local topW = math.min(width - 20, compact and 410 or 470)
@@ -1644,15 +1751,55 @@ local phaseNames = {
 	RESULTS = "RESULTS",
 }
 
+local previousPhase = nil
+local previousTurn = -1
+local previousAlive = nil
+local lastTickKey = ""
 local function update(state)
 	local phase = state.phase or "JOIN"
+	local mine = state.mine
+	local changedPhase = phase ~= previousPhase or state.turn ~= previousTurn
+	if phase == "VOTE" and mine and mine.alive and (state.time or 0) <= 3 and (state.time or 0) > 0 then
+		local key = tostring(state.turn) .. ":" .. tostring(state.time)
+		if lastTickKey ~= key then
+			lastTickKey = key
+			cue("tick")
+		end
+	end
+	if changedPhase and phase == "REVEAL" and mine then
+		if mine.alive and (mine.allowed or 0) > 0 then
+			cue("safe")
+			showFeedback("SAFE PICK · MOVE UP TO " .. mine.allowed .. " TILES", true)
+		elseif mine.alive then
+			cue("crack")
+			showFeedback("BLOCKED PICK · " .. mine.cracks .. "/3 CRACKS", false)
+		end
+	elseif changedPhase and phase == "MOVE" and mine and mine.alive then
+		if (mine.allowed or 0) > 0 then
+			showFeedback("GREEN TILES · WALK NOW!", true)
+		else
+			showFeedback("RED TILES · STAY PUT!", false)
+		end
+	end
+	if mine and previousAlive == true and not mine.alive then
+		cue("fall")
+		showFeedback("YOUR GLASS BROKE!", false)
+	end
+	if changedPhase and phase == "RESULTS"
+		and type(state.message) == "string"
+		and (string.find(state.message, "WINS!", 1, true) or string.find(state.message, "TIE!", 1, true)) then
+		cue("win")
+	end
+	previousPhase = phase
+	previousTurn = state.turn
+	previousAlive = mine and mine.alive or nil
 	-- Turn numbers restart every match; never reuse a previous match's vote rows.
 	if phase == "JOIN" or phase == "VOTE" then
 		lastTurnRendered = -1
 	end
-	local mine = state.mine
-	phaseText.Text = ("v0.11 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
+	phaseText.Text = ("v0.12 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
 	clockText.Text = tostring(state.time or 0) .. "s"
+	clockText.TextColor3 = phase == "VOTE" and (state.time or 0) <= 2 and COLOR.Red or COLOR.Purple
 	description.Text = state.message or ""
 
 	join.Visible = phase == "JOIN" and state.queued ~= true and (state.ready or 0) < (state.capacity or 8)
@@ -1660,7 +1807,7 @@ local function update(state)
 	movement.Visible = phase == "MOVE" and mine ~= nil and mine.alive == true
 
 	if phase == "JOIN" then
-		phaseText.Text = "v0.11 · NEXT MATCH"
+		phaseText.Text = "v0.12 · NEXT MATCH"
 		description.Text = state.queued and "You're queued for the next race."
 			or "Join at the gold pad or use the button below."
 		ownStats.Text = ("%d/%d PLAYERS READY"):format(state.ready or 0, state.capacity or 8)
@@ -1679,11 +1826,15 @@ local function update(state)
 	if phase == "RESULTS" then
 		-- Server sends winner/draw text in state.message; show it only in
 		-- the small status panel and avoid blocking the camera.
-		phaseText.Text = "v0.11 · ROUND OVER"
+		phaseText.Text = "v0.12 · ROUND OVER"
 		ownStats.Text = "NEXT MATCH STARTS SOON"
 	end
 
 	if voting.Visible and mine then
+		local hurry = (state.time or 0) <= 2
+		voteTitle.Text = hurry and ("CHOOSE NOW · " .. tostring(state.time) .. "s") or "PICK YOUR STEPS · 1–5"
+		voteTitle.TextColor3 = hurry and COLOR.Red or COLOR.Text
+		voting.BackgroundColor3 = hurry and Color3.fromRGB(255, 245, 230) or COLOR.Ink
 		for n, b in ipairs(choiceButtons) do
 			b.BackgroundColor3 = mine.vote == n and COLOR.Gold or COLOR.Blue
 			b.TextColor3 = mine.vote == n and COLOR.Text or COLOR.White
@@ -1694,6 +1845,13 @@ local function update(state)
 	end
 
 	if movement.Visible and mine then
+		local blocked = {}
+		for n = 1, 5 do
+			if state.unsafe and state.unsafe[n] then table.insert(blocked, tostring(n)) end
+		end
+		description.Text = #blocked > 0
+			and ("BLOCKED: " .. table.concat(blocked, ", ") .. "  ·  Watch your next tile")
+			or "NO BLOCKED NUMBERS · Watch your next tile"
 		local allowed = mine.allowed or 0
 		if allowed > 0 then
 			movement.BackgroundColor3 = Color3.fromRGB(220, 252, 231)
@@ -1717,6 +1875,7 @@ local function update(state)
 end
 
 join.Visible = false
+feedback.Visible = false
 voting.Visible = false
 movement.Visible = false
 reveal.Visible = false
@@ -1724,7 +1883,7 @@ stateEvent.OnClientEvent:Connect(update)
 command:FireServer("Sync")
 ]====]
 
--- Diagnostic/cleanup installer: v0.11
+-- Diagnostic/cleanup installer: v0.12
 -- Remove known legacy copies from services used by previous Mythblox builds.
 -- This intentionally does NOT remove scripts belonging to other games.
 -- Permanently remove the UNUSED default Roblox Baseplate spawn while in
@@ -1810,12 +1969,12 @@ for _, child in ipairs(game:GetDescendants()) do
 	end
 end
 
-print("[Mythblox INSTALL] v0.11 VERIFIED: 2 scripts installed and Source checked.")
-print("[Mythblox INSTALL] Server: " .. liveServer:GetFullName() .. " | Build v0.11")
-print("[Mythblox INSTALL] Client: " .. liveClient:GetFullName() .. " | Build v0.11")
+print("[Mythblox INSTALL] v0.12 VERIFIED: 2 scripts installed and Source checked.")
+print("[Mythblox INSTALL] Server: " .. liveServer:GetFullName() .. " | Build v0.12")
+print("[Mythblox INSTALL] Client: " .. liveClient:GetFullName() .. " | Build v0.12")
 print("[Mythblox INSTALL] Cleaned " .. #removed .. " previous Mythblox script/UI objects.")
 print("[Mythblox INSTALL] Disabled " .. #disabledLegacy .. " other old game scripts found by source signature.")
 if #suspicious > 0 then
 	warn("[Mythblox INSTALL] Other Mythblox scripts still exist: " .. table.concat(suspicious, "; "))
 end
-print("[Mythblox INSTALL] NOW START A FRESH PLAY SESSION. Confirm the top HUD visibly says v0.11, and check Output for SERVER RUNNING v0.11 and CLIENT RUNNING v0.11.")
+print("[Mythblox INSTALL] NOW START A FRESH PLAY SESSION. Confirm the top HUD visibly says v0.12, and check Output for SERVER RUNNING v0.12 and CLIENT RUNNING v0.12.")
