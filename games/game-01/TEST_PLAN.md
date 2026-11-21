@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-22):** v0.9 Studio screenshot confirms the latest build and more proportionate world signage. Owner spotted an unused default Baseplate SpawnLocation below lava. **v0.10 removes that unused spawn and adds a genuine current-server leaderboard near spawn.** v0.10 has not yet been tested in Studio.
+**Status (2026-11-22):** Owner supplied v0.10 Studio screenshots showing an unattractive finish, protruding spectator/bridge glass edges, a slab-like island side, and an oversized two-sided leaderboard with unnecessary text. **v0.11 addresses these four issues in code; Roblox Studio testing is still pending.**
 
 ## Playtest log
 
@@ -31,6 +31,22 @@
 6. Repeat with 3–4 clients if the two-player flow works.
 
 
+
+## v0.11 — visual fix verification
+
+- [ ] Stop Play, run the latest [Command Bar installer](INSTALL_STUDIO_COMMAND_BAR.luau), confirm `v0.11 VERIFIED` in Output and `v0.11` in the HUD during Play.
+- [ ] Finish: from last glass tile, verify there are exactly two symmetrical blue posts, one white FINISH beam, and no extra flags, floating white label, or stacked blocks.
+- [ ] Final tile: checker markings appear only on each player's last tile, not as a bridge across gaps. Winning still triggers on tile 20.
+- [ ] Leaderboard: one **small board** near spawn, text on the face looking toward the main plaza; no text on the reverse, no central post showing through the sign.
+- [ ] Leaderboard text contains only `TOP RACERS` and actual name/win/coin rows; no reset notices or scope disclaimers. Winning updates the rows.
+- [ ] Bridge glass/decorative rails: ends align to tile 0/20 edges and do not stick past the sides.
+- [ ] Shared ready deck: front transparent barrier aligns to deck edge; inward glass guards align to promenade ends without blocking the connection from the ready area.
+- [ ] Look toward the hub from the bridge: visible soil/stone layers form a clearer island edge, with blue sea covering the former gray terrain background.
+- [ ] Test three clients (two racers, one spectator). Spectators can reach side walks but cannot cross onto race lanes or shortcut.
+- [ ] Recheck JOIN prompt, voting 1–5, 3 cracks, illegal stepping, falls, respawn, first finisher/last survivor, temporary coins and winning.
+- [ ] Check both server and client Output for errors; compare before/after screenshots.
+
+**Not yet passed:** code and installer are updated, but the owner has not tested v0.11 in Roblox Studio.
 
 ## v0.10 — remove default Baseplate spawn and verify session leaderboard
 
