@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-21):** Owner confirmed **v0.2 functionality works in Studio** after reporting and retesting previous problems. UI/presentation still needs improvement and is intentionally **deferred to a dedicated polish phase**. The owner did not provide individual test-case results, so this is a reported overall functional pass, not exhaustive QA.
+**Status (2026-11-21):** Owner confirmed v0.2 functionality works in Studio. **v0.3 visual polish is now in GitHub but untested in Studio.** The owner did not itemize every test case; this is not exhaustive release QA.
 
 ## Playtest log
 
@@ -31,6 +31,22 @@
 6. Repeat with 3–4 clients if the two-player flow works.
 
 
+
+## Visual polish v0.3 — priority regression tests
+
+- [ ] Stop Play, rerun the **latest** [installer](INSTALL_STUDIO_COMMAND_BAR.luau) in the Command Bar (Edit mode). Verify the Output says **v0.3 installed**.
+- [ ] Play: safe lobby appears with accent lights; no unused bridges during join.
+- [ ] Join with two clients: exactly two glass lanes and only one FINISH sign, with neon accent rails **not acting as walkable paths**.
+- [ ] Select numbers 5 and 3: both walk the expected maximum distances. Selection highlight is clear.
+- [ ] Select identical numbers: both crack; their individual glass shows crack strokes and a small particle effect.
+- [ ] Deliberately step onto forbidden glass: elimination and lava respawn still work.
+- [ ] During vote reveal, confirm 1–5 vote counts, blocked numbers, and every player's name, selected number and outcome appear.
+- [ ] Begin a **second match**: the reveal board refreshes for turn 1, with no stale names or totals from the first match.
+- [ ] Confirm green safe tiles, red unsafe tiles, progress/round indicators, standings, and winner banner.
+- [ ] Use Studio **Device Emulator** or a narrow client viewport: check tappable five-number buttons, visible text, no UI clipped offscreen, no covering critical gameplay controls.
+- [ ] Check **Output** in both server and client for red exceptions or warnings related to GUI, Lighting, particle, or SurfaceGui properties.
+
+**Visual pass alone is not gameplay certification:** still test 2–8 players, late joins, crash/rejoin behavior, mobile controls, and performance before publication.
 
 ## Setup
 
@@ -80,11 +96,11 @@
 | 29 | Inspect small/mobile viewport | Reveal remains readable and doesn't prevent movement |
 | 30 | Check Output, both client and server | No red runtime errors introduced by the new build |
 
-## Deferred UI and visual polish
+## Visual polish — staged follow-ups (after v0.3 test)
 
-- Make post-vote results clearer and more engaging (counts, players, cracks, permissions).
-- Make HUD more responsive and legible on small screens; review panel placement.
-- Improve in-world feedback, glass cracks, falls and finish celebration.
+- Evaluate v0.3 vote-result readability; refine based on real desktop/mobile screenshots.
+- Verify touch/mobile screen layout, including default Roblox on-screen controls.
+- Tune crack particles, glass contrast, optional ambient sounds, camera feel and finish celebration after testing.
 - Do not modify gameplay rules solely for cosmetic redesign.
 
 ## Balance questions to answer in playtests
