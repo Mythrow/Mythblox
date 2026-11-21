@@ -1,14 +1,27 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-21):** User reports the Studio installer succeeded and the prototype behaved as expected during **solo Play testing** under several conditions. This is a general solo smoke-test pass, not a verified pass for every numbered acceptance case. **Two-player and higher-player tests remain pending.**
+**Status (2026-11-21):** Owner reports **solo AND multiplayer v0.1 testing succeeded** across multiple gameplay conditions. Exact numbered cases were not individually recorded. Owner also reported four issues; changes for these are in **v0.2**, but this new build has **NOT YET BEEN TESTED IN STUDIO**.
 
 ## Playtest log
 
 | Date | Environment | Result | Remaining validation |
 |---|---|---|---|
-| 2026-11-21 | Roblox Studio, 1 client (user-reported) | Installer worked; user reports trying different conditions and expected behavior | Exact cases not itemized; multiplayer voting, collisions, finish races, ties and late joining remain unverified |
+| 2026-11-21 | Roblox Studio, 1 client (user-reported), v0.1 | Installer worked; solo gameplay matched expectations under several unspecified conditions | Specific checklist cases not enumerated |
+| 2026-11-21 | Roblox Studio, multiple players (user-reported), v0.1 | Multiplayer worked across multiple unspecified conditions | Reported bugs: initial/respawn near lava, repeated FINISH signs, fixed 8 bridges during join, missing vote breakdown UI |
+| 2026-11-21 | GitHub v0.2 (not tested) | Applied fixes to server/client/one-paste installer | Retest all four reported bugs on two clients, especially rejoining after death |
 
-### Priority next test: two local clients
+### Priority next test: re-install v0.2 and verify the four reported fixes
+
+1. **Stop** the old Play session; open latest [installer](INSTALL_STUDIO_COMMAND_BAR.luau), copy **Raw**, paste into **Command Bar** and Run again while in Edit mode.
+2. Start single-player Play without joining. Confirm you spawn safely **inside the elevated lobby**, with no repeat lava deaths. Confirm **no glass lanes** exist before join closes.
+3. Join a solo practice match; after 10 seconds confirm there is **exactly one** glass lane and **one shared FINISH banner**.
+4. Repeat in Server & Clients with **2 clients**; join both. Confirm **exactly two** glass lanes and one FINISH sign.
+5. Vote differently (e.g. A=5, B=3). During reveal and walking, confirm the board lists **vote totals 1–5**, each player's pick and **MOVE 5/MOVE 3**.
+6. Vote the same number. Confirm counts reflect two votes for it, **BLOCKED** displays that number, both players show **CRACK** with their crack count.
+7. Force a fall by stepping onto forbidden glass or receiving a third crack. Confirm the next character **respawns at the safe lobby** and does not get stuck dying in lava.
+8. At match end, confirm bridges disappear before the next join period and reappear with the **new** participant count.
+
+### Previous priority: two local clients
 
 1. Choose **Test → Server & Clients** and set **2 clients** in Studio.
 2. Press **JOIN NEXT MATCH** on both clients before the join countdown finishes.
@@ -51,6 +64,21 @@
 | 18 | Valid participation/first-place | Session Coins/Wins update, with no Roblox purchases |
 | 19 | Cross to another lane / try jumping | Cannot legitimately gain progress in another lane |
 | 20 | End of test | No unhandled errors in Studio Output |
+
+## Fix regression checklist (v0.2)
+
+| # | Regression check | Expected |
+|---|---|---|
+| 21 | Join first time, then die and respawn | Alive in safe raised lobby; no repeated lava deaths |
+| 22 | Join countdown with 0 or 1/2 queued players | No unused glass lanes visible during countdown |
+| 23 | Start match with 2 queued players | Only 2 lanes are generated |
+| 24 | Complete match / return to join | Lanes disappear until next match starts |
+| 25 | View bridge end with 2–8 players | Only one shared FINISH banner |
+| 26 | Vote 1–5 with differing selections | Reveal shows all vote totals, names, picks, and MOVE N |
+| 27 | Most popular number gets 2+ picks | Reveal marks it BLOCKED and shows CRACK to affected players |
+| 28 | All vote uniquely | No numbers blocked, everyone eligible to advance their chosen distance |
+| 29 | Inspect small/mobile viewport | Reveal remains readable and doesn't prevent movement |
+| 30 | Check Output, both client and server | No red runtime errors introduced by the new build |
 
 ## Balance questions to answer in playtests
 
