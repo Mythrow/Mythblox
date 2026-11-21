@@ -27,6 +27,8 @@ Use this file to separate **confirmed project rules** from **ideas not yet appro
 
 - **2026-11-21:** Owner accepted v0.2 as **functionally working**, while specifically deferring **UI improvements** to the later polish phase. This is a functional milestone, not full release QA.
 
+- **2026-11-21:** Owner approved proceeding to the **visual-polish phase**. **v0.3** adds UI redesign, responsive voting/reveal/results, neon arena styling, and glass-crack/shatter effects. No rule changes intended; v0.3 **requires new Studio verification**. See [Game 01 test plan](../games/game-01/TEST_PLAN.md).
+
 ## Open decisions
 
 | Question | Options | Status |
