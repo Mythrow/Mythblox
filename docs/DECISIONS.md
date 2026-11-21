@@ -47,6 +47,8 @@ Use this file to separate **confirmed project rules** from **ideas not yet appro
 
 - **2026-11-22:** User approved four corrections from v0.10 screenshots: cleaner finish gate, flush bridge/spectator glass, a smaller **single-face** leaderboard with only names/wins/coins, and a better-looking island edge from the course. **v0.11 scripts and installer committed**: simple finish posts/beam, precise rail extents, compact scoreboard, layered soil/stone and sea backdrop. **Studio visual verification pending**; voting, match duration and rewards unchanged.
 
+- **2026-11-22:** Owner confirms **v0.11 works** in Roblox Studio. Environment changes are now the functional/visual baseline; further layout redesign deferred unless a specific issue appears. Proposed next development stage: **v0.12 gameplay presentation and feedback**, then permanent wins/coins, cosmetics, and release testing. This proposed sequence is a recommendation, **not yet approval to implement v0.12**.
+
 ## Open decisions
 
 | Question | Options | Status |
