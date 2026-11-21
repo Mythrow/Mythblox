@@ -1,4 +1,4 @@
--- Mythblox game-01: glass bridge race v0.10 (server)
+-- Mythblox game-01: glass bridge race v0.11 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -6,7 +6,7 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
-local BUILD_VERSION = "v0.10"
+local BUILD_VERSION = "v0.11"
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -509,8 +509,8 @@ local function buildBridges(count)
 		for _, edge in ipairs({-1, 1}) do
 			local rail = part(
 				("Lane%02d_EdgeGlow"):format(lane),
-				Vector3.new(0.35, 0.35, SETTINGS.TileSpacing * SETTINGS.BridgeLength + 7),
-				Vector3.new(x + edge * 3.25, SETTINGS.BridgeY - 1.1, SETTINGS.BridgeLength * SETTINGS.TileSpacing / 2),
+				Vector3.new(0.35, 0.35, SETTINGS.TileSpacing * SETTINGS.BridgeLength + 6.7),
+				Vector3.new(x + edge * (3.35 - 0.175), SETTINGS.BridgeY - 0.625, SETTINGS.BridgeLength * SETTINGS.TileSpacing / 2),
 				VIOLET, Enum.Material.SmoothPlastic, bridgeModel
 			)
 			rail.CanCollide = false
@@ -519,47 +519,65 @@ local function buildBridges(count)
 		end
 	end
 
-	-- One festive finish arch across every generated lane.
-	local bannerWidth = math.max(12, count * SETTINGS.LaneSpacing)
+	-- Clean two-post finish gate, with a single sign integrated into the beam.
+	-- Keep all decorative parts noncolliding; winning still happens on tile 20.
 	local finishZ = SETTINGS.BridgeLength * SETTINGS.TileSpacing
+	local occupiedSpan = (count - 1) * SETTINGS.LaneSpacing + 6.7
+	local postX = occupiedSpan / 2 + 1.9
 	local beam = part(
-		"SharedFinishArchBeam",
-		Vector3.new(bannerWidth + 5, 2.7, 2.5),
-		Vector3.new(0, SETTINGS.BridgeY + 13.5, finishZ),
-		Color3.fromRGB(255, 204, 62), Enum.Material.SmoothPlastic, bridgeModel
+		"FinishGateBeam",
+		Vector3.new(occupiedSpan + 6.2, 3.0, 1.5),
+		Vector3.new(0, SETTINGS.BridgeY + 11.6, finishZ),
+		Color3.fromRGB(249, 252, 255), Enum.Material.SmoothPlastic, bridgeModel
 	)
 	beam.CanCollide = false
+	beam.CanTouch = false
 	finishCenter = beam
-	textSign(beam, "FINISH!", 2.6, 210)
+
+	local gateText = Instance.new("SurfaceGui")
+	gateText.Name = "FinishWord"
+	gateText.Face = Enum.NormalId.Front -- readable when approaching along +Z
+	gateText.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	gateText.PixelsPerStud = 35
+	gateText.LightInfluence = 0
+	gateText.AlwaysOnTop = false
+	gateText.Parent = beam
+	local name = Instance.new("TextLabel")
+	name.Name = "FinishLabel"
+	name.Size = UDim2.fromScale(1, 1)
+	name.BackgroundTransparency = 1
+	name.Font = Enum.Font.GothamBlack
+	name.Text = "FINISH"
+	name.TextColor3 = Color3.fromRGB(37, 116, 193)
+	name.TextSize = 65
+	name.TextScaled = false
+	name.Parent = gateText
+
 	for _, side in ipairs({-1, 1}) do
-		local postX = side * (bannerWidth / 2 + 0.5)
-		local post = part(
-			"FinishArchColumn",
-			Vector3.new(2.8, 14, 3.5),
-			Vector3.new(postX, SETTINGS.BridgeY + 6.5, finishZ),
-			Color3.fromRGB(56, 158, 246), Enum.Material.SmoothPlastic, bridgeModel
+		local column = part(
+			"FinishGatePillar",
+			Vector3.new(2.0, 11.7, 2.5),
+			Vector3.new(side * postX, SETTINGS.BridgeY + 5.85, finishZ),
+			Color3.fromRGB(73, 171, 235), Enum.Material.SmoothPlastic, bridgeModel
 		)
-		post.CanCollide = false
-		local cap = part(
-			"FinishArchFlag",
-			Vector3.new(6, 2.1, 2.1),
-			Vector3.new(postX + side * 1.7, SETTINGS.BridgeY + 15.2, finishZ),
-			side == -1 and Color3.fromRGB(255, 100, 141) or Color3.fromRGB(64, 210, 136),
-			Enum.Material.SmoothPlastic, bridgeModel
-		)
-		cap.CanCollide = false
+		column.CanCollide = false
+		column.CanTouch = false
 	end
-	-- Bright checker accents, all noncolliding. Winning remains at tile 20.
-	local checks = math.max(2, math.floor(bannerWidth / 4))
-	for i = 1, checks do
-		local block = part(
-			"FinishChecker",
-			Vector3.new(bannerWidth / checks, 0.85, 2.8),
-			Vector3.new(-bannerWidth / 2 + (i - 0.5) * (bannerWidth / checks), SETTINGS.BridgeY + 11.6, finishZ),
-			i % 2 == 0 and WHITE or Color3.fromRGB(45, 70, 106),
-			Enum.Material.SmoothPlastic, bridgeModel
-		)
-		block.CanCollide = false
+	-- Checkered stripes belong only to the final glass tile, not across gaps
+	-- between player lanes; they cannot be walked on independently.
+	for lane = 1, count do
+		local laneX = lanes[lane].x
+		for i = 1, 6 do
+			local mark = part(
+				"FinishTileChecker",
+				Vector3.new(6.7 / 6, 0.055, 1.15),
+				Vector3.new(laneX - 3.35 + (i - 0.5) * (6.7 / 6), SETTINGS.BridgeY + 0.48, finishZ - 2.1),
+				i % 2 == 0 and Color3.fromRGB(43, 75, 113) or WHITE,
+				Enum.Material.SmoothPlastic, bridgeModel
+			)
+			mark.CanCollide = false
+			mark.CanTouch = false
+		end
 	end
 end
 
