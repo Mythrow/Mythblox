@@ -34,8 +34,9 @@
 
 ## Future world-layout build acceptance (blueprint only, not implemented yet)
 
-- [ ] Free-roam central grass island with marked spawn, join pad, visible cosmetics placeholder and leaderboard space.
-- [ ] Unqueued or late players can walk onto the central viewing deck and side platforms, and see matches as spectators.
+- [ ] Spawn plaza is **the beginning of the main path**, with the **leaderboard near spawn** and shops/cosmetic stalls **on both sides of the path**.
+- [ ] Only **one combined Join/Ready + Front Spectator platform** exists; during joining it shows ready status/countdown, while during active play the same platform lets players watch.
+- [ ] Unqueued, late, or eliminated players can walk from spawn along the main path to the **shared viewing/ready platform**, and optionally onto side promenades, to observe the match.
 - [ ] Nonparticipants cannot access/interfere with race glass; participants cannot shortcut through the viewing promenade.
 - [ ] Finish arch is visually prominent and generated once regardless of racer count.
 - [ ] Overhead player-name tags no longer dominate the field of view; lane identity remains understandable.
