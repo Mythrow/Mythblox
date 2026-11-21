@@ -39,6 +39,8 @@ Use this file to separate **confirmed project rules** from **ideas not yet appro
 
 - **2026-11-22:** Owner's v0.6 screenshot shows sign lettering distorted by `TextScaled`, plus an unwanted center-screen results popup. **v0.7 source/installer** switches to fixed-size world-sign fonts with separate small subtitles and removes the modal results card, retaining winner text in the compact top HUD. **Studio test pending; gameplay rules unchanged.**
 
+- **2026-11-22:** Owner reports both sign-text distortion and centered results popup **still persist** after the v0.7 attempt. Inspected v0.7 GitHub code: the center results UI is already absent, so a stale/duplicate running Studio script is possible. **v0.8** adds cleanup of installed/stray older game scripts, exact Source checks, `BuildVersion` replicated marker, `v0.8` in the top HUD, and server/client runtime Output logs. Sign lettering is further reduced. **Studio verification pending**, no gameplay rules changed.
+
 ## Open decisions
 
 | Question | Options | Status |
