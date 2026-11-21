@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-22):** Owner's v0.8 Studio screenshot confirms the updated client is running, but sign letters are still tiny and horizontally distorted. Investigation found that the `SurfaceGui` was not explicitly set to `PixelsPerStud` sizing mode and could inherit a fixed 800×600 canvas on wide, shallow Parts. **v0.9 fixes this mode and requires a Studio retest**; no gameplay changes.
+**Status (2026-11-22):** v0.9 Studio screenshot confirms the latest build and more proportionate world signage. Owner spotted an unused default Baseplate SpawnLocation below lava. **v0.10 removes that unused spawn and adds a genuine current-server leaderboard near spawn.** v0.10 has not yet been tested in Studio.
 
 ## Playtest log
 
@@ -31,6 +31,21 @@
 6. Repeat with 3–4 clients if the two-player flow works.
 
 
+
+## v0.10 — remove default Baseplate spawn and verify session leaderboard
+
+- [ ] Stop Play. Run the latest [installer](INSTALL_STUDIO_COMMAND_BAR.luau) in **Edit mode**, confirm `v0.10 VERIFIED` in Output and check the unused Baseplate SpawnLocation removal count.
+- [ ] In Studio **Edit mode**, expand Workspace: the low, near-origin default object named `SpawnLocation` should be gone. The server-generated `MythbloxLobbySpawn` appears during Play.
+- [ ] During **Play**, inspect the lava near (0,0,0). The unwanted white star-shaped baseplate spawn platform should no longer be visible.
+- [ ] Spawn, join, deliberately fall, then respawn: the character must return to the **elevated island plaza**, not to lava or another player's bridge.
+- [ ] From spawn, inspect the physical leaderboard: `TOP RACERS`, `THIS SERVER ONLY`, and up to four actual players with Wins/Coins. No `COMING SOON` leaderboard sign remains.
+- [ ] Two-client test: player A wins a round. Verify A moves up to first place with 1 Win/25 Coins and B has 0 Wins/5 Coins, given a fresh server/session.
+- [ ] Have a player leave the server. Leaderboard should update and exclude absent players on the next state publish.
+- [ ] Stop and restart the test server: board should reset to fresh session values, **not claim persistent/global scores**.
+- [ ] Full 2-client match: selection, cracks, movement permissions, spectator access, finish and round-end UI work as before.
+- [ ] Check client/server Output for runtime errors, including any SurfaceGui, SpawnLocation or leaderboard updates.
+
+**Status:** Source and installer checks complete; Studio test pending.
 
 ## v0.9 — sign aspect-ratio fix: targeted regression
 
