@@ -81,52 +81,76 @@ end
 -- World-space signage: a fixed 3D board, NOT a BillboardGui overlay.
 -- The old AlwaysOnTop Billboards made labels enormous at a distance and
 -- overlapped one another in the shared ready/spectator area.
+-- Fixed-size world boards: no TextScaled or automatic wrapping.
+-- Billboard-style text scaling previously made labels fill the entire screen.
 local function textSign(parent, message, yOffset, width)
+	local heading, subheading = string.match(message, "^(.-)%s*|%s*(.+)$")
+	heading = heading or message
+
 	local board = Instance.new("Part")
 	board.Name = "WorldSign_" .. parent.Name
 	board.Anchored = true
 	board.CanCollide = false
 	board.CanTouch = false
-	board.Size = Vector3.new(math.clamp((width or 220) / 16, 9, 22), 3.2, 0.55)
+	board.Size = Vector3.new(math.clamp((width or 220) / 19, 9, 18), 2.7, 0.45)
 	board.Position = parent.Position + Vector3.new(0, yOffset or 3, 0)
 	board.Material = Enum.Material.SmoothPlastic
 	board.Color = Color3.fromRGB(250, 251, 255)
 	board.Parent = parent.Parent or world
 
-	local surface = Instance.new("SurfaceGui")
-	surface.Name = "WorldText"
-	surface.Face = Enum.NormalId.Front
-	surface.PixelsPerStud = 38
-	surface.AlwaysOnTop = false
-	surface.LightInfluence = 0
-	surface.Parent = board
+	local function face(side, name)
+		local surface = Instance.new("SurfaceGui")
+		surface.Name = name
+		surface.Face = side
+		surface.PixelsPerStud = 48
+		surface.AlwaysOnTop = false
+		surface.LightInfluence = 0
+		surface.Parent = board
 
-	local label = Instance.new("TextLabel")
-	label.Position = UDim2.fromScale(0.03, 0.04)
-	label.Size = UDim2.fromScale(0.94, 0.92)
-	label.BackgroundTransparency = 1
-	label.TextColor3 = Color3.fromRGB(33, 92, 150)
-	label.TextScaled = true
-	label.TextWrapped = true
-	label.Font = Enum.Font.GothamBold
-	label.Text = message
-	label.Parent = surface
+		local label = Instance.new("TextLabel")
+		label.Name = "Heading"
+		label.Position = UDim2.fromScale(0.04, subheading and 0.12 or 0.08)
+		label.Size = UDim2.fromScale(0.92, subheading and 0.51 or 0.84)
+		label.BackgroundTransparency = 1
+		label.TextColor3 = Color3.fromRGB(33, 92, 150)
+		label.TextScaled = false
+		label.TextSize = subheading and 34 or 38
+		label.TextWrapped = false
+		label.TextTruncate = Enum.TextTruncate.AtEnd
+		label.TextXAlignment = Enum.TextXAlignment.Center
+		label.TextYAlignment = Enum.TextYAlignment.Center
+		label.Font = Enum.Font.GothamBold
+		label.Text = heading
+		label.Parent = surface
 
-	-- Back-facing signs remain readable to people walking in from either side.
-	local back = Instance.new("SurfaceGui")
-	back.Name = "WorldTextBack"
-	back.Face = Enum.NormalId.Back
-	back.PixelsPerStud = 38
-	back.AlwaysOnTop = false
-	back.LightInfluence = 0
-	back.Parent = board
-	local backLabel = label:Clone()
-	backLabel.Name = "BackLabel"
-	backLabel.Parent = back
-	label:GetPropertyChangedSignal("Text"):Connect(function()
-		if backLabel.Parent then backLabel.Text = label.Text end
+		if subheading then
+			local subtitle = Instance.new("TextLabel")
+			subtitle.Name = "Subtitle"
+			subtitle.Position = UDim2.fromScale(0.04, 0.64)
+			subtitle.Size = UDim2.fromScale(0.92, 0.25)
+			subtitle.BackgroundTransparency = 1
+			subtitle.TextColor3 = Color3.fromRGB(112, 137, 165)
+			subtitle.TextScaled = false
+			subtitle.TextSize = 22
+			subtitle.TextWrapped = false
+			subtitle.TextTruncate = Enum.TextTruncate.AtEnd
+			subtitle.TextXAlignment = Enum.TextXAlignment.Center
+			subtitle.Font = Enum.Font.GothamMedium
+			subtitle.Text = subheading
+			subtitle.Parent = surface
+		end
+		return surface, label
+	end
+
+	local front, frontLabel = face(Enum.NormalId.Front, "WorldText")
+	local _, backLabel = face(Enum.NormalId.Back, "WorldTextBack")
+	-- A single changing status label updates both sides of the join deck.
+	frontLabel:GetPropertyChangedSignal("Text"):Connect(function()
+		if backLabel.Parent then
+			backLabel.Text = frontLabel.Text
+		end
 	end)
-	return surface
+	return front
 end
 
 -- Persistent social island and phase-aware shared ready/spectator platform.
@@ -1087,7 +1111,7 @@ end
 ]====]
 
 local CLIENT_SOURCE = [====[
--- Mythblox Game 01 · streamlined screen UI v0.6
+-- Mythblox Game 01 · streamlined screen UI v0.7
 -- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -1264,14 +1288,8 @@ movement.AnchorPoint = Vector2.new(0.5, 1)
 local movementText = label(movement, "MovementText", "", 14, 8, -28, 50, 16, COLOR.Text, true)
 movementText.TextXAlignment = Enum.TextXAlignment.Center
 
--- A strong result banner, instead of using only small status text.
-local result = panel("ResultPanel")
-result.AnchorPoint = Vector2.new(0.5, 0.5)
-result.Position = UDim2.fromScale(0.5, 0.48)
-local resultKicker = label(result, "Kicker", "ROUND COMPLETE", 18, 10, -36, 30, 17, COLOR.Purple, true)
-resultKicker.TextXAlignment = Enum.TextXAlignment.Center
-local resultMessage = label(result, "Winner", "", 18, 43, -36, 76, 22, COLOR.Text, true)
-resultMessage.TextXAlignment = Enum.TextXAlignment.Center
+-- Results appear in the compact top status strip instead of a centered
+-- modal. The arena and other players remain visible when a match ends.
 
 -- Reveal panel displays every player's number, risk and permitted movement.
 -- No one can see choices during secret voting; the server only publishes after.
@@ -1422,9 +1440,6 @@ local function layoutForViewport()
 	movement.Position = UDim2.new(0.5, 0, 1, -26)
 	movementText.TextSize = compact and 14 or 17
 
-	result.Size = UDim2.fromOffset(math.min(width - 18, 550), 135)
-	resultMessage.TextSize = compact and 17 or 22
-
 	local revealW = math.min(compact and width - 16 or 322, 322)
 	local revealH = math.max(165, math.min(compact and 242 or 388, height - (compact and 156 or 171)))
 	reveal.Size = UDim2.fromOffset(revealW, revealH)
@@ -1466,7 +1481,6 @@ local function update(state)
 	join.Visible = phase == "JOIN" and state.queued ~= true and (state.ready or 0) < (state.capacity or 8)
 	voting.Visible = phase == "VOTE" and mine ~= nil and mine.alive == true
 	movement.Visible = phase == "MOVE" and mine ~= nil and mine.alive == true
-	result.Visible = phase == "RESULTS"
 
 	if phase == "JOIN" then
 		phaseText.Text = "NEXT MATCH"
@@ -1484,6 +1498,12 @@ local function update(state)
 	else
 		ownStats.Text = "SPECTATING  ·  WATCH FROM THE FRONT DECK"
 		progressFill.Size = UDim2.fromScale(0, 1)
+	end
+	if phase == "RESULTS" then
+		-- Server sends winner/draw text in state.message; show it only in
+		-- the small status panel and avoid blocking the camera.
+		phaseText.Text = "ROUND OVER"
+		ownStats.Text = "NEXT MATCH STARTS SOON"
 	end
 
 	if voting.Visible and mine then
@@ -1509,10 +1529,6 @@ local function update(state)
 		end
 	end
 
-	if result.Visible then
-		resultMessage.Text = state.message or "Next race starts soon."
-	end
-
 	-- Make the full breakdown visible on desktop during walking. On mobile,
 	-- display it during REVEAL only, so controls/gameplay remain unobstructed.
 	-- Keep racers' walking camera clear, show extended results to observers.
@@ -1526,7 +1542,6 @@ end
 join.Visible = false
 voting.Visible = false
 movement.Visible = false
-result.Visible = false
 reveal.Visible = false
 stateEvent.OnClientEvent:Connect(update)
 command:FireServer("Sync")
@@ -1546,4 +1561,4 @@ end
 
 install(game:GetService("ServerScriptService"), "Script", "MythbloxGame", SERVER_SOURCE)
 install(game:GetService("StarterPlayer"):WaitForChild("StarterPlayerScripts"), "LocalScript", "MythbloxGame", CLIENT_SOURCE)
-print("[Mythblox] Game 01 v0.6 join/HUD fixes installed. Test with Play, or Test > Server & Clients (2 clients). Bridges are generated only after the join countdown.")
+print("[Mythblox] Game 01 v0.7 sign/results UI fixes installed. Test with Play, or Test > Server & Clients (2 clients). Bridges are generated only after the join countdown.")
