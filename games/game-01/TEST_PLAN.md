@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-22):** Owner supplied a v0.6 screenshot revealing **distorted TextScaled world sign lettering** and an intrusive centered results popup. **v0.7 source and installer address these reports, but Studio regression testing is still pending.** Multiplayer spectator safety and full geometry are not certified.
+**Status (2026-11-22):** Owner reports **both bugs persist** despite prior code changes. Since v0.7 GitHub code no longer has a centered result card, a stale/duplicate running Studio script is a credible possibility, not yet proven. **v0.8 adds verified clean installation, server/client version logs and a visible build marker. Studio test pending.**
 
 ## Playtest log
 
@@ -31,6 +31,20 @@
 6. Repeat with 3–4 clients if the two-player flow works.
 
 
+
+## v0.8 — verify which code actually runs BEFORE checking appearance
+
+- [ ] Stop all Play and multiplayer sessions. Reopen the latest [installer](INSTALL_STUDIO_COMMAND_BAR.luau) on GitHub via Raw (hard refresh if needed) and execute it in Studio Edit mode.
+- [ ] Output contains **`[Mythblox INSTALL] v0.8 VERIFIED`**, the paths to server/client scripts, and the number of old script/UI objects cleaned.
+- [ ] Check Output for a warning listing other old Mythblox game scripts; if present, inspect their paths. Installer should disable old copies whose source matches the game's UI/world signature.
+- [ ] Start a *new* Play session. HUD heading visibly starts **`v0.8`** (including during JOIN). Output shows **`SERVER RUNNING v0.8`** and **`CLIENT RUNNING v0.8`**.
+- [ ] If HUD does **not** say v0.8 or the runtime log lines are missing, the updated scripts did not run: record Output and Explorer script names rather than concluding the visual changes failed.
+- [ ] If HUD **does** say v0.8, confirm storefront labels use compact headings with small subtitles and no stretched text.
+- [ ] Complete at least one round; confirm no center-screen `ROUND COMPLETE` overlay, and winner/draw status remains in the compact HUD.
+- [ ] Check for red Output errors and duplicate Mythblox scripts in StarterPlayerScripts, StarterGui or ServerScriptService.
+- [ ] Reconfirm one active bridge per joined racer, three-crack elimination, normal respawn and spectator access.
+
+**Not yet verified in Roblox Studio.** Persistent bugs with an observed v0.8 marker should be escalated with a screenshot and exact Output log.
 
 ## v0.7 — fixed board lettering and no centered results popup
 
