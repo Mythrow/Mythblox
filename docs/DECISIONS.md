@@ -23,7 +23,9 @@ Use this file to separate **confirmed project rules** from **ideas not yet appro
 
 - **2026-11-21:** Owner confirmed **both solo and multiplayer v0.1 gameplay** worked across several tested conditions; detailed individual test cases were not enumerated.
 - Owner identified four v0.1 problems: lobby/respawn lava deaths, eight FINISH signs, bridges built before player count finalized, and no visible post-vote results.
-- **v0.2 code committed:** safe respawn target and guarded lobby, dynamic per-match lane creation, one shared FINISH banner, and a visible vote tally/individual results panel. **These changes await Studio verification.** See [Game 01 test plan](../games/game-01/TEST_PLAN.md).
+- **v0.2 code committed:** safe respawn target and guarded lobby, dynamic per-match lane creation, one shared FINISH banner, and a visible vote tally/individual results panel. **Owner subsequently confirmed v0.2 functionality works in Studio.** See [Game 01 test plan](../games/game-01/TEST_PLAN.md).
+
+- **2026-11-21:** Owner accepted v0.2 as **functionally working**, while specifically deferring **UI improvements** to the later polish phase. This is a functional milestone, not full release QA.
 
 ## Open decisions
 
