@@ -29,6 +29,8 @@ Use this file to separate **confirmed project rules** from **ideas not yet appro
 
 - **2026-11-21:** Owner approved proceeding to the **visual-polish phase**. **v0.3** adds UI redesign, responsive voting/reveal/results, neon arena styling, and glass-crack/shatter effects. No rule changes intended; v0.3 **requires new Studio verification**. See [Game 01 test plan](../games/game-01/TEST_PLAN.md).
 
+- **2026-11-21:** The user rejected the dark/neon v0.3 aesthetic and requested the usual **bright Roblox style**. **v0.4 code** switches to daylight, grass, sky-blue bridges, white UI and blue/green/yellow controls. Core mechanics remain unchanged; **Studio verification pending**. [Game 01](../games/game-01/README.md).
+
 ## Open decisions
 
 | Question | Options | Status |
