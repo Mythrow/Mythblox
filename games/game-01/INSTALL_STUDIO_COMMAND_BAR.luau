@@ -5,7 +5,7 @@
 assert(not game:GetService("RunService"):IsRunning(), "Stop the test session before installing.")
 
 local SERVER_SOURCE = [====[
--- Mythblox game-01: glass bridge race v0.10 (server)
+-- Mythblox game-01: glass bridge race v0.11 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -13,7 +13,7 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
-local BUILD_VERSION = "v0.10"
+local BUILD_VERSION = "v0.11"
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -200,6 +200,16 @@ local function decorative(name, size, position, color, material)
 	return part(name, size, position, color, material or Enum.Material.SmoothPlastic, hub)
 end
 
+-- Layered terrain gives the island a proper visible edge from the bridge.
+-- These are behind the spectator rails and do not alter the match.
+local islandSoil = decorative(
+	"IslandSoil", Vector3.new(125, 12, 87),
+	Vector3.new(0, 16, -59), Color3.fromRGB(153, 113, 72), Enum.Material.Ground
+)
+local islandStone = decorative(
+	"IslandStoneBase", Vector3.new(120, 4, 83),
+	Vector3.new(0, 8, -59), Color3.fromRGB(174, 163, 137), Enum.Material.Slate
+)
 local ground = decorative("HubGrassIsland", Vector3.new(130, 4, 91), Vector3.new(0, 22, -59), GRASS, Enum.Material.Grass)
 local plaza = decorative("SpawnPlaza", Vector3.new(26, 0.4, 23), Vector3.new(0, 24.2, -76), CREAM)
 local path = decorative("MainWalkPath", Vector3.new(11, 0.25, 36), Vector3.new(0, 24.14, -53), CREAM)
@@ -247,8 +257,8 @@ local deckSignText = deckSignGui:FindFirstChildOfClass("TextLabel")
 -- to this deck by an additional server-side bounds check.
 local barrier = decorative(
 	"FrontSpectatorGlassBarrier",
-	Vector3.new(91, 7, 1.5),
-	Vector3.new(0, 28, -9.6),
+	Vector3.new(90, 8.5, 0.45),
+	Vector3.new(0, 28.8, -10.25),
 	Color3.fromRGB(177, 238, 252),
 	Enum.Material.Glass
 )
@@ -270,24 +280,24 @@ local function makePromenade(side)
 	)
 	local inner = decorative(
 		"InnerViewingSafetyGlass",
-		Vector3.new(1.5, 7, 84),
-		Vector3.new(side * 43.75, 28, 31),
+		Vector3.new(0.45, 8.5, 79.8),
+		Vector3.new(side * 44.5, 28.8, 30.1),
 		Color3.fromRGB(177, 238, 252),
 		Enum.Material.Glass
 	)
 	inner.Transparency = 0.78
 	local outer = decorative(
 		"OuterViewingFence",
-		Vector3.new(1.5, 7, 95),
-		Vector3.new(side * 54.1, 27.5, 22.5),
+		Vector3.new(0.75, 7, 95),
+		Vector3.new(side * 53.5, 28.05, 22.5),
 		WOOD,
 		Enum.Material.Wood
 	)
 	outer.Transparency = 0.05
 	local endRail = decorative(
 		"ViewingEndFence",
-		Vector3.new(11, 7, 1.4),
-		Vector3.new(x, 27.5, 70),
+		Vector3.new(9, 7, 0.7),
+		Vector3.new(x, 28.05, 69.65),
 		WOOD,
 		Enum.Material.Wood
 	)
@@ -329,64 +339,71 @@ end
 makeStall("LeftShopComingSoon", -25, -49, ROOF_BLUE, "SHOP", "COMING SOON")
 makeStall("RightCosmeticsComingSoon", 25, -49, ROOF_PINK, "COSMETICS", "COMING SOON")
 
--- World leaderboard: genuine session stats only. No DataStore/global rankings.
-local boardPost = decorative("LeaderboardPost", Vector3.new(1.4, 10, 1.4), Vector3.new(33, 29, -82), WOOD, Enum.Material.Wood)
-local board = decorative("LeaderboardBoard", Vector3.new(15, 10, 1.3), Vector3.new(33, 34, -82), ROOF_BLUE)
+-- Compact single-face leaderboard. Its front for arriving lobby visitors
+-- points toward +Z (Back face in Roblox part-local coordinates).
+local boardPost = decorative(
+	"LeaderboardPost",
+	Vector3.new(1.4, 8.5, 1.2),
+	Vector3.new(33, 26.25, -83.4),
+	WOOD, Enum.Material.Wood
+)
+local board = decorative(
+	"LeaderboardBoard",
+	Vector3.new(13, 8, 1.1),
+	Vector3.new(33, 32.2, -82),
+	ROOF_BLUE
+)
+local boardGui = Instance.new("SurfaceGui")
+boardGui.Name = "ServerLeaderboard"
+boardGui.Face = Enum.NormalId.Back
+boardGui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+boardGui.PixelsPerStud = 34
+boardGui.LightInfluence = 0
+boardGui.AlwaysOnTop = false
+boardGui.Parent = board
 
-local boardFaces = {}
-local function makeScoreFace(side)
-	local surface = Instance.new("SurfaceGui")
-	surface.Name = "ServerLeaderboard"
-	surface.Face = side
-	surface.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-	surface.PixelsPerStud = 30
-	surface.LightInfluence = 0
-	surface.AlwaysOnTop = false
-	surface.Parent = board
+local card = Instance.new("Frame")
+card.Name = "ScoreCard"
+card.Position = UDim2.fromScale(0.04, 0.055)
+card.Size = UDim2.fromScale(0.92, 0.89)
+card.BackgroundColor3 = WHITE
+card.BorderSizePixel = 0
+card.Parent = boardGui
+local cardCorner = Instance.new("UICorner")
+cardCorner.CornerRadius = UDim.new(0, 10)
+cardCorner.Parent = card
 
-	local card = Instance.new("Frame")
-	card.Name = "WhiteScoreCard"
-	card.Position = UDim2.fromScale(0.04, 0.045)
-	card.Size = UDim2.fromScale(0.92, 0.91)
-	card.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	card.BorderSizePixel = 0
-	card.Parent = surface
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 12)
-	corner.Parent = card
-
-	local function makeLabel(name, content, y, h, fontSize, color, bold)
-		local t = Instance.new("TextLabel")
-		t.Name = name
-		t.Position = UDim2.new(0.04, 0, y, 0)
-		t.Size = UDim2.new(0.92, 0, h, 0)
-		t.BackgroundTransparency = 1
-		t.Text = content
-		t.TextColor3 = color
-		t.TextSize = fontSize
-		t.TextScaled = false
-		t.TextWrapped = false
-		t.TextTruncate = Enum.TextTruncate.AtEnd
-		t.TextXAlignment = Enum.TextXAlignment.Left
-		t.Font = bold and Enum.Font.GothamBold or Enum.Font.Gotham
-		t.Parent = card
-		return t
-	end
-
-	makeLabel("Title", "TOP RACERS", 0.04, 0.14, 31, Color3.fromRGB(33, 101, 183), true)
-	makeLabel("Scope", "THIS SERVER ONLY", 0.20, 0.09, 19, Color3.fromRGB(102, 124, 143), true)
-	local rows = {}
-	for i = 1, 4 do
-		rows[i] = makeLabel(
-			"Rank" .. i, "", 0.34 + (i - 1) * 0.142, 0.115,
-			24, Color3.fromRGB(35, 73, 111), i == 1
-		)
-	end
-	makeLabel("Note", "Resets when server closes", 0.92, 0.06, 16, Color3.fromRGB(114, 134, 154), false)
-	table.insert(boardFaces, rows)
+local function scoreLabel(name, message, position, height, size, isBold)
+	local text = Instance.new("TextLabel")
+	text.Name = name
+	text.Position = UDim2.new(0.055, 0, position, 0)
+	text.Size = UDim2.new(0.89, 0, height, 0)
+	text.BackgroundTransparency = 1
+	text.Text = message
+	text.TextColor3 = Color3.fromRGB(41, 91, 147)
+	text.TextSize = size
+	text.TextScaled = false
+	text.TextWrapped = false
+	text.TextTruncate = Enum.TextTruncate.AtEnd
+	text.TextXAlignment = Enum.TextXAlignment.Left
+	text.TextYAlignment = Enum.TextYAlignment.Center
+	text.Font = isBold and Enum.Font.GothamBold or Enum.Font.GothamMedium
+	text.Parent = card
+	return text
 end
-makeScoreFace(Enum.NormalId.Front)
-makeScoreFace(Enum.NormalId.Back)
+
+scoreLabel("Title", "TOP RACERS", 0.065, 0.18, 32, true)
+local boardRows = {}
+for i = 1, 4 do
+	boardRows[i] = scoreLabel(
+		"Player" .. i,
+		"",
+		0.29 + (i - 1) * 0.165,
+		0.12,
+		23,
+		i == 1
+	)
+end
 
 local lastLeaderboardText = ""
 local function refreshSessionLeaderboard()
@@ -404,23 +421,21 @@ local function refreshSessionLeaderboard()
 		if ac ~= bc then return ac > bc end
 		return a.UserId < b.UserId
 	end)
-	local textRows = {}
+	local rows = {}
 	for i = 1, 4 do
 		local player = contestants[i]
 		if player then
 			local wins, coins = values(player)
-			textRows[i] = string.format("%d. %s  ·  %dW  %dC", i, player.DisplayName, wins, coins)
+			rows[i] = string.format("%d. %s  ·  %dW  %dC", i, player.DisplayName, wins, coins)
 		else
-			textRows[i] = i == 1 and "No players yet" or ""
+			rows[i] = ""
 		end
 	end
-	local key = table.concat(textRows, "\n")
+	local key = table.concat(rows, "\n")
 	if key == lastLeaderboardText then return end
 	lastLeaderboardText = key
-	for _, rows in ipairs(boardFaces) do
-		for i, label in ipairs(rows) do
-			label.Text = textRows[i]
-		end
+	for i, textLabel in ipairs(boardRows) do
+		textLabel.Text = rows[i]
 	end
 end
 local rewardsBase = decorative("FutureRewardsPodium", Vector3.new(12, 1.5, 10), Vector3.new(-33, 24.75, -82), Color3.fromRGB(255, 195, 91))
@@ -463,12 +478,14 @@ for _, side in ipairs({-1, 1}) do
 	end
 end
 
--- Under-island lawn and lava are scenery/physics separate from the hub.
-local grass = part(
-	"GrassSurround", Vector3.new(190, 2, 320),
-	Vector3.new(0, 0, 58), Color3.fromRGB(103, 205, 88), Enum.Material.Grass
+-- Calm sea backdrop covers the template's empty gray baseplate when viewed
+-- from the arena; unlike the grass island it has no collision.
+local ocean = part(
+	"OceanBackdrop", Vector3.new(820, 1.5, 820),
+	Vector3.new(0, 0.6, 58), Color3.fromRGB(72, 185, 234), Enum.Material.SmoothPlastic
 )
-grass.CanTouch = false
+ocean.CanCollide = false
+ocean.CanTouch = false
 local lava = part("Lava", Vector3.new(105, 2, 235), Vector3.new(0, 7, 68), Color3.fromRGB(255, 105, 35), Enum.Material.Neon)
 lava.CanCollide = false
 lava.Transparency = 0.12
@@ -516,8 +533,8 @@ local function buildBridges(count)
 		for _, edge in ipairs({-1, 1}) do
 			local rail = part(
 				("Lane%02d_EdgeGlow"):format(lane),
-				Vector3.new(0.35, 0.35, SETTINGS.TileSpacing * SETTINGS.BridgeLength + 7),
-				Vector3.new(x + edge * 3.25, SETTINGS.BridgeY - 1.1, SETTINGS.BridgeLength * SETTINGS.TileSpacing / 2),
+				Vector3.new(0.35, 0.35, SETTINGS.TileSpacing * SETTINGS.BridgeLength + 6.7),
+				Vector3.new(x + edge * (3.35 - 0.175), SETTINGS.BridgeY - 0.625, SETTINGS.BridgeLength * SETTINGS.TileSpacing / 2),
 				VIOLET, Enum.Material.SmoothPlastic, bridgeModel
 			)
 			rail.CanCollide = false
@@ -526,47 +543,65 @@ local function buildBridges(count)
 		end
 	end
 
-	-- One festive finish arch across every generated lane.
-	local bannerWidth = math.max(12, count * SETTINGS.LaneSpacing)
+	-- Clean two-post finish gate, with a single sign integrated into the beam.
+	-- Keep all decorative parts noncolliding; winning still happens on tile 20.
 	local finishZ = SETTINGS.BridgeLength * SETTINGS.TileSpacing
+	local occupiedSpan = (count - 1) * SETTINGS.LaneSpacing + 6.7
+	local postX = occupiedSpan / 2 + 1.9
 	local beam = part(
-		"SharedFinishArchBeam",
-		Vector3.new(bannerWidth + 5, 2.7, 2.5),
-		Vector3.new(0, SETTINGS.BridgeY + 13.5, finishZ),
-		Color3.fromRGB(255, 204, 62), Enum.Material.SmoothPlastic, bridgeModel
+		"FinishGateBeam",
+		Vector3.new(occupiedSpan + 6.2, 3.0, 1.5),
+		Vector3.new(0, SETTINGS.BridgeY + 11.6, finishZ),
+		Color3.fromRGB(249, 252, 255), Enum.Material.SmoothPlastic, bridgeModel
 	)
 	beam.CanCollide = false
+	beam.CanTouch = false
 	finishCenter = beam
-	textSign(beam, "FINISH!", 2.6, 210)
+
+	local gateText = Instance.new("SurfaceGui")
+	gateText.Name = "FinishWord"
+	gateText.Face = Enum.NormalId.Front -- readable when approaching along +Z
+	gateText.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	gateText.PixelsPerStud = 35
+	gateText.LightInfluence = 0
+	gateText.AlwaysOnTop = false
+	gateText.Parent = beam
+	local name = Instance.new("TextLabel")
+	name.Name = "FinishLabel"
+	name.Size = UDim2.fromScale(1, 1)
+	name.BackgroundTransparency = 1
+	name.Font = Enum.Font.GothamBlack
+	name.Text = "FINISH"
+	name.TextColor3 = Color3.fromRGB(37, 116, 193)
+	name.TextSize = 65
+	name.TextScaled = false
+	name.Parent = gateText
+
 	for _, side in ipairs({-1, 1}) do
-		local postX = side * (bannerWidth / 2 + 0.5)
-		local post = part(
-			"FinishArchColumn",
-			Vector3.new(2.8, 14, 3.5),
-			Vector3.new(postX, SETTINGS.BridgeY + 6.5, finishZ),
-			Color3.fromRGB(56, 158, 246), Enum.Material.SmoothPlastic, bridgeModel
+		local column = part(
+			"FinishGatePillar",
+			Vector3.new(2.0, 11.7, 2.5),
+			Vector3.new(side * postX, SETTINGS.BridgeY + 5.85, finishZ),
+			Color3.fromRGB(73, 171, 235), Enum.Material.SmoothPlastic, bridgeModel
 		)
-		post.CanCollide = false
-		local cap = part(
-			"FinishArchFlag",
-			Vector3.new(6, 2.1, 2.1),
-			Vector3.new(postX + side * 1.7, SETTINGS.BridgeY + 15.2, finishZ),
-			side == -1 and Color3.fromRGB(255, 100, 141) or Color3.fromRGB(64, 210, 136),
-			Enum.Material.SmoothPlastic, bridgeModel
-		)
-		cap.CanCollide = false
+		column.CanCollide = false
+		column.CanTouch = false
 	end
-	-- Bright checker accents, all noncolliding. Winning remains at tile 20.
-	local checks = math.max(2, math.floor(bannerWidth / 4))
-	for i = 1, checks do
-		local block = part(
-			"FinishChecker",
-			Vector3.new(bannerWidth / checks, 0.85, 2.8),
-			Vector3.new(-bannerWidth / 2 + (i - 0.5) * (bannerWidth / checks), SETTINGS.BridgeY + 11.6, finishZ),
-			i % 2 == 0 and WHITE or Color3.fromRGB(45, 70, 106),
-			Enum.Material.SmoothPlastic, bridgeModel
-		)
-		block.CanCollide = false
+	-- Checkered stripes belong only to the final glass tile, not across gaps
+	-- between player lanes; they cannot be walked on independently.
+	for lane = 1, count do
+		local laneX = lanes[lane].x
+		for i = 1, 6 do
+			local mark = part(
+				"FinishTileChecker",
+				Vector3.new(6.7 / 6, 0.055, 1.15),
+				Vector3.new(laneX - 3.35 + (i - 0.5) * (6.7 / 6), SETTINGS.BridgeY + 0.48, finishZ - 2.1),
+				i % 2 == 0 and Color3.fromRGB(43, 75, 113) or WHITE,
+				Enum.Material.SmoothPlastic, bridgeModel
+			)
+			mark.CanCollide = false
+			mark.CanTouch = false
+		end
 	end
 end
 
@@ -1236,11 +1271,11 @@ end
 ]====]
 
 local CLIENT_SOURCE = [====[
--- Mythblox Game 01 · clean verified client v0.10
+-- Mythblox Game 01 · clean verified client v0.11
 -- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local BUILD_VERSION = "v0.10"
+local BUILD_VERSION = "v0.11"
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local network = ReplicatedStorage:WaitForChild("MythbloxGame01")
@@ -1616,7 +1651,7 @@ local function update(state)
 		lastTurnRendered = -1
 	end
 	local mine = state.mine
-	phaseText.Text = ("v0.10 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
+	phaseText.Text = ("v0.11 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
 	clockText.Text = tostring(state.time or 0) .. "s"
 	description.Text = state.message or ""
 
@@ -1625,7 +1660,7 @@ local function update(state)
 	movement.Visible = phase == "MOVE" and mine ~= nil and mine.alive == true
 
 	if phase == "JOIN" then
-		phaseText.Text = "v0.10 · NEXT MATCH"
+		phaseText.Text = "v0.11 · NEXT MATCH"
 		description.Text = state.queued and "You're queued for the next race."
 			or "Join at the gold pad or use the button below."
 		ownStats.Text = ("%d/%d PLAYERS READY"):format(state.ready or 0, state.capacity or 8)
@@ -1644,7 +1679,7 @@ local function update(state)
 	if phase == "RESULTS" then
 		-- Server sends winner/draw text in state.message; show it only in
 		-- the small status panel and avoid blocking the camera.
-		phaseText.Text = "v0.10 · ROUND OVER"
+		phaseText.Text = "v0.11 · ROUND OVER"
 		ownStats.Text = "NEXT MATCH STARTS SOON"
 	end
 
@@ -1689,7 +1724,7 @@ stateEvent.OnClientEvent:Connect(update)
 command:FireServer("Sync")
 ]====]
 
--- Diagnostic/cleanup installer: v0.10
+-- Diagnostic/cleanup installer: v0.11
 -- Remove known legacy copies from services used by previous Mythblox builds.
 -- This intentionally does NOT remove scripts belonging to other games.
 -- Permanently remove the UNUSED default Roblox Baseplate spawn while in
@@ -1775,12 +1810,12 @@ for _, child in ipairs(game:GetDescendants()) do
 	end
 end
 
-print("[Mythblox INSTALL] v0.10 VERIFIED: 2 scripts installed and Source checked.")
-print("[Mythblox INSTALL] Server: " .. liveServer:GetFullName() .. " | Build v0.10")
-print("[Mythblox INSTALL] Client: " .. liveClient:GetFullName() .. " | Build v0.10")
+print("[Mythblox INSTALL] v0.11 VERIFIED: 2 scripts installed and Source checked.")
+print("[Mythblox INSTALL] Server: " .. liveServer:GetFullName() .. " | Build v0.11")
+print("[Mythblox INSTALL] Client: " .. liveClient:GetFullName() .. " | Build v0.11")
 print("[Mythblox INSTALL] Cleaned " .. #removed .. " previous Mythblox script/UI objects.")
 print("[Mythblox INSTALL] Disabled " .. #disabledLegacy .. " other old game scripts found by source signature.")
 if #suspicious > 0 then
 	warn("[Mythblox INSTALL] Other Mythblox scripts still exist: " .. table.concat(suspicious, "; "))
 end
-print("[Mythblox INSTALL] NOW START A FRESH PLAY SESSION. Confirm the top HUD visibly says v0.10, and check Output for SERVER RUNNING v0.10 and CLIENT RUNNING v0.10.")
+print("[Mythblox INSTALL] NOW START A FRESH PLAY SESSION. Confirm the top HUD visibly says v0.11, and check Output for SERVER RUNNING v0.11 and CLIENT RUNNING v0.11.")
