@@ -17,7 +17,7 @@ Use this file to separate **confirmed project rules** from **ideas not yet appro
 - 45–120-second matches; 5–10-second intermission.
 - Cosmetic-first monetization; no paid random items, and no pay-to-win.
 - Rojo/code-first version-controlled workflow with Studio Assistant; optional local Studio MCP integration.
-- **First-game concept under active design:** parallel glass-bridge voting over lava. Players manually step one panel on a safe selection, or stay when blocked. Five choices every turn. See [concept memo](FIRST_GAME_GLASS_BRIDGE_CONCEPT.md).
+- **First-game concept under active design:** parallel glass-bridge voting over lava. Players manually advance up to the number selected (fixed choices 1–5) when safe, or stay when blocked. No spinner in MVP. See [concept memo](FIRST_GAME_GLASS_BRIDGE_CONCEPT.md).
 
 ## Open decisions
 
@@ -25,8 +25,8 @@ Use this file to separate **confirmed project rules** from **ideas not yet appro
 |---|---|---|
 | First game mechanic | Glass-bridge voting race over lava | Preferred concept; rules under review |
 | First game name | Chosen only after agreeing on mechanic | Not selected |
-| Tie-handling and 2-player play | Original popularity vs tied-vote wheel and other variants | Not final; simulated in concept memo |
-| Bridge race parameters | 6 tiles, 3 cracks, 5s vote / 4s move | Suggested prototype defaults |
+| Two-player rule and tie-handling | Fixed 1–5 choices grant up to N steps when safe; tied most-popular groups of 2+ are blocked; no spinner | Current prototype proposal |
+| Bridge race parameters | 20 tiles, 3 cracks, 5s vote / 6s move | Suggested prototype defaults, untested |
 | AI-to-Studio integration | Assistant/scripts, Rojo/code-first, local MCP-enabled client | To confirm |
 | First-store balance | Cosmetics only vs one tightly bounded optional perk | To confirm |
 | First target audience | Age-checked 16+ first vs expanded Kids/Select reach subject to eligibility | To confirm |
