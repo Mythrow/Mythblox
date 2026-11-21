@@ -1,4 +1,4 @@
--- Mythblox Game 01 · visual polish v0.3
+-- Mythblox Game 01 · bright Roblox-style visuals v0.4
 -- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -19,16 +19,19 @@ gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 gui.DisplayOrder = 10
 gui.Parent = playerGui
 
+-- Bright white panels + colorful blue/green buttons, readable against daylight.
 local COLOR = {
-	Ink = Color3.fromRGB(18, 24, 45),
-	InkBright = Color3.fromRGB(29, 40, 71),
-	Text = Color3.fromRGB(248, 250, 255),
-	Muted = Color3.fromRGB(177, 198, 219),
-	Blue = Color3.fromRGB(66, 141, 245),
-	Green = Color3.fromRGB(42, 189, 128),
-	Red = Color3.fromRGB(234, 89, 98),
-	Gold = Color3.fromRGB(247, 194, 94),
-	Purple = Color3.fromRGB(158, 122, 255),
+	Ink = Color3.fromRGB(255, 255, 255),         -- cards
+	InkBright = Color3.fromRGB(231, 244, 255),   -- alternate rows and tracks
+	Text = Color3.fromRGB(29, 63, 103),          -- dark text on bright cards
+	Muted = Color3.fromRGB(90, 119, 151),
+	Blue = Color3.fromRGB(41, 137, 242),
+	Green = Color3.fromRGB(35, 180, 100),
+	Red = Color3.fromRGB(224, 73, 83),
+	Gold = Color3.fromRGB(255, 198, 63),
+	Purple = Color3.fromRGB(35, 112, 211),       -- blue accent, kept variable name
+	Border = Color3.fromRGB(179, 218, 247),
+	White = Color3.fromRGB(255, 255, 255),
 }
 
 local function addCorner(parent, radius)
@@ -40,9 +43,9 @@ end
 
 local function addStroke(parent, color, thickness)
 	local stroke = Instance.new("UIStroke")
-	stroke.Color = color or COLOR.Purple
+	stroke.Color = color or COLOR.Border
 	stroke.Thickness = thickness or 1
-	stroke.Transparency = 0.52
+	stroke.Transparency = 0.25
 	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	stroke.Parent = parent
 	return stroke
@@ -52,11 +55,11 @@ local function panel(name)
 	local frame = Instance.new("Frame")
 	frame.Name = name
 	frame.BackgroundColor3 = COLOR.Ink
-	frame.BackgroundTransparency = 0.055
+	frame.BackgroundTransparency = 0.015
 	frame.BorderSizePixel = 0
 	frame.Parent = gui
 	addCorner(frame, 13)
-	addStroke(frame, COLOR.Purple, 1)
+	addStroke(frame, COLOR.Border, 1)
 	return frame
 end
 
@@ -82,7 +85,7 @@ local function button(parent, name, content, bg)
 	local b = Instance.new("TextButton")
 	b.Name = name
 	b.Text = content
-	b.TextColor3 = COLOR.Text
+	b.TextColor3 = COLOR.White
 	b.Font = Enum.Font.GothamBold
 	b.TextSize = 23
 	b.BackgroundColor3 = bg or COLOR.Blue
@@ -90,7 +93,7 @@ local function button(parent, name, content, bg)
 	b.AutoButtonColor = true
 	b.Parent = parent
 	addCorner(b, 11)
-	addStroke(b, COLOR.Text, 1)
+	addStroke(b, COLOR.White, 1)
 	return b
 end
 
@@ -99,7 +102,7 @@ local top = panel("StatusPanel")
 top.AnchorPoint = Vector2.new(0.5, 0)
 top.Position = UDim2.new(0.5, 0, 0, 8)
 local phaseText = label(top, "Phase", "JOINING", 16, 7, -125, 25, 17, COLOR.Purple, true)
-local clockText = label(top, "Clock", "10s", 16, 7, -32, 26, 21, COLOR.Gold, true)
+local clockText = label(top, "Clock", "10s", 16, 7, -32, 26, 21, COLOR.Purple, true)
 clockText.TextXAlignment = Enum.TextXAlignment.Right
 local description = label(top, "Guidance", "Join the next round.", 16, 36, -32, 47, 15, COLOR.Text, false)
 local ownStats = label(top, "Progress", "", 16, 86, -32, 24, 14, COLOR.Muted, true)
@@ -122,7 +125,7 @@ addCorner(progressFill, 4)
 -- Optional standings on desktop; hidden on smaller screens.
 local standings = panel("Standings")
 standings.AnchorPoint = Vector2.new(1, 0)
-local standingsHeader = label(standings, "Header", "LEADERBOARD", 12, 7, -24, 27, 15, COLOR.Gold, true)
+local standingsHeader = label(standings, "Header", "LEADERBOARD", 12, 7, -24, 27, 15, COLOR.Purple, true)
 local standingsRows = label(standings, "Rows", "Waiting for racers", 12, 40, -24, 128, 13, COLOR.Text)
 standingsRows.TextYAlignment = Enum.TextYAlignment.Top
 
@@ -164,6 +167,7 @@ for n = 1, 5 do
 		command:FireServer("Vote", number)
 		for chosen, other in ipairs(choiceButtons) do
 			other.BackgroundColor3 = chosen == number and COLOR.Gold or COLOR.Blue
+			other.TextColor3 = chosen == number and COLOR.Text or COLOR.White
 		end
 		voteHint.Text = "Choice " .. number .. " selected · you can change it before time ends"
 	end)
@@ -180,7 +184,7 @@ movementText.TextXAlignment = Enum.TextXAlignment.Center
 local result = panel("ResultPanel")
 result.AnchorPoint = Vector2.new(0.5, 0.5)
 result.Position = UDim2.fromScale(0.5, 0.48)
-local resultKicker = label(result, "Kicker", "ROUND COMPLETE", 18, 10, -36, 30, 17, COLOR.Gold, true)
+local resultKicker = label(result, "Kicker", "ROUND COMPLETE", 18, 10, -36, 30, 17, COLOR.Purple, true)
 resultKicker.TextXAlignment = Enum.TextXAlignment.Center
 local resultMessage = label(result, "Winner", "", 18, 43, -36, 76, 22, COLOR.Text, true)
 resultMessage.TextXAlignment = Enum.TextXAlignment.Center
@@ -188,7 +192,7 @@ resultMessage.TextXAlignment = Enum.TextXAlignment.Center
 -- Reveal panel displays every player's number, risk and permitted movement.
 -- No one can see choices during secret voting; the server only publishes after.
 local reveal = panel("RevealPanel")
-local revealHeader = label(reveal, "Heading", "NUMBER REVEAL", 13, 7, -26, 26, 16, COLOR.Gold, true)
+local revealHeader = label(reveal, "Heading", "NUMBER REVEAL", 13, 7, -26, 26, 16, COLOR.Purple, true)
 local revealSubtitle = label(reveal, "Rule", "MOST PICKED = CRACK", 13, 34, -26, 25, 13, COLOR.Muted)
 local countsRow = Instance.new("Frame")
 countsRow.Name = "CountRow"
@@ -244,7 +248,7 @@ local function drawOutcomes(state)
 	for n = 1, 5 do
 		local hit = state.unsafe and state.unsafe[n] == true
 		local card = countCards[n]
-		card.frame.BackgroundColor3 = hit and Color3.fromRGB(100, 39, 53) or COLOR.InkBright
+		card.frame.BackgroundColor3 = hit and Color3.fromRGB(255, 225, 226) or COLOR.InkBright
 		card.number.TextColor3 = hit and COLOR.Red or COLOR.Text
 		card.votes.Text = tostring(counts[n] or 0) .. " picked"
 		if hit then table.insert(blocked, tostring(n)) end
@@ -264,7 +268,7 @@ local function drawOutcomes(state)
 		row.Name = "Outcome" .. idx
 		row.Size = UDim2.new(1, -3, 0, 29)
 		row.LayoutOrder = idx
-		row.BackgroundColor3 = idx % 2 == 0 and COLOR.InkBright or Color3.fromRGB(32, 43, 75)
+		row.BackgroundColor3 = idx % 2 == 0 and COLOR.InkBright or Color3.fromRGB(248, 252, 255)
 		row.BorderSizePixel = 0
 		row.Parent = revealList
 		addCorner(row, 7)
@@ -403,6 +407,7 @@ local function update(state)
 	if voting.Visible and mine then
 		for n, b in ipairs(choiceButtons) do
 			b.BackgroundColor3 = mine.vote == n and COLOR.Gold or COLOR.Blue
+			b.TextColor3 = mine.vote == n and COLOR.Text or COLOR.White
 		end
 		voteHint.Text = mine.vote
 			and ("Number " .. mine.vote .. " locked in · tap another to change")
@@ -412,10 +417,12 @@ local function update(state)
 	if movement.Visible and mine then
 		local allowed = mine.allowed or 0
 		if allowed > 0 then
-			movement.BackgroundColor3 = Color3.fromRGB(17, 88, 64)
+			movement.BackgroundColor3 = Color3.fromRGB(220, 252, 231)
+			movementText.TextColor3 = Color3.fromRGB(22, 128, 72)
 			movementText.Text = ("GO! Walk 1–%d GREEN tiles. Leave your old tile!"):format(allowed)
 		else
-			movement.BackgroundColor3 = Color3.fromRGB(102, 39, 51)
+			movement.BackgroundColor3 = Color3.fromRGB(255, 229, 230)
+			movementText.TextColor3 = Color3.fromRGB(198, 47, 68)
 			movementText.Text = "STAY! Your next tile is unsafe. Do not walk forward."
 		end
 	end
