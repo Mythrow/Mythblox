@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-22):** Owner's v0.10 Studio screenshots highlighted four remaining environment issues: cluttered finish, flat island edge, protruding glass barriers, and oversized two-sided leaderboard with unnecessary text. **v0.11 implements all four visual changes in source and the one-paste installer, but has not yet been tested in Studio.** The individual experience remains unnamed and unpublished.  
+**Status (2026-11-22):** Owner confirms **v0.11 works in Roblox Studio** after the four requested environment fixes. This is an owner-reported functional/visual checkpoint, **not complete mobile, spectator, performance or release QA**. The game remains unnamed and unpublished.  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
