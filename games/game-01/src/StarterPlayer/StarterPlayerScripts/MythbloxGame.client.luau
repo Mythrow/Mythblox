@@ -1,4 +1,4 @@
--- Mythblox Game 01 · streamlined screen UI v0.6
+-- Mythblox Game 01 · streamlined screen UI v0.7
 -- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -175,14 +175,8 @@ movement.AnchorPoint = Vector2.new(0.5, 1)
 local movementText = label(movement, "MovementText", "", 14, 8, -28, 50, 16, COLOR.Text, true)
 movementText.TextXAlignment = Enum.TextXAlignment.Center
 
--- A strong result banner, instead of using only small status text.
-local result = panel("ResultPanel")
-result.AnchorPoint = Vector2.new(0.5, 0.5)
-result.Position = UDim2.fromScale(0.5, 0.48)
-local resultKicker = label(result, "Kicker", "ROUND COMPLETE", 18, 10, -36, 30, 17, COLOR.Purple, true)
-resultKicker.TextXAlignment = Enum.TextXAlignment.Center
-local resultMessage = label(result, "Winner", "", 18, 43, -36, 76, 22, COLOR.Text, true)
-resultMessage.TextXAlignment = Enum.TextXAlignment.Center
+-- Results appear in the compact top status strip instead of a centered
+-- modal. The arena and other players remain visible when a match ends.
 
 -- Reveal panel displays every player's number, risk and permitted movement.
 -- No one can see choices during secret voting; the server only publishes after.
@@ -333,9 +327,6 @@ local function layoutForViewport()
 	movement.Position = UDim2.new(0.5, 0, 1, -26)
 	movementText.TextSize = compact and 14 or 17
 
-	result.Size = UDim2.fromOffset(math.min(width - 18, 550), 135)
-	resultMessage.TextSize = compact and 17 or 22
-
 	local revealW = math.min(compact and width - 16 or 322, 322)
 	local revealH = math.max(165, math.min(compact and 242 or 388, height - (compact and 156 or 171)))
 	reveal.Size = UDim2.fromOffset(revealW, revealH)
@@ -377,7 +368,6 @@ local function update(state)
 	join.Visible = phase == "JOIN" and state.queued ~= true and (state.ready or 0) < (state.capacity or 8)
 	voting.Visible = phase == "VOTE" and mine ~= nil and mine.alive == true
 	movement.Visible = phase == "MOVE" and mine ~= nil and mine.alive == true
-	result.Visible = phase == "RESULTS"
 
 	if phase == "JOIN" then
 		phaseText.Text = "NEXT MATCH"
@@ -395,6 +385,12 @@ local function update(state)
 	else
 		ownStats.Text = "SPECTATING  ·  WATCH FROM THE FRONT DECK"
 		progressFill.Size = UDim2.fromScale(0, 1)
+	end
+	if phase == "RESULTS" then
+		-- Server sends winner/draw text in state.message; show it only in
+		-- the small status panel and avoid blocking the camera.
+		phaseText.Text = "ROUND OVER"
+		ownStats.Text = "NEXT MATCH STARTS SOON"
 	end
 
 	if voting.Visible and mine then
@@ -420,10 +416,6 @@ local function update(state)
 		end
 	end
 
-	if result.Visible then
-		resultMessage.Text = state.message or "Next race starts soon."
-	end
-
 	-- Make the full breakdown visible on desktop during walking. On mobile,
 	-- display it during REVEAL only, so controls/gameplay remain unobstructed.
 	-- Keep racers' walking camera clear, show extended results to observers.
@@ -437,7 +429,6 @@ end
 join.Visible = false
 voting.Visible = false
 movement.Visible = false
-result.Visible = false
 reveal.Visible = false
 stateEvent.OnClientEvent:Connect(update)
 command:FireServer("Sync")
