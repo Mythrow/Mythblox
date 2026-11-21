@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-22):** Owner's v0.8 screenshot confirms the **latest client was running** and the large centered results overlay is no longer the current issue, but shop/sign lettering remained distorted and tiny. **v0.9 explicitly fixes the SurfaceGui sizing mode**, addressing the underlying wide-part-to-fixed-canvas aspect-ratio mismatch; **Studio verification is still pending**. The game remains unnamed and unpublished.  
+**Status (2026-11-22):** Owner's v0.9 Studio screenshot shows correctly proportioned in-world lettering and identifies an unused **default Baseplate spawn marker beneath the lava**. **v0.10 removes the stock spawn and adds a live, current-server wins/coins board near the hub plaza.** v0.10 is committed but has not been playtested in Studio. The game remains unnamed and unpublished.  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -34,6 +34,21 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 | Reward | Win +25 coins, participation +5 coins |
 
 **Rewards are session-only in v0.1.** There is no DataStore persistence, no purchasable items, and no paid power-ups. Do not publish this as a monetized finished game without playtests and a reviewed commerce implementation.
+
+## v0.10 — clean spawning and current-server leaderboard (Studio test pending)
+
+Owner's v0.9 screenshot revealed the **original default Baseplate SpawnLocation**, still visible beneath the lava. This isn't the raised Mythblox spawn the gameplay uses; the old default remains in the source place from creating a Baseplate template.
+
+**Changes in v0.10:**
+- The Studio **Command Bar installer removes the default low-altitude `SpawnLocation`** near world origin (only if its name is exactly `SpawnLocation` and it is close to (0,0,0)); it preserves custom spawns away from that location. This removes the unused marker **from Edit mode** as well as future Play sessions.
+- The server also cleans that same leftover spawn at runtime if a place is initialized through Rojo/manual script installs rather than the Command Bar. New participants and respawned players still use `MythbloxLobbySpawn` on the elevated island.
+- The existing physical leaderboard near spawn is now **functional for the current server only**. It shows up to four players sorted by Wins then Coins, on both sides of a readable light board. It refreshes with the server's match-state updates.
+- The leaderboard explicitly says **THIS SERVER ONLY** and **Resets when server closes**. It does **not** save to a DataStore or show cross-server/global rankings. Cosmetic shops/rewards remain placeholders.
+- No core gameplay, match timing, voting rules, damage, movement, spectating, or winner reward amounts were changed.
+
+**Install:** Stop Play, open [the latest installer](INSTALL_STUDIO_COMMAND_BAR.luau) in GitHub, choose Raw, copy the **entire** file and run it via the **Command Bar in Studio Edit mode**. Confirm Output shows `v0.10 VERIFIED` and the count of unused Baseplate spawns removed. The top HUD should show `v0.10` when Play starts.
+
+**Test:** Confirm the white Roblox default spawn star/platform is gone from beneath the lava in both Edit and Play; join/die/respawn twice and verify the island spawn; earn wins/coins in a two-client match and verify the leaderboard reflects real current-server totals. **Unverified in Studio so far.**
 
 ## v0.9 — correct SurfaceGui canvas proportions (needs Studio confirmation)
 
@@ -216,6 +231,6 @@ For repeat development, clone `Mythrow/Mythblox`, install [Rojo](https://rojo.sp
 
 ## Next step
 
-Functional prototype v0.2 was confirmed by the owner. **Next: verify v0.9 running and compare the shop signs with the v0.8 screenshot.** Then complete the spectator and gameplay regression checklist in [TEST_PLAN.md](TEST_PLAN.md). Review mobile controls and map sightlines before considering persistence and cosmetics. Validate whether **5-second selection / 6-second walking / 20 tiles / 3 cracks** is enjoyable before adding features.
+Functional prototype v0.2 was confirmed by the owner. **Next: verify v0.10 in Studio, specifically the removal of the under-lava spawn and the live current-server leaderboard**, then proceed to spectator/mobile regression testing in [TEST_PLAN.md](TEST_PLAN.md). Review mobile controls and map sightlines before considering persistence and cosmetics. Validate whether **5-second selection / 6-second walking / 20 tiles / 3 cracks** is enjoyable before adding features.
 
 See [the Mythblox game-design memo](../../docs/FIRST_GAME_GLASS_BRIDGE_CONCEPT.md) for earlier alternatives, including the spinner idea that was explicitly deferred.
