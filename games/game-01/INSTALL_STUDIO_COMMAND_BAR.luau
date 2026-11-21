@@ -99,48 +99,196 @@ local function textSign(parent, text, yOffset, width)
 	return gui
 end
 
+-- Persistent social island and phase-aware shared ready/spectator platform.
+local hub = Instance.new("Model")
+hub.Name = "HubIsland"
+hub.Parent = world
+
+local GRASS = Color3.fromRGB(101, 204, 91)
+local CREAM = Color3.fromRGB(246, 226, 171)
+local WOOD = Color3.fromRGB(170, 111, 58)
+local ROOF_BLUE = Color3.fromRGB(52, 157, 244)
+local ROOF_PINK = Color3.fromRGB(252, 107, 150)
+local WHITE = Color3.fromRGB(253, 251, 238)
+
+local function decorative(name, size, position, color, material)
+	return part(name, size, position, color, material or Enum.Material.SmoothPlastic, hub)
+end
+
+local ground = decorative("HubGrassIsland", Vector3.new(130, 4, 91), Vector3.new(0, 22, -59), GRASS, Enum.Material.Grass)
+local plaza = decorative("SpawnPlaza", Vector3.new(26, 0.4, 23), Vector3.new(0, 24.2, -76), CREAM)
+local path = decorative("MainWalkPath", Vector3.new(11, 0.25, 36), Vector3.new(0, 24.14, -53), CREAM)
+local spurLeft = decorative("LeftShopPath", Vector3.new(27, 0.22, 7), Vector3.new(-19, 24.13, -48), CREAM)
+local spurRight = decorative("RightShopPath", Vector3.new(27, 0.22, 7), Vector3.new(19, 24.13, -48), CREAM)
+
+-- The platform is BOTH ready and spectator space. It persists for the whole
+-- server session; we change its message, never create a second front deck.
+local sharedDeck = decorative(
+	"SharedReadyAndSpectatorDeck",
+	Vector3.new(90, 1, 24),
+	Vector3.new(0, 23.5, -22),
+	Color3.fromRGB(228, 245, 254)
+)
+local deckCenter = decorative(
+	"JoinAndWatchFloorMarking",
+	Vector3.new(19, 0.17, 9),
+	Vector3.new(0, 24.11, -25),
+	Color3.fromRGB(255, 207, 67)
+)
+deckCenter.CanCollide = false
+local deckPrompt = Instance.new("ProximityPrompt")
+deckPrompt.Name = "JoinRoundPrompt"
+deckPrompt.ActionText = "Join next round"
+deckPrompt.ObjectText = "Glass Bridge Race"
+deckPrompt.KeyboardKeyCode = Enum.KeyCode.E
+deckPrompt.HoldDuration = 0
+deckPrompt.MaxActivationDistance = 15
+deckPrompt.RequiresLineOfSight = false
+deckPrompt.Parent = deckCenter
+
+local sharedDeckSignAnchor = decorative(
+	"SharedPlatformSign",
+	Vector3.new(1, 1, 1),
+	Vector3.new(0, 30, -25),
+	CREAM
+)
+sharedDeckSignAnchor.Transparency = 1
+sharedDeckSignAnchor.CanCollide = false
+local deckSignGui = textSign(sharedDeckSignAnchor, "JOIN NEXT ROUND", 3, 310)
+local deckSignText = deckSignGui:FindFirstChildOfClass("TextLabel")
+
+-- One transparent front barrier lets spectators see the bridges but stops
+-- jumping into an active lane. A spectator who bypasses it is also returned
+-- to this deck by an additional server-side bounds check.
+local barrier = decorative(
+	"FrontSpectatorGlassBarrier",
+	Vector3.new(91, 14, 1.5),
+	Vector3.new(0, 31, -9.6),
+	Color3.fromRGB(177, 238, 252),
+	Enum.Material.Glass
+)
+barrier.Transparency = 0.73
+
+local function makePromenade(side)
+	local x = side * 49
+	local walkway = decorative(
+		side < 0 and "LeftSpectatorWalkway" or "RightSpectatorWalkway",
+		Vector3.new(9, 1, 95),
+		Vector3.new(x, 23.5, 22.5),
+		Color3.fromRGB(226, 244, 252)
+	)
+	local connector = decorative(
+		side < 0 and "LeftSpectatorConnector" or "RightSpectatorConnector",
+		Vector3.new(12, 1, 15),
+		Vector3.new(side * 44, 23.5, -17.5),
+		Color3.fromRGB(226, 244, 252)
+	)
+	local inner = decorative(
+		"InnerViewingSafetyGlass",
+		Vector3.new(1.5, 14, 84),
+		Vector3.new(side * 43.75, 31, 31),
+		Color3.fromRGB(177, 238, 252),
+		Enum.Material.Glass
+	)
+	inner.Transparency = 0.72
+	local outer = decorative(
+		"OuterViewingFence",
+		Vector3.new(1.5, 7, 95),
+		Vector3.new(side * 54.1, 27.5, 22.5),
+		WOOD,
+		Enum.Material.Wood
+	)
+	outer.Transparency = 0.05
+	local endRail = decorative(
+		"ViewingEndFence",
+		Vector3.new(11, 7, 1.4),
+		Vector3.new(x, 27.5, 70),
+		WOOD,
+		Enum.Material.Wood
+	)
+	return walkway
+end
+makePromenade(-1)
+makePromenade(1)
+
+-- Invisible, noninteractive spawn pad. Its parent location is deliberately
+-- well clear of the lava. Existing respawn code still points here.
 local lobby = Instance.new("SpawnLocation")
 lobby.Name = "MythbloxLobbySpawn"
 lobby.Neutral = true
 lobby.Duration = 0
 lobby.Anchored = true
-lobby.Size = Vector3.new(34, 1.5, 24)
-lobby.Position = Vector3.new(0, SETTINGS.BridgeY, -70)
+lobby.Size = Vector3.new(18, 0.4, 13)
+lobby.Position = Vector3.new(0, 24.5, -76)
 lobby.Material = Enum.Material.SmoothPlastic
-lobby.Color = Color3.fromRGB(85, 175, 255)
-lobby.Parent = world
-textSign(lobby, "MYTHBLOX | GLASS RACE", 8, 350)
--- Subtle lobby lights and floor markings; no additional paths to the lava.
-for _, side in ipairs({-1, 1}) do
-	local stripe = part(
-		"LobbyColorStripe",
-		Vector3.new(1, 0.15, 19),
-		Vector3.new(side * 14, SETTINGS.BridgeY + 0.83, -70),
-		AMBER, Enum.Material.SmoothPlastic
-	)
-	stripe.CanCollide = false
+lobby.Color = CREAM
+lobby.Transparency = 0.4
+lobby.Parent = hub
+
+-- Decorative low-poly store fronts: deliberately no paid products yet.
+local function makeStall(name, x, z, roofColor, line1, line2)
+	local group = Instance.new("Model")
+	group.Name = name
+	group.Parent = hub
+	part("DisplayFloor", Vector3.new(17, 0.6, 14), Vector3.new(x, 24.4, z), WHITE, Enum.Material.WoodPlanks, group)
+	part("BackWall", Vector3.new(17, 8, 1), Vector3.new(x, 28.4, z + 6), WOOD, Enum.Material.WoodPlanks, group)
+	for _, side in ipairs({-1, 1}) do
+		part("CornerPost", Vector3.new(1.2, 8.5, 1.2), Vector3.new(x + side * 7.2, 28.4, z - 4.5), WOOD, Enum.Material.Wood, group)
+	end
+	local roof = part("ColorfulRoof", Vector3.new(19, 1.3, 17), Vector3.new(x, 33.2, z), roofColor, Enum.Material.SmoothPlastic, group)
+	local header = part("StallSignAnchor", Vector3.new(1, 1, 1), Vector3.new(x, 31, z - 6.5), WHITE, Enum.Material.SmoothPlastic, group)
+	header.Transparency = 1
+	header.CanCollide = false
+	textSign(header, line1 .. " | " .. line2, 2, 210)
 end
-local instructionAnchor = part(
-	"LobbyInstructionAnchor",
-	Vector3.new(1, 1, 1),
-	Vector3.new(0, SETTINGS.BridgeY + 7, -58),
-	VIOLET, Enum.Material.Neon
-)
-instructionAnchor.Transparency = 1
-instructionAnchor.CanCollide = false
-textSign(instructionAnchor, "JOIN · PICK 1–5 · WALK ONLY ON GREEN", 2, 410)
--- Guard rails keep the waiting area safely away from the lava.
-for _, rail in ipairs({
-	{ "Back", Vector3.new(36, 5, 1), Vector3.new(0, SETTINGS.BridgeY + 3, -82) },
-	{ "Front", Vector3.new(36, 5, 1), Vector3.new(0, SETTINGS.BridgeY + 3, -58) },
-	{ "Left", Vector3.new(1, 5, 24), Vector3.new(-17, SETTINGS.BridgeY + 3, -70) },
-	{ "Right", Vector3.new(1, 5, 24), Vector3.new(17, SETTINGS.BridgeY + 3, -70) },
+makeStall("LeftShopComingSoon", -25, -49, ROOF_BLUE, "SHOP", "COMING SOON")
+makeStall("RightCosmeticsComingSoon", 25, -49, ROOF_PINK, "COSMETICS", "COMING SOON")
+
+-- Near-spawn board: do not invent global data or live purchase controls.
+local boardPost = decorative("LeaderboardPost", Vector3.new(1.4, 10, 1.4), Vector3.new(33, 29, -82), WOOD, Enum.Material.Wood)
+local board = decorative("LeaderboardBoard", Vector3.new(15, 10, 1.3), Vector3.new(33, 34, -82), ROOF_BLUE)
+textSign(board, "LEADERBOARD | COMING SOON", 1.5, 245)
+local rewardsBase = decorative("FutureRewardsPodium", Vector3.new(12, 1.5, 10), Vector3.new(-33, 24.75, -82), Color3.fromRGB(255, 195, 91))
+local rewardSign = decorative("FutureRewardsSignAnchor", Vector3.new(1, 1, 1), Vector3.new(-33, 27, -82), WHITE)
+rewardSign.CanCollide = false
+rewardSign.Transparency = 1
+textSign(rewardSign, "REWARDS | COMING SOON", 2.5, 226)
+
+-- Small cartoony trees and bushes around the EDGE, leaving sightlines open.
+local function makeTree(x, z, height)
+	local trunk = decorative("BlockyTreeTrunk", Vector3.new(2, height, 2), Vector3.new(x, 24 + height / 2, z), WOOD, Enum.Material.Wood)
+	for dx = -1, 1 do
+		for dz = -1, 1 do
+			if dx == 0 or dz == 0 then
+				local leaf = decorative(
+					"BlockyTreeLeaves",
+					Vector3.new(5, 3, 5),
+					Vector3.new(x + dx * 3.2, 24 + height + (dx == 0 and 2.5 or 1), z + dz * 3.2),
+					Color3.fromRGB(65 + (dx + 1) * 10, 190 + (dz + 1) * 6, 80),
+					Enum.Material.Grass
+				)
+				leaf.CanCollide = false
+			end
+		end
+	end
+end
+for _, spot in ipairs({
+	{-56, -88, 9}, {-56, -53, 10}, {-56, -24, 8},
+	{56, -88, 9}, {56, -53, 10}, {56, -24, 8}
 }) do
-	local wall = part(rail[1] .. "LobbyRail", rail[2], rail[3], Color3.fromRGB(181, 231, 255), Enum.Material.Glass)
-	wall.Transparency = 0.35
+	makeTree(spot[1], spot[2], spot[3])
+end
+for _, spot in ipairs({{-49,-92},{-43,-92},{45,-92},{50,-93},{-50,-39},{50,-39}}) do
+	local bush = decorative("HubBush", Vector3.new(5, 3, 5), Vector3.new(spot[1], 25.5, spot[2]), Color3.fromRGB(77, 198, 99), Enum.Material.Grass)
+	bush.CanCollide = false
+end
+for _, side in ipairs({-1, 1}) do
+	for _, z in ipairs({-89, -74, -59, -44}) do
+		local post = decorative("IslandEdgeFencePost", Vector3.new(1.5, 5, 1.5), Vector3.new(side * 63, 26.5, z), WOOD, Enum.Material.Wood)
+	end
 end
 
--- Sunny green ground is scenery only; the lava and match checks still eliminate falls.
+-- Under-island lawn and lava are scenery/physics separate from the hub.
 local grass = part(
 	"GrassSurround", Vector3.new(190, 2, 320),
 	Vector3.new(0, 0, 58), Color3.fromRGB(103, 205, 88), Enum.Material.Grass
@@ -159,9 +307,11 @@ end)
 -- participant after the join countdown has completed.
 local lanes = {}
 local bridgeModel = nil
+local finishCenter = nil
 local function clearBridges()
 	if bridgeModel then bridgeModel:Destroy() end
 	bridgeModel = nil
+	finishCenter = nil
 	lanes = {}
 end
 
@@ -201,24 +351,47 @@ local function buildBridges(count)
 		end
 	end
 
-	-- One shared finish banner, rather than a floating FINISH label per lane.
+	-- One festive finish arch across every generated lane.
 	local bannerWidth = math.max(12, count * SETTINGS.LaneSpacing)
-	local banner = part(
-		"SharedFinishBanner",
-		Vector3.new(bannerWidth, 1.5, 1.5),
-		Vector3.new(0, SETTINGS.BridgeY + 11, SETTINGS.BridgeLength * SETTINGS.TileSpacing),
-		AMBER, Enum.Material.Neon, bridgeModel
+	local finishZ = SETTINGS.BridgeLength * SETTINGS.TileSpacing
+	local beam = part(
+		"SharedFinishArchBeam",
+		Vector3.new(bannerWidth + 5, 2.7, 2.5),
+		Vector3.new(0, SETTINGS.BridgeY + 13.5, finishZ),
+		Color3.fromRGB(255, 204, 62), Enum.Material.SmoothPlastic, bridgeModel
 	)
-	banner.CanCollide = false
-	textSign(banner, "FINISH", 2, 180)
-	for _, edge in ipairs({-1, 1}) do
+	beam.CanCollide = false
+	finishCenter = beam
+	textSign(beam, "FINISH!", 2.6, 210)
+	for _, side in ipairs({-1, 1}) do
+		local postX = side * (bannerWidth / 2 + 0.5)
 		local post = part(
-			"FinishGlowPost",
-			Vector3.new(1.5, 13, 1.5),
-			Vector3.new(edge * (bannerWidth / 2 - 1), SETTINGS.BridgeY + 6, SETTINGS.BridgeLength * SETTINGS.TileSpacing),
-			AMBER, Enum.Material.Neon, bridgeModel
+			"FinishArchColumn",
+			Vector3.new(2.8, 14, 3.5),
+			Vector3.new(postX, SETTINGS.BridgeY + 6.5, finishZ),
+			Color3.fromRGB(56, 158, 246), Enum.Material.SmoothPlastic, bridgeModel
 		)
 		post.CanCollide = false
+		local cap = part(
+			"FinishArchFlag",
+			Vector3.new(6, 2.1, 2.1),
+			Vector3.new(postX + side * 1.7, SETTINGS.BridgeY + 15.2, finishZ),
+			side == -1 and Color3.fromRGB(255, 100, 141) or Color3.fromRGB(64, 210, 136),
+			Enum.Material.SmoothPlastic, bridgeModel
+		)
+		cap.CanCollide = false
+	end
+	-- Bright checker accents, all noncolliding. Winning remains at tile 20.
+	local checks = math.max(2, math.floor(bannerWidth / 4))
+	for i = 1, checks do
+		local block = part(
+			"FinishChecker",
+			Vector3.new(bannerWidth / checks, 0.85, 2.8),
+			Vector3.new(-bannerWidth / 2 + (i - 0.5) * (bannerWidth / checks), SETTINGS.BridgeY + 11.6, finishZ),
+			i % 2 == 0 and WHITE or Color3.fromRGB(45, 70, 106),
+			Enum.Material.SmoothPlastic, bridgeModel
+		)
+		block.CanCollide = false
 	end
 end
 
@@ -233,7 +406,6 @@ local voteOutcomes = {}
 local message = "Join the next match!"
 local winnerPlayer = nil
 local initialMatchCount = 0
-local labelFolder = nil
 local publish
 
 local function numberReady()
@@ -261,7 +433,7 @@ local function lobbyTeleport(player)
 	local humanoid = character:FindFirstChildOfClass("Humanoid")
 	if root then
 		local offset = math.random(-9, 9)
-		root.CFrame = CFrame.new(offset, SETTINGS.BridgeY + 4, -70)
+		root.CFrame = CFrame.new(offset, SETTINGS.BridgeY + 4, -76)
 		root.AssemblyLinearVelocity = Vector3.zero
 	end
 	if humanoid then
@@ -288,11 +460,22 @@ local function setWalking(player, canMove)
 	end
 end
 
-local function prepareMatchLabels()
-	if labelFolder then labelFolder:Destroy() end
-	labelFolder = Instance.new("Folder")
-	labelFolder.Name = "PlayerLaneLabels"
-	labelFolder.Parent = bridgeModel
+-- Tiny number printed on the starting glass. No giant floating name tags.
+local function markLane(tile, lane)
+	local gui = Instance.new("SurfaceGui")
+	gui.Name = "LaneNumber"
+	gui.Face = Enum.NormalId.Top
+	gui.PixelsPerStud = 28
+	gui.Parent = tile
+	local number = Instance.new("TextLabel")
+	number.Size = UDim2.fromScale(1, 1)
+	number.BackgroundTransparency = 1
+	number.Text = tostring(lane)
+	number.TextColor3 = Color3.fromRGB(24, 87, 139)
+	number.TextTransparency = 0.12
+	number.Font = Enum.Font.GothamBold
+	number.TextScaled = true
+	number.Parent = gui
 end
 
 -- Optional particles for important falls. Routine old-tile removal stays lightweight.
@@ -312,6 +495,27 @@ local function glassBurst(tile, shade, amount)
 	particles.Parent = tile
 	particles:Emit(amount or 10)
 	Debris:AddItem(particles, 1.5)
+end
+
+local function finishConfetti()
+	if not finishCenter or not finishCenter.Parent then return end
+	local emitter = Instance.new("ParticleEmitter")
+	emitter.Name = "WinnerConfetti"
+	emitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	emitter.Rate = 0
+	emitter.Lifetime = NumberRange.new(0.7, 1.9)
+	emitter.Speed = NumberRange.new(13, 23)
+	emitter.SpreadAngle = Vector2.new(180, 180)
+	emitter.Size = NumberSequence.new(0.65)
+	emitter.LightEmission = 0.25
+	emitter.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 207, 52)),
+		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(81, 209, 132)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(74, 155, 251))
+	})
+	emitter.Parent = finishCenter
+	emitter:Emit(60)
+	Debris:AddItem(emitter, 3)
 end
 
 local function showCrackLines(tile, count)
@@ -447,10 +651,32 @@ local function snapshot(player)
 end
 
 publish = function()
+	-- The single physical platform changes role by phase, without moving.
+	if phase == "JOIN" then
+		deckSignText.Text = ("JOIN NEXT ROUND  |  %ds  |  %d READY"):format(secondsLeft, numberReady())
+		deckPrompt.Enabled = true
+	elseif phase == "RESULTS" then
+		deckSignText.Text = "ROUND FINISHED  |  NEXT MATCH SOON"
+		deckPrompt.Enabled = false
+	else
+		deckSignText.Text = ("WATCH THE MATCH  |  %d RACERS LEFT"):format(#survivors())
+		deckPrompt.Enabled = false
+	end
 	for _, player in ipairs(Players:GetPlayers()) do
 		stateEvent:FireClient(player, snapshot(player))
 	end
 end
+
+local function joinQueue(player)
+	if player.Parent ~= Players or phase ~= "JOIN" or queue[player] or numberReady() >= SETTINGS.MaxPlayers then
+		return
+	end
+	queue[player] = true
+	publish()
+end
+
+-- Physical join pad and existing UI button call the SAME validated server path.
+deckPrompt.Triggered:Connect(joinQueue)
 
 local function makeLeaderstats(player)
 	if player:FindFirstChild("leaderstats") then return end
@@ -507,9 +733,7 @@ command.OnServerEvent:Connect(function(player, action, payload)
 	if action == "Sync" then
 		stateEvent:FireClient(player, snapshot(player))
 	elseif action == "Join" then
-		if phase ~= "JOIN" or queue[player] or numberReady() >= SETTINGS.MaxPlayers then return end
-		queue[player] = true
-		publish()
+		joinQueue(player)
 	elseif action == "Vote" then
 		if phase ~= "VOTE" then return end
 		local info = active[player]
@@ -569,6 +793,24 @@ RunService.Heartbeat:Connect(function(dt)
 	if accumulator < 0.09 then return end
 	accumulator = 0
 	if phase ~= "MOVE" and phase ~= "VOTE" and phase ~= "REVEAL" then return end
+	-- Spectators can roam the deck and protected side walks, but are
+	-- returned if they reach the actual glass-lane area by jumping past a rail.
+	for _, observer in ipairs(Players:GetPlayers()) do
+		local info = active[observer]
+		local character = observer.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		local isSpectator = not info or (not info.alive and info.root ~= root)
+		if isSpectator and root and humanoid and humanoid.Health > 0 then
+			local position = root.Position
+			if position.Z >= -3.5 and position.Z <= SETTINGS.BridgeLength * SETTINGS.TileSpacing + 4
+				and math.abs(position.X) < 42.5
+				and position.Y > SETTINGS.BridgeY - 9 and position.Y < SETTINGS.BridgeY + 18 then
+				root.CFrame = CFrame.new(0, SETTINGS.BridgeY + 4, -23)
+				root.AssemblyLinearVelocity = Vector3.zero
+			end
+		end
+	end
 	for player, info in pairs(active) do
 		if info.alive then
 			local character = player.Character
@@ -601,6 +843,7 @@ RunService.Heartbeat:Connect(function(dt)
 						if observed >= SETTINGS.BridgeLength and not winnerPlayer then
 							winnerPlayer = player
 							message = player.DisplayName .. " reached the finish!"
+							finishConfetti()
 						end
 					end
 				end
@@ -616,7 +859,6 @@ local function beginMatch(participants)
 	winnerPlayer = nil
 	turnNumber = 0
 	buildBridges(#participants)
-	prepareMatchLabels()
 	for lane, player in ipairs(participants) do
 		if player.Parent == Players then
 			local root = teleportToLane(player, lane)
@@ -630,9 +872,7 @@ local function beginMatch(participants)
 				alive = true,
 				root = root,
 			}
-			local sign = textSign(lanes[lane].tiles[0], player.DisplayName, 5, 175)
-			sign.Parent = labelFolder
-			sign.Adornee = lanes[lane].tiles[0]
+			markLane(lanes[lane].tiles[0], lane)
 		end
 	end
 end
@@ -721,7 +961,6 @@ end
 while true do
 	phase = "JOIN"
 	clearBridges()
-	if labelFolder then labelFolder = nil end
 	queue = {}
 	active = {}
 	unsafe = {}
@@ -1290,4 +1529,4 @@ end
 
 install(game:GetService("ServerScriptService"), "Script", "MythbloxGame", SERVER_SOURCE)
 install(game:GetService("StarterPlayer"):WaitForChild("StarterPlayerScripts"), "LocalScript", "MythbloxGame", CLIENT_SOURCE)
-print("[Mythblox] Game 01 v0.4 bright style installed. Test with Play, or Test > Server & Clients (2 clients). Bridges are generated only after the join countdown.")
+print("[Mythblox] Game 01 v0.5 island hub installed. Test with Play, or Test > Server & Clients (2 clients). Bridges are generated only after the join countdown.")
