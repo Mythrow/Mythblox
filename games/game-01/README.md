@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-21):** Owner confirmed v0.2 gameplay works in Roblox Studio. **v0.5 social-island environment** is implemented in source and Studio installer, but **has not been run in Roblox Studio yet**. The game remains unnamed and unpublished.  
+**Status (2026-11-21):** Owner confirmed v0.2 functional gameplay and provided a screenshot of v0.5. The screenshot revealed oversized floating signboards, redundant HUD leaderboard, and visual issues in the shared join area. **v0.6 fixes have been committed and packaged, but not yet verified in Studio.** The game remains unnamed and unpublished.  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -34,6 +34,22 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 | Reward | Win +25 coins, participation +5 coins |
 
 **Rewards are session-only in v0.1.** There is no DataStore persistence, no purchasable items, and no paid power-ups. Do not publish this as a monetized finished game without playtests and a reviewed commerce implementation.
+
+## v0.6 — join-area readability and streamlined HUD (Studio test pending)
+
+Owner screenshot of v0.5 highlighted unnecessary overlay clutter and what appears to be visual flicker/overlap near the shared join/spectator platform.
+
+**v0.6 changes:**
+- Replaced `BillboardGui` / `AlwaysOnTop` floating signs with fixed-size **physical two-sided signboards**, using `SurfaceGui` attached to real Parts. Join, shop, leaderboard, rewards and finish signage remains in the world and can be read from either side.
+- Reduced excessive white overlays and sign overlap; shortens the phase-driven shared-deck sign messages.
+- Raised the shared spectator deck and side walkways slightly above the grass to eliminate **coplanar overlapping surfaces** (a likely cause of visual flicker, pending Studio confirmation).
+- Reduced the large front and side spectator glass barriers to shorter, less intrusive translucent safety railings. Server spectator isolation and the race/glass boundaries remain intact.
+- Removed the extra on-screen HUD leaderboard; the designated world leaderboard remains near the spawn plaza.
+- Replaced the tall screen HUD with a **small top match-status strip** for phase, timer and personal progress. The JOIN screen says **NEXT MATCH**, not a duplicate large "JOIN THE ROUND" message.
+- During walking, active contestants see their movement warning and unobstructed course, while spectator clients can still view the voting breakdown.
+- All five selection buttons, voting/three-crack rules, match times, manual movement, dynamic lanes, join prompt, rewards and winning remain unchanged.
+
+**Test:** Reinstall [the latest Studio Command Bar installer](INSTALL_STUDIO_COMMAND_BAR.luau) in Edit mode (Output reports **v0.6 join/HUD fixes installed**). Verify from both spawn and spectator-view angles, including when walking near the gold ready pad. v0.6 code has not been tested in the Roblox engine.
 
 ## v0.5 — social island and spectator hub (source implemented; Studio retest pending)
 
@@ -150,6 +166,6 @@ For repeat development, clone `Mythrow/Mythblox`, install [Rojo](https://rojo.sp
 
 ## Next step
 
-Functional prototype v0.2 was confirmed by the owner. **Next: retest v0.5 island, join/spectator deck, side viewing, shops, finish arch, and unchanged game mechanics** using [TEST_PLAN.md](TEST_PLAN.md). Review mobile controls and map sightlines before considering persistence and cosmetics. Validate whether **5-second selection / 6-second walking / 20 tiles / 3 cracks** is enjoyable before adding features.
+Functional prototype v0.2 was confirmed by the owner. **Next: retest v0.6 signage, deck floors and compact HUD**, then confirm spectator safety and unchanged mechanics using [TEST_PLAN.md](TEST_PLAN.md). Review mobile controls and map sightlines before considering persistence and cosmetics. Validate whether **5-second selection / 6-second walking / 20 tiles / 3 cracks** is enjoyable before adding features.
 
 See [the Mythblox game-design memo](../../docs/FIRST_GAME_GLASS_BRIDGE_CONCEPT.md) for earlier alternatives, including the spinner idea that was explicitly deferred.
