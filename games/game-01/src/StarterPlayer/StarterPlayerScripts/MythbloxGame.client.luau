@@ -108,6 +108,7 @@ local soundIds = {
 	safe = "rbxasset://sounds/electronicpingshort.mp3",
 	crack = "rbxasset://sounds/snap.mp3",
 	fall = "rbxasset://sounds/collide.mp3",
+	win = "rbxasset://sounds/electronicpingshort.mp3",
 }
 local sounds = {}
 for kind, asset in pairs(soundIds) do
@@ -115,7 +116,7 @@ for kind, asset in pairs(soundIds) do
 	audio.Name = "GlassRace_" .. kind
 	audio.SoundId = asset
 	audio.Volume = kind == "fall" and 0.36 or (kind == "tick" and 0.13 or 0.22)
-	audio.PlaybackSpeed = kind == "safe" and 1.35 or (kind == "tick" and 1.15 or 1)
+	audio.PlaybackSpeed = kind == "safe" and 1.35 or (kind == "tick" and 1.15 or (kind == "win" and 0.85 or 1))
 	audio.Parent = SoundService
 	sounds[kind] = audio
 end
@@ -477,6 +478,11 @@ local function update(state)
 		cue("fall")
 		showFeedback("YOUR GLASS BROKE!", false)
 	end
+	if changedPhase and phase == "RESULTS"
+		and type(state.message) == "string"
+		and (string.find(state.message, "WINS!", 1, true) or string.find(state.message, "TIE!", 1, true)) then
+		cue("win")
+	end
 	previousPhase = phase
 	previousTurn = state.turn
 	previousAlive = mine and mine.alive or nil
@@ -486,6 +492,7 @@ local function update(state)
 	end
 	phaseText.Text = ("v0.12 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
 	clockText.Text = tostring(state.time or 0) .. "s"
+	clockText.TextColor3 = phase == "VOTE" and (state.time or 0) <= 2 and COLOR.Red or COLOR.Purple
 	description.Text = state.message or ""
 
 	join.Visible = phase == "JOIN" and state.queued ~= true and (state.ready or 0) < (state.capacity or 8)
