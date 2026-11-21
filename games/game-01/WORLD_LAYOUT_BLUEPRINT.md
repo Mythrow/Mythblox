@@ -1,115 +1,122 @@
 # Game 01 — Mini-Game Island / Spectator Arena Blueprint
 
-**Status:** World-layout design, **not yet implemented**. User approved the *design direction* on 2026-11-21; dimensions and decorative details below are proposed implementation coordinates for review.  
+**Status:** Revised world-layout blueprint, **not yet implemented**. User approved the social-island direction and then specifically consolidated the Join/Ready and front spectator areas, located the leaderboard near spawn, and placed shop spaces on both sides of the main path (2026-11-21). Coordinates below are proposed build targets, not confirmed Studio measurements.  
 **Game title:** Unnamed (Game 01 is only the internal development label).  
 **References:** Three Roblox game screenshots supplied by the owner in the conversation (2026-11-21), showing bright social hubs, green island terrain, colorful blocky scenery, decorative paths/fences, shop/leaderboard landmarks, and clear game-viewing areas. **Copy the design vocabulary, not their exact map, asset artwork, logos, or UI.**
 
 ## 1. One-sentence design goal
 
-Build a **compact, cheerful Roblox mini-game island** where everyone can move freely between rounds, nonparticipants can safely **watch every active glass-bridge race**, and the world already has tidy places reserved for future cosmetics, shops, and leaderboard content.
+Build a **compact, cheerful Roblox mini-game island** with **one dual-purpose Join/Ready + front spectator deck**: the plaza and main path lead to it, shops flank that path, the leaderboard sits near the spawn plaza, and nonparticipants can safely watch each glass-bridge race.
 
 This is **not** a dark/neon arena, an empty floating test baseplate, or a giant open-world lobby. The bridge is still the only playable minigame.
 
 ## 2. Player experience
 
-1. Spawn on a bright grassy hub island, with paths and a central welcome sign.
-2. See the **Join Next Round** pad and remaining countdown prominently. The current on-screen JOIN button remains available; a future in-world ProximityPrompt may offer an alternate join input.
-3. Walk through the lobby to the spectator deck, leaderboard area, or cosmetic storefront placeholders. No purchases are functional in this phase.
-4. After 10 seconds, only joined players teleport onto one glass lane each. The existing game rules remain unchanged.
-5. Everyone else stays in the hub and can **physically walk to the front viewing deck or either side viewing promenade**, looking directly at votes, movement, cracks, falling avatars, and the finish.
-6. Eliminated players respawn in the safe hub and may watch the ongoing round. The next round allows everyone to rejoin.
-7. First finisher or last survivor wins; winner celebration should be visible to spectators.
+1. Spawn in the **spawn plaza at the beginning of the main path**, near the leaderboard. Players can read standings, meet others, or walk straight toward the bridge-viewing area.
+2. Follow the main path between **small shop/cosmetic/rewards placeholders on both sides**. Leave ample open space so walking through the island is easy.
+3. Reach a **single wide Join/Ready + Front Spectator platform** at the end of the path. During the 10-second join countdown, this is where players gather and join using the existing on-screen JOIN button (future in-world interaction optional).
+4. Once the countdown ends, **only joined players** teleport into the dynamically generated glass lanes.
+5. **The same platform is now the front spectator area**: unqueued/late players stand there to watch. No second or separate front deck is constructed. Optional protected side promenades extend from this platform to improve viewing angles.
+6. Eliminated contestants respawn safely at the spawn plaza and can walk back along the main path to the shared viewing area while the current match continues.
+7. When the round ends, the area returns to **Join/Ready mode** for the next countdown. Its geometry remains in place; only the signs/queue and spectator messaging need to reflect the phase. A player standing on it is never automatically enrolled.
+8. First finisher or last survivor wins; the finish animation and landmark should be clearly visible from the shared viewing area.
 
 ## 3. Top-down spatial arrangement
 
-View from above: **+Z = forward toward FINISH**, -Z = toward lobby spawn. X is left/right. Not to scale.
+View from above: **+Z = forward toward FINISH**, -Z = toward spawn. X is left/right. Not to scale.
 
 ```text
-                              FAR END (+Z)
+                           FAR END (+Z)
 
-                    +------------------------+
-                    |    FINISH ARCH         | z = +140
-                    +------------------------+
-   left viewing     |  |  |  |  |  |  |  |  |   right viewing
-   promenade        |  dynamic parallel      promenade
-   (safe spectators)|  glass lanes over lava |(safe spectators)
-   x ~ -49          |  2–8 players           x ~ +49
-   z -20 to +70     |  z = 0 to +140         z -20 to +70
-          [safe rail]  (no spectator entry) [safe rail]
+                        [ FINISH ARCH ]      z +140
+                     +-------------------+
+  Left side viewing  | | | | | | | | | |   | Right side viewing
+  (optional/guarded) | dynamic glass lanes| (optional/guarded)
+      x -49          | over lava (2–8)   |      x +49
+                     +-------------------+
+                       BRIDGE STARTS         z 0
+                [safe barrier / viewing rail]
+            +--------------------------------+
+            | JOIN / READY + FRONT SPECTATOR |   z -22
+            |       SAME SHARED PLATFORM     |
+            +--------------+-----------------+
+                           |
+            [SHOP]         |         [SHOP / COSMETICS]
+            [SKINS]        |         [TRAILS / EFFECTS]
+              x -24        |              x +24
+              z -47        |              z -47
+                      MAIN PATH                z -72 to -34
+                           |
+               +-----------+------------+
+               |       SPAWN PLAZA      |   z -74
+               +-----------+------------+
+                 [REWARDS]   [LEADERBOARD]
+                  x -31         x +31
+                  z -80         z -80
 
-                FRONT WATCHING DECK       z ~ -20
-          =======================================
-                  JOIN / READY PAD        z ~ -40
-
-      COSMETIC STALL     MAIN PATH     LEADERBOARD BOARD
-         x -42            x 0            x +42
-         z -57            z -55          z -57
-
-                   SPAWN PLAZA            z ~ -74
-                                         REWARDS CORNER
-                                            x +42
-                                           z -83
-                HUB ISLAND / FENCES / TREES
-
-                              NEAR END (-Z)
+                           NEAR END (-Z)
 ```
 
 ### Proposed coordinate plan
 
-All surfaces below should be compatible with the **existing bridge height, Y ≈ 24**. Sizes are Roblox studs; these are layout targets, not requirements for exact game balance.
+All playable horizontal surfaces remain near **Y ≈ 24**, compatible with the existing bridge elevation. Positions are Roblox studs and may be fine-tuned when implementing.
 
 | Zone / prop | Center (X, Y, Z) | Footprint / size | Function |
 |---|---|---|---|
-| Main grassy island | (0, 22, -57) | 130 × 4 × 86 | Top surface Y=24; safe lobby |
-| Spawn plaza | (0, 24.2, -74) | About 22 × 0.4 × 22 | Bright paved start area; existing spawn stays near (0,24,-70) |
-| Main path | (0, 24.1, -50) | 10 wide, running -75 to -20 | Direct spawn-to-watch route |
-| Join pad | (0, 24.4, -40) | 16 × 0.5 × 10 | Visible join landmark and countdown |
-| Front watch deck | (0, 24, -20) | 80 × 1 × 20 | Near bridge starts, with transparent protective front rail at Z=-10 |
-| Left spectator promenade | (-49, 24, +25) | 9 × 1 × 90 | Safe viewing above lava, Z=-20 to +70 |
-| Right spectator promenade | (+49, 24, +25) | 9 × 1 × 90 | Same from opposite side |
-| Future cosmetics stall | (-42, 24, -57) | Approx. 22 × 16 | Noninteractive facade and sample display pedestals |
-| Wins leaderboard area | (+42, 24, -57) | Approx. 18 × 16 | Clearly labeled leaderboard space, no invented persistent ranks |
-| Future rewards kiosk | (+42, 24, -83) | Approx. 16 × 12 | Placeholder, labeled COMING SOON |
-| Bridge starts | Z=0, Y=24 | 1 start tile per contestant | Built **after join closes** |
-| Bridge finish | Z=140, Y=24 | 20th tile; width scales with joined count | One colorful shared finish arch and celebratory floor accents |
-| Lava basin | centered near (0, 7, 68) | Existing 105 × 2 × 235 | Still lethal; visual improvements only |
-| Outer sea/sky | Below hub and around lava | Noncolliding light-blue plane, if used | Bright floating-island look |
+| Main grassy island | (0, 22, -57) | About 130 × 4 × 86 | Top surface Y=24; persistent shared hub |
+| **Spawn plaza / path beginning** | (0, 24.2, -74) | About 22 × 0.4 × 22 | First area the player encounters; safe respawn near existing (0,24,-70) |
+| **Main path** | (0, 24.1, -53) | 10 wide, Z from -74 to -34 | Direct, uncluttered walk from spawn to shared platform |
+| **Shared Join/Ready + Front Spectator deck** | (0, 24, -22) | **80 × 1 × 24**, Z -34 to -10 | **One permanent structure**; joins/countdown before game, protected viewing during game |
+| Join landmark **within shared deck** | (0, 24.6, -25) | Colored floor marking/sign, no separate platform | Shows JOIN/COUNTDOWN in waiting phase; WATCH MATCH in ongoing phase |
+| Left spectator promenade (optional) | (-49, 24, +25) | 9 × 1 × 90 | Safe side viewing, connects to shared deck |
+| Right spectator promenade (optional) | (+49, 24, +25) | 9 × 1 × 90 | Safe side viewing, connects to shared deck |
+| **Shop/cosmetic stall — left of path** | (-24, 24, -47) | About 17 × 16 | Cosmetic shop placeholder, no real purchases |
+| **Shop/cosmetic stall — right of path** | (+24, 24, -47) | About 17 × 16 | Future glass skin/trail/effect showcases, no real purchases |
+| **Leaderboard beside spawn plaza** | (+31, 24, -80) | About 16 × 12 | Visible near arrival; no invented global standings |
+| Future rewards kiosk near spawn | (-31, 24, -80) | About 14 × 12 | Nonfunctional reserved landmark |
+| Bridge starts | Z=0, Y=24 | One start tile per contestant | Generated **only after queue closes** |
+| Bridge finish | Z=140, Y=24 | Tile 20; width scales with participant count | One prominent shared arch and celebratory floor accents |
+| Lava basin | Center near (0, 7, 68) | Existing 105 × 2 × 235 | Still lethal; visual changes only |
+| Outer sea/sky | Below hub and around lava | Optional noncolliding light-blue backdrop | Friendly floating island atmosphere |
 
-**Existing protected gameplay geometry:** `BridgeLength = 20`, `TileSpacing = 7`, `LaneSpacing = 9`, `BridgeY = 24`. Match lanes are centered at `X = (lane - (count+1)/2) * 9`; at 8 participants their outermost centers are ±31.5 and each tile is 6.7 wide. The viewing promenades at ±49 thus remain **outside** the glass lanes.
+**Existing protected gameplay geometry:** `BridgeLength = 20`, `TileSpacing = 7`, `LaneSpacing = 9`, `BridgeY = 24`. Lane centers are `X = (lane - (count+1)/2) * 9`; for eight contestants the outermost centers are ±31.5 and each glass tile is 6.7 wide. Side promenades at X≈±49 remain outside race lanes.
 
-**No accidental bridge access:** Front deck stops at Z=-10; the first start panel begins near Z=-3.35. Transparent collision railing and the gap separate the spectator deck from the race; side promenades require similarly reliable inward railings. Make spectator barrier high enough to prevent jumping/vaulting across into live lanes. Do **not** rely only on appearances: validate with two players and an unqueued spectator, and if necessary implement server-side spectator zone enforcement. Lobby and promenade walkways must have their own safe, collidable ground while decorations and visual rails below the arena do not provide shortcuts.
+**Access and spectator safety:** The shared deck ends at Z=-10 and is separated by a gap and **transparent physical guardrail** from the start tiles near Z=0. Keep the deck **walkable in all phases**. A queued player is teleported to a game lane by the match controller; an unqueued player can remain on the shared deck and watch. Side promenades require safe bridges/connections from the deck, inward barriers, and fall-resistant outer rails. The proposed coordinate plan alone does not prevent jumping into the arena: test it in Studio with at least one unqueued spectator, and use server-side boundary enforcement if the guardrails are insufficient. Never put barriers or shop displays in the middle of the main path.
 
 ## 4. Individual areas
 
-### A. Spawn / social plaza
+### A. Spawn plaza and the main path
 
-- Bright lawn plus light beige paved circle or square; limited, recognizable Roblox toy-scale terrain.
-- Small welcome board: **GLASS BRIDGE RACE** only as descriptive signage, **not** a permanent experience title.
-- Center path has enough room for 8 player avatars to pass without knocking each other off.
-- Trees, bushes, flowers, pastel rocks, wooden fences and a few benches around the *edges*, not on the path.
-- Keep existing safe respawn logic. Never spawn players at the height of the lava or on a spectator walkway over the lava.
+- **Start the main path at the spawn plaza**; it is not a separate destination beyond the path. The central walk should lead directly to the combined Join/Ready + spectator platform.
+- Put the **leaderboard alongside the spawn plaza** so players see it when they arrive, rather than halfway down the path.
+- Bright lawn, light beige paving, decorative trees/bushes and a small welcome sign; **GLASS BRIDGE RACE** is descriptive signage, not a permanent experience title.
+- Keep a path at least about 10 studs wide and clear of stands, large props and sales pop-ups. The left and right shop areas branch off the sides.
+- Keep the safe respawn location and unobstructed route back to watching the match. Do not spawn on spectator catwalks or near lava.
 
-### B. Join zone
+### B. One shared Join/Ready + Front Spectator platform
 
-- Colorful floor pad/sign reading **JOIN ROUND** and current queue / countdown. A clear distinction between "joined" and "spectating".
-- Keep existing server-validated `Join` RemoteEvent and on-screen button for v0.5.
-- A physical ProximityPrompt can be added later **if** it sends the same server-validated action, never a second, independent joining system.
-- Unjoined users aren't teleported to bridges; late joiners wait for the next round.
+- **One physical platform serves both roles**. Do not build separate 'Join' and 'front spectator' decks.
+- **JOIN phase:** show a bright Join Round pad/area, countdown and count of ready players. Retain the existing server-validated Join RemoteEvent and JOIN button; a physical prompt can reuse that behavior later.
+- **VOTE/REVEAL/MOVE phase:** switch the platform's messaging to **WATCH MATCH** / **MATCH IN PROGRESS** and optional live standings. It remains accessible to spectators; no duplicate waiting deck is added.
+- **RESULTS phase:** display winner/results briefly, then return to Join mode when the next countdown starts.
+- An unqueued or late player remains free to walk here and watch. Standing here must **not** automatically register them for the game. Joined players are teleported to their individual glass lanes when the join countdown ends.
+- The forward edge has a transparent guardrail and direct view of the glass lanes. There must be no easy spectator jump from the platform into a live lane.
 
-### C. Spectators — essential, not optional
+### C. Optional protected side viewing promenades
 
-- **Central deck:** wide, slightly elevated or directly above island surface; open panoramic view from the bridge starts toward the finish.
-- **Side promenades:** safe parallel walkways from the island toward the halfway point. Use transparent inner guards, low solid outer fences, and clear sightlines.
-- **Camera:** normal Roblox free camera is sufficient for first implementation; later a voluntary "Watch Match" camera button may improve visibility of far-away progress. Never force nonparticipants into a match.
-- **Spectator UI:** status text like "MATCH IN PROGRESS", number of live racers, and progress standings. The current vote results remain hidden until reveal; spectators should see the same server-published outcomes when a reveal occurs.
-- **Safety:** nonplayers should not be able to stand on glass race tiles, block contestants, or be affected by a participant's glass destruction. Test spectator-to-bridge jumping and walking across guardrails.
+- Promenades connect **from the same shared platform**, giving side-on views of the middle of a race. They are not a second front spectator location.
+- Provide collidable safe floors, inward transparent guardrails and outer safety fences; nothing should provide a shortcut or alternate walkable route to bridge tiles.
+- Preserve the default Roblox camera for the first implementation. A voluntary camera-switch button may be considered later.
+- Spectators see vote results only after reveal, never secret choices before voting closes.
+- Test eliminated players walking from spawn along the main path to the shared platform without leaving spectator boundaries.
 
-### D. Cosmetic/store, leaderboard and rewards placeholders
+### D. Shop/cosmetic spaces along the path; leaderboard near spawn
 
-- **Cosmetic corner (left):** a colorful compact stall or three display pedestals for future glass skins/trails; show `COMING SOON`; nothing purchasable yet.
-- **Leaderboard (right):** a clean in-world board large enough for future Wins and Coins; don't fabricate global wins or imply DataStore persistence exists. May show simple descriptive text until the backend is added.
-- **Rewards corner:** optional small nonfunctional gift kiosk/podium, no false "claim" action.
-- Preserve walking space around all landmarks; avoid oversized floating menu labels covering the center of the screen.
+- **Left side of the main path:** compact shop stall / cosmetic glass-skin displays, clearly labeled `COMING SOON`.
+- **Right side of the main path:** another storefront for potential trails, effects or other cosmetics; these are **physical placeholders only**, with no invented live purchase menus.
+- **Leaderboard near the spawn plaza:** simple board explaining future Wins / Coins support, without pretending global records or DataStore saving exist.
+- **Rewards placeholder near spawn**, opposite the leaderboard, if the space remains uncluttered.
+- Place signs, benches and decorative props off the central path. Keep plenty of room for people walking between spawn and the shared viewing/ready area.
 
 ### E. Bridge arena
 
@@ -160,15 +167,15 @@ Keep static social content independent of dynamic round content:
 Workspace
 └── MythbloxGame01
     ├── HubIsland (persistent)
-    │   ├── SafeSpawn
-    │   ├── SpawnPlaza + Paths
-    │   ├── JoinZone
-    │   ├── SpectatorDeck
-    │   ├── LeftViewingWalkway
-    │   ├── RightViewingWalkway
-    │   ├── ShopsComingSoon
-    │   ├── LeaderboardArea
-    │   ├── RewardsComingSoon
+    │   ├── SafeSpawn + SpawnPlaza (main-path origin)
+    │   ├── MainPath
+    │   ├── SharedJoinAndFrontSpectatorDeck
+    │   ├── LeftViewingWalkway (optional)
+    │   ├── RightViewingWalkway (optional)
+    │   ├── LeftPathShopComingSoon
+    │   ├── RightPathShopComingSoon
+    │   ├── LeaderboardBesideSpawn
+    │   ├── RewardsBesideSpawnComingSoon
     │   └── Decoration
     ├── LavaAndEnvironment (persistent)
     └── CurrentMatchBridges (created at match start, removed at end)
@@ -188,9 +195,9 @@ Workspace
 ## 7. Recommended implementation sequence — **not yet authorized code changes**
 
 1. Refactor world creation into persistent `HubIsland` and persistent `LavaAndEnvironment`, keeping `CurrentMatchBridges` dynamic.
-2. Build grass island, safe spawn plaza and natural paths; verify all respawns.
-3. Create front viewing deck and protected left/right viewing promenades; test nonparticipants observing a match without entering race lanes.
-4. Add the JOIN area plus clearly marked (nonfunctional) store, leaderboard, and rewards spaces.
+2. Build the safe spawn plaza as the **beginning of the main path**; place leaderboard and optional rewards zone beside spawn. Verify respawns and a clear path forward.
+3. Build **one shared Join/Ready + Front Spectator deck** at the path's end. Show queue/countdown during JOIN and spectator information during an active match. Test unqueued observation without access to race lanes.
+4. Add shop/cosmetic placeholders on **both sides of the main path**, plus optional protected side promenades connected to the shared deck.
 5. Create a single proper finish arch spanning `count` lanes and reduce player markers to tiny lane indicators.
 6. Finish with a small set of bushes, low-poly trees, benches, rocks, flags and lighting adjustments.
 7. Rebuild the Studio Command Bar installer from the exact current server/client sources and run 1-, 2-, 4- and 8-client Studio verification.
@@ -199,20 +206,20 @@ No production shop, coins persistence, publishing, or title selection is part of
 
 ## 8. Acceptance criteria for approving the built world
 
-- [ ] New player spawns safely in an attractive, free-roam island and can walk to at least three marked landmark areas.
+- [ ] New player spawns at the **beginning of the main path**, with a nearby leaderboard; can reach a shop on either side and the combined ready/viewing platform.
 - [ ] The round join flow still works, and the bridge count matches actual joined players.
-- [ ] Late joiners and unqueued players can watch glass destruction and player motion from a protected spectator platform.
+- [ ] **Only one front platform** is present: it works as JOIN/READY during the countdown and as FRONT SPECTATOR during play; late joiners, unqueued players and eliminated players can safely watch from it.
 - [ ] Two-client test: a spectator cannot enter a competitor's lane; a participating player cannot shortcut from an outside walkway.
 - [ ] At any participant count, exactly one visible finish arch marks tile 20; no big repeated FINISH billboards.
 - [ ] No enormous floating player-name tags block gameplay; identity remains understandable from the roster/avatars.
 - [ ] Safe/blocked colors, vote numbers, cracks, lava and walk/stay warnings remain legible against the more detailed scene.
-- [ ] Main plaza and join pad leave room for multiple avatars; no path obstructions or permanent interaction clutter.
+- [ ] Spawn plaza flows directly into the main path; the leaderboard is near spawn, and two shop spaces flank the path. The combined ready/viewing platform has enough room for queued and unqueued players.
 - [ ] Cosmetic/shop/leaderboard/rewards placeholders are visibly reserved but **not represented as live purchases or global records**.
 - [ ] No regressions in spawn, lava elimination, third-crack falling, advancement permissions or match win logic.
 - [ ] Mobile/narrow viewport renders enough field-of-view to play; high-detail props do not cause obvious performance degradation.
 
 ## 9. Sign-off status
 
-- **Approved by owner:** general world direction — colorful social hub, spectator access, reserved shop/leaderboard areas, clearer finish, smaller names.
+- **Approved by owner:** colorful social hub, **one dual-use Join/Ready + Front Spectator platform**, main path starting at spawn plaza, leaderboard near spawn, shops/features on both sides of the path, optional side viewing promenades, clearer finish and smaller player-name tags.
 - **Blueprint proposal for implementation:** coordinates, specific zones, materials and acceptance checks above.
 - **Not completed yet:** implementation of this world redesign or in-Studio testing.
