@@ -43,6 +43,8 @@ Use this file to separate **confirmed project rules** from **ideas not yet appro
 
 - **2026-11-22:** Owner's screenshot shows the **v0.8 build marker**, confirming script replacement, yet world signs still have flattened/tiny lettering. Root issue traced to Roblox `SurfaceGui.SizingMode` possibly defaulting to `FixedSize` (800×600 canvas) on wide Parts; the previous code only set `PixelsPerStud`, which has no effect in FixedSize mode. **v0.9** explicitly selects `PixelsPerStud` for signs, lane numbers and cracks, and restores sensible text size. **Studio visual acceptance pending.**
 
+- **2026-11-22:** Owner's v0.9 screenshot identified a still-present **stock Baseplate SpawnLocation under lava**. **v0.10** adds narrowly scoped old-spawn removal in the Studio Edit-mode installer and at server startup, while keeping the raised custom lobby spawn. As the next small improvement, the existing near-spawn leaderboard displays **current-server-only Wins and Coins**, sorted by wins, without DataStore persistence. **Studio testing pending**, no game-rule changes.
+
 ## Open decisions
 
 | Question | Options | Status |
