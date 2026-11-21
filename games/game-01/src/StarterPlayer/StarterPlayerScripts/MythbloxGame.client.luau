@@ -143,6 +143,86 @@ hintConstraint.MaxSize = Vector2.new(510, 58)
 hintConstraint.Parent = hint
 local hintText = text(hint, "Hint", "", UDim2.new(0.04, 0, 0.12, 0), UDim2.new(0.92, 0, 0.76, 0), Enum.Font.GothamBold, WHITE)
 
+-- During the reveal and movement phases, show exactly how every player voted.
+-- This is read-only: all vote counts/outcomes come from the server.
+local revealPanel = panel("VoteReveal", UDim2.fromOffset(10, 150), UDim2.fromOffset(265, 270))
+revealPanel.BackgroundTransparency = 0.05
+
+local revealTitle = text(revealPanel, "RevealTitle", "VOTE RESULTS", UDim2.new(0, 10, 0, 8), UDim2.new(1, -20, 0, 26), Enum.Font.GothamBold, GOLD)
+revealTitle.TextXAlignment = Enum.TextXAlignment.Left
+revealTitle.TextScaled = false
+revealTitle.TextSize = 17
+
+local countLine = text(revealPanel, "VoteCounts", "1:0  2:0  3:0  4:0  5:0", UDim2.new(0, 10, 0, 39), UDim2.new(1, -20, 0, 26), Enum.Font.GothamBold, WHITE)
+countLine.TextXAlignment = Enum.TextXAlignment.Left
+countLine.TextScaled = false
+countLine.TextSize = 15
+
+local nameRows = Instance.new("Frame")
+nameRows.Name = "PlayersAndPicks"
+nameRows.BackgroundTransparency = 1
+nameRows.Position = UDim2.new(0, 10, 0, 75)
+nameRows.Size = UDim2.new(1, -20, 1, -85)
+nameRows.Parent = revealPanel
+
+local rowLayout = Instance.new("UIListLayout")
+rowLayout.FillDirection = Enum.FillDirection.Vertical
+rowLayout.Padding = UDim.new(0, 2)
+rowLayout.SortOrder = Enum.SortOrder.LayoutOrder
+rowLayout.Parent = nameRows
+
+local cachedRevealKey = ""
+local function updateRevealBoard(state)
+	local visible = state.phase == "REVEAL" or state.phase == "MOVE" or state.phase == "RESULTS"
+	revealPanel.Visible = visible and state.turn > 0
+	if not revealPanel.Visible then return end
+
+	local viewport = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1200, 700)
+	local compact = viewport.X < 700
+	revealPanel.Size = UDim2.fromOffset(compact and 193 or 265, 270)
+	countLine.TextSize = compact and 12 or 15
+
+	local counts = state.voteCounts or {}
+	local nums = {}
+	for n = 1, 5 do
+		table.insert(nums, ("%d:%d"):format(n, counts[n] or 0))
+	end
+	countLine.Text = table.concat(nums, "   ")
+
+	local cacheKey = tostring(state.turn) .. ":" .. tostring(state.phase == "RESULTS")
+	if cachedRevealKey == cacheKey then return end
+	cachedRevealKey = cacheKey
+	for _, child in ipairs(nameRows:GetChildren()) do
+		if child:IsA("TextLabel") then child:Destroy() end
+	end
+
+	for i, result in ipairs(state.voteOutcomes or {}) do
+		local label = Instance.new("TextLabel")
+		label.Name = "VoteRow" .. i
+		label.LayoutOrder = i
+		label.BackgroundTransparency = 1
+		label.Size = UDim2.new(1, 0, 0, 21)
+		label.TextXAlignment = Enum.TextXAlignment.Left
+		label.TextScaled = false
+		label.TextSize = compact and 12 or 14
+		label.TextTruncate = Enum.TextTruncate.AtEnd
+		label.Font = Enum.Font.GothamMedium
+		label.TextColor3 = result.status == "GO" and Color3.fromRGB(95, 245, 154) or Color3.fromRGB(255, 121, 111)
+		local name = tostring(result.name or "Player")
+		local selection = result.number and tostring(result.number) or "-"
+		local outcome
+		if result.status == "GO" then
+			outcome = "MOVE " .. tostring(result.steps or 0)
+		elseif result.status == "NO_VOTE" then
+			outcome = "NO PICK · CRACK"
+		else
+			outcome = result.out and "OUT" or "CRACK " .. tostring(result.cracks or 0) .. "/3"
+		end
+		label.Text = name .. "  [" .. selection .. "]  " .. outcome
+		label.Parent = nameRows
+	end
+end
+
 local phaseLabels = {
 	JOIN = "JOINING",
 	VOTE = "SECRET VOTE",
@@ -153,6 +233,7 @@ local phaseLabels = {
 
 local function update(state)
 	local phase = state.phase or "JOIN"
+	updateRevealBoard(state)
 	local mine = state.mine
 	timer.Text = ("%s  ·  %ds  ·  Turn %d"):format(phaseLabels[phase] or phase, state.time or 0, state.turn or 0)
 	description.Text = state.message or ""
@@ -212,5 +293,6 @@ end
 join.Visible = false
 choicePanel.Visible = false
 hint.Visible = false
+revealPanel.Visible = false
 stateEvent.OnClientEvent:Connect(update)
 command:FireServer("Sync")
