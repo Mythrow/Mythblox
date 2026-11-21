@@ -98,7 +98,7 @@ local function textSign(parent, message, yOffset, width)
 	board.Anchored = true
 	board.CanCollide = false
 	board.CanTouch = false
-	board.Size = Vector3.new(math.clamp((width or 220) / 19, 9, 18), 2.7, 0.45)
+	board.Size = Vector3.new(math.clamp((width or 220) / 21, 8, 16), 2.35, 0.45)
 	board.Position = parent.Position + Vector3.new(0, yOffset or 3, 0)
 	board.Material = Enum.Material.SmoothPlastic
 	board.Color = Color3.fromRGB(250, 251, 255)
@@ -120,7 +120,7 @@ local function textSign(parent, message, yOffset, width)
 		label.BackgroundTransparency = 1
 		label.TextColor3 = Color3.fromRGB(33, 92, 150)
 		label.TextScaled = false
-		label.TextSize = subheading and 34 or 38
+		label.TextSize = subheading and 27 or 33
 		label.TextWrapped = false
 		label.TextTruncate = Enum.TextTruncate.AtEnd
 		label.TextXAlignment = Enum.TextXAlignment.Center
@@ -137,7 +137,7 @@ local function textSign(parent, message, yOffset, width)
 			subtitle.BackgroundTransparency = 1
 			subtitle.TextColor3 = Color3.fromRGB(112, 137, 165)
 			subtitle.TextScaled = false
-			subtitle.TextSize = 22
+			subtitle.TextSize = 18
 			subtitle.TextWrapped = false
 			subtitle.TextTruncate = Enum.TextTruncate.AtEnd
 			subtitle.TextXAlignment = Enum.TextXAlignment.Center
@@ -1128,7 +1128,7 @@ local playerGui = player:WaitForChild("PlayerGui")
 local network = ReplicatedStorage:WaitForChild("MythbloxGame01")
 local command = network:WaitForChild("Command")
 local stateEvent = network:WaitForChild("State")
-local remoteBuild = network:FindFirstChild("BuildVersion")
+local remoteBuild = network:WaitForChild("BuildVersion", 5)
 if not remoteBuild or remoteBuild.Value ~= BUILD_VERSION then
 	warn("[Mythblox] Client " .. BUILD_VERSION .. " does not match server version; old scripts may still be running.")
 end
@@ -1608,6 +1608,29 @@ end
 local liveServer = install(SERVER_FOLDER, "Script", "MythbloxGame", SERVER_SOURCE)
 local liveClient = install(STARTER_PLAYER_SCRIPTS, "LocalScript", "MythbloxGame", CLIENT_SOURCE)
 
+-- Older test scripts sometimes get copied under a different name; remove
+-- their effect too, without touching unrelated Roblox scripts.
+local disabledLegacy = {}
+for _, other in ipairs(game:GetDescendants()) do
+	if other ~= liveServer and other ~= liveClient
+		and (other:IsA("Script") or other:IsA("LocalScript")) then
+		local ok, source = pcall(function()
+			return other.Source
+		end)
+		if ok and type(source) == "string" then
+			local previousUi = string.find(source, "MythbloxGame01UI", 1, true)
+			local previousWorld = string.find(source, 'world.Name = "MythbloxGame01"', 1, true)
+			if previousUi or previousWorld then
+				other.Enabled = false
+				table.insert(disabledLegacy, other:GetFullName())
+			end
+		end
+	end
+end
+if #disabledLegacy > 0 then
+	warn("[Mythblox INSTALL] Disabled " .. #disabledLegacy .. " extra older game scripts: " .. table.concat(disabledLegacy, "; "))
+end
+
 -- Warn about other Mythblox-named scripts that may run an old UI.
 local suspicious = {}
 for _, child in ipairs(game:GetDescendants()) do
@@ -1622,6 +1645,7 @@ print("[Mythblox INSTALL] v0.8 VERIFIED: 2 scripts installed and Source checked.
 print("[Mythblox INSTALL] Server: " .. liveServer:GetFullName() .. " | Build v0.8")
 print("[Mythblox INSTALL] Client: " .. liveClient:GetFullName() .. " | Build v0.8")
 print("[Mythblox INSTALL] Cleaned " .. #removed .. " previous Mythblox script/UI objects.")
+print("[Mythblox INSTALL] Disabled " .. #disabledLegacy .. " other old game scripts found by source signature.")
 if #suspicious > 0 then
 	warn("[Mythblox INSTALL] Other Mythblox scripts still exist: " .. table.concat(suspicious, "; "))
 end
