@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-22):** Owner confirms **v0.11 works in Roblox Studio** after the four requested environment fixes. This is an owner-reported functional/visual checkpoint, **not complete mobile, spectator, performance or release QA**. The game remains unnamed and unpublished.  
+**Status (2026-11-22):** Owner confirms **v0.11 works in Roblox Studio**. The approved **v0.12 gameplay-feedback pass** is committed (source scripts and installer), **but not yet tested in Studio**. The game remains unnamed and unpublished.  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -34,6 +34,25 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 | Reward | Win +25 coins, participation +5 coins |
 
 **Rewards are session-only in v0.1.** There is no DataStore persistence, no purchasable items, and no paid power-ups. Do not publish this as a monetized finished game without playtests and a reviewed commerce implementation.
+
+## v0.12 — gameplay feedback and sound cues (awaiting Studio test)
+
+Approved after v0.11 was confirmed working. Focus: make the existing game rules feel responsive and entertaining, **without a new mechanic or redesigned world**.
+
+**What's implemented:**
+- Subtle built-in Roblox sound cues for choosing a number, the last three seconds of secret voting, a safe pick, a cracked pick, falling, and winning. Sounds use `rbxasset://sounds/...` paths, no purchased or third-party audio. **Roblox Studio playback of these files is not yet verified.**
+- Quick blue/yellow selection emphasis and a red-tinged countdown panel during the last two voting seconds.
+- A brief **nonmodal** green/red feedback chip **below the top HUD** when your selected number is safe, blocked, when walking begins, or when you fall. It hides automatically after about a second; on narrow/mobile-size displays it is hidden entirely. **No centered round-complete popup** was reintroduced.
+- Vote-reveal rows highlight **your own** selection by Roblox UserId, so duplicate display names do not confuse the result. The server still hides all choices during the vote.
+- During movement, the compact top HUD lists blocked number(s) in addition to the existing green GO/red STAY warning.
+- More visible but short-lived glass-break particles and a handful of small noncolliding glass fragments on dramatic falls; routine tile cleanup remains lightweight.
+- The finish confetti now triggers for any legitimate match win (including **last-survivor and furthest-ahead** wins), not just when someone reaches the final tile.
+
+**Not changed:** five fixed choices, most-popular collision logic, 3 cracks, manual 1–N tile movement, 20-tile bridge, 10-second join, 5-second vote, 2-second reveal, 6-second movement, round result timing, cosmetics placeholders and temporary rewards.
+
+**Install:** Stop Play in Roblox Studio and run the latest [Studio Command Bar installer](INSTALL_STUDIO_COMMAND_BAR.luau) while in Edit mode. It will replace the existing Mythblox scripts. Confirm Output prints **v0.12 VERIFIED** and the game HUD shows **v0.12**.
+
+**Next validation:** Test one solo session then at least two clients. Check vote sounds, crack/fall sounds, visible results, no duplicated sounds, player movement and spectator visibility, and no Output errors. The v0.12 package passes GitHub source/installer consistency checks only, **not Roblox Studio engine QA**.
 
 ## v0.11 — four environment fixes (awaiting Studio test)
 
@@ -242,6 +261,6 @@ For repeat development, clone `Mythrow/Mythblox`, install [Rojo](https://rojo.sp
 
 ## Next step
 
-Functional prototype v0.2 was confirmed by the owner. **Next: install and review v0.11's finish, smaller one-sided leaderboard, flush glass ends, and layered island edge**; then continue spectator/mobile regression testing in [TEST_PLAN.md](TEST_PLAN.md). Review mobile controls and map sightlines before considering persistence and cosmetics. Validate whether **5-second selection / 6-second walking / 20 tiles / 3 cracks** is enjoyable before adding features.
+Functional prototype v0.2 was confirmed by the owner. **Next: test v0.12 gameplay cues and effects in Roblox Studio**, then continue spectator/mobile regression testing and plan saving data/cosmetics in [TEST_PLAN.md](TEST_PLAN.md). Review mobile controls and map sightlines before considering persistence and cosmetics. Validate whether **5-second selection / 6-second walking / 20 tiles / 3 cracks** is enjoyable before adding features.
 
 See [the Mythblox game-design memo](../../docs/FIRST_GAME_GLASS_BRIDGE_CONCEPT.md) for earlier alternatives, including the spinner idea that was explicitly deferred.
