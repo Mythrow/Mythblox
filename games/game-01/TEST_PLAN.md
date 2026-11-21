@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-21):** Owner tested v0.5 and shared a screenshot reporting oversized world signs, duplicate HUD information and glitches near the join area. **v0.6 addresses those issues in source; an in-Studio retest is still required.** Multiplayer spectator safety and geometry remain unverified.
+**Status (2026-11-22):** Owner supplied a v0.6 screenshot revealing **distorted TextScaled world sign lettering** and an intrusive centered results popup. **v0.7 source and installer address these reports, but Studio regression testing is still pending.** Multiplayer spectator safety and full geometry are not certified.
 
 ## Playtest log
 
@@ -31,6 +31,19 @@
 6. Repeat with 3–4 clients if the two-player flow works.
 
 
+
+## v0.7 — fixed board lettering and no centered results popup
+
+- [ ] Stop Play; install newest [installer](INSTALL_STUDIO_COMMAND_BAR.luau) in Edit mode. Output says **v0.7 sign/results UI fixes installed**.
+- [ ] Inspect SHOP, COSMETICS, REWARDS, LEADERBOARD and FINISH signs from the path at varying distances. Headings must not fill the entire sign or be stretched into giant letters.
+- [ ] Confirm signs with a `COMING SOON` suffix have a **separate, smaller second line**, readable without overlap.
+- [ ] Look at the join/spectator sign during JOIN, VOTE and RESULTS. Its physical size should stay unchanged while both front/back labels update.
+- [ ] Complete a match and verify there is **no centered ROUND COMPLETE card** obscuring the world. Winner/draw text should appear only in the small top status area.
+- [ ] Repeat a second round, ensure five-number selection UI and vote-reveal panel still behave correctly, and check character movement is unobstructed.
+- [ ] Observe world signs near corners, at angles and on mobile-size windows; report clipping or unreadably small text for further tuning.
+- [ ] Check client/server Output for exceptions involving `SurfaceGui`, `TextTruncate`, or result UI objects.
+
+**Unverified:** This is a source update awaiting the owner's Roblox Studio test, not a claimed visual pass.
 
 ## v0.6 — join platform and information-display regression tests
 
