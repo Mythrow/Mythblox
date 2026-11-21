@@ -4,6 +4,8 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
+local Debris = game:GetService("Debris")
+local Lighting = game:GetService("Lighting")
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -26,6 +28,15 @@ local GREEN = Color3.fromRGB(64, 235, 142)
 local RED = Color3.fromRGB(255, 85, 84)
 local GLASS = Color3.fromRGB(105, 201, 240)
 local AMBER = Color3.fromRGB(255, 192, 85)
+local VIOLET = Color3.fromRGB(145, 110, 255)
+
+-- Visual-only lighting adjustments (these do not affect voting or movement).
+Lighting.ClockTime = 18.7
+Lighting.Brightness = 2
+Lighting.Ambient = Color3.fromRGB(71, 85, 128)
+Lighting.OutdoorAmbient = Color3.fromRGB(85, 90, 125)
+Lighting.FogColor = Color3.fromRGB(30, 32, 70)
+Lighting.FogEnd = 500
 
 local oldWorld = workspace:FindFirstChild("MythbloxGame01")
 if oldWorld then oldWorld:Destroy() end
@@ -91,6 +102,25 @@ lobby.Material = Enum.Material.SmoothPlastic
 lobby.Color = Color3.fromRGB(47, 61, 100)
 lobby.Parent = world
 textSign(lobby, "MYTHBLOX | GLASS RACE", 8, 350)
+-- Subtle lobby lights and floor markings; no additional paths to the lava.
+for _, side in ipairs({-1, 1}) do
+	local stripe = part(
+		"LobbyGlowStrip",
+		Vector3.new(1, 0.15, 19),
+		Vector3.new(side * 14, SETTINGS.BridgeY + 0.83, -70),
+		VIOLET, Enum.Material.Neon
+	)
+	stripe.CanCollide = false
+end
+local instructionAnchor = part(
+	"LobbyInstructionAnchor",
+	Vector3.new(1, 1, 1),
+	Vector3.new(0, SETTINGS.BridgeY + 7, -58),
+	VIOLET, Enum.Material.Neon
+)
+instructionAnchor.Transparency = 1
+instructionAnchor.CanCollide = false
+textSign(instructionAnchor, "JOIN · PICK 1–5 · WALK ONLY ON GREEN", 2, 410)
 -- Guard rails keep the waiting area safely away from the lava.
 for _, rail in ipairs({
 	{ "Back", Vector3.new(36, 5, 1), Vector3.new(0, SETTINGS.BridgeY + 3, -82) },
@@ -142,6 +172,19 @@ local function buildBridges(count)
 			tile.Transparency = 0.22
 			lanes[lane].tiles[index] = tile
 		end
+		-- Decorative glowing rails sit below the glass and cannot be stood on.
+		-- Only two rails per player, keeping the world small on mobile devices.
+		for _, edge in ipairs({-1, 1}) do
+			local rail = part(
+				("Lane%02d_EdgeGlow"):format(lane),
+				Vector3.new(0.35, 0.35, SETTINGS.TileSpacing * SETTINGS.BridgeLength + 7),
+				Vector3.new(x + edge * 3.25, SETTINGS.BridgeY - 1.1, SETTINGS.BridgeLength * SETTINGS.TileSpacing / 2),
+				VIOLET, Enum.Material.Neon, bridgeModel
+			)
+			rail.CanCollide = false
+			rail.CanTouch = false
+			rail.Transparency = 0.32
+		end
 	end
 
 	-- One shared finish banner, rather than a floating FINISH label per lane.
@@ -154,6 +197,15 @@ local function buildBridges(count)
 	)
 	banner.CanCollide = false
 	textSign(banner, "FINISH", 2, 180)
+	for _, edge in ipairs({-1, 1}) do
+		local post = part(
+			"FinishGlowPost",
+			Vector3.new(1.5, 13, 1.5),
+			Vector3.new(edge * (bannerWidth / 2 - 1), SETTINGS.BridgeY + 6, SETTINGS.BridgeLength * SETTINGS.TileSpacing),
+			AMBER, Enum.Material.Neon, bridgeModel
+		)
+		post.CanCollide = false
+	end
 end
 
 local phase = "JOIN"
@@ -229,8 +281,54 @@ local function prepareMatchLabels()
 	labelFolder.Parent = bridgeModel
 end
 
-local function shatter(tile)
+-- Optional particles for important falls. Routine old-tile removal stays lightweight.
+local function glassBurst(tile, shade, amount)
+	if not tile then return end
+	local particles = Instance.new("ParticleEmitter")
+	particles.Name = "GlassBurst"
+	particles.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	particles.Rate = 0
+	particles.Lifetime = NumberRange.new(0.25, 0.65)
+	particles.Speed = NumberRange.new(8, 16)
+	particles.SpreadAngle = Vector2.new(160, 160)
+	particles.Size = NumberSequence.new(0.35)
+	particles.Color = ColorSequence.new(shade)
+	particles.LightEmission = 0.8
+	particles.EmissionDirection = Enum.NormalId.Top
+	particles.Parent = tile
+	particles:Emit(amount or 10)
+	Debris:AddItem(particles, 1.5)
+end
+
+local function showCrackLines(tile, count)
+	if not tile then return end
+	local overlay = tile:FindFirstChild("DamageLines")
+	if not overlay then
+		overlay = Instance.new("SurfaceGui")
+		overlay.Name = "DamageLines"
+		overlay.Face = Enum.NormalId.Top
+		overlay.PixelsPerStud = 40
+		overlay.AlwaysOnTop = false
+		overlay.Parent = tile
+	end
+	for _, child in ipairs(overlay:GetChildren()) do child:Destroy() end
+	for index = 1, count do
+		-- Flat UI crack stripes: lightweight and readable from above.
+		local line = Instance.new("Frame")
+		line.Name = "Crack" .. index
+		line.AnchorPoint = Vector2.new(0.5, 0.5)
+		line.Position = UDim2.fromScale(0.5 + ((index % 2) * 0.13 - 0.06), 0.5)
+		line.Size = UDim2.fromScale(0.012, 0.78)
+		line.Rotation = ({33, -48, 73})[index] or 20
+		line.BackgroundColor3 = Color3.fromRGB(30, 36, 56)
+		line.BorderSizePixel = 0
+		line.Parent = overlay
+	end
+end
+
+local function shatter(tile, dramatic)
 	if not tile or not tile.CanCollide then return end
+	if dramatic then glassBurst(tile, RED, 16) end
 	tile.CanCollide = false
 	tile.CanTouch = false
 	tile.Color = RED
@@ -244,10 +342,10 @@ local function eliminate(player, reason, tileToBreak)
 	info.elimination = reason
 	info.allowed = 0
 	setWalking(player, false)
-	if tileToBreak then shatter(tileToBreak) end
+	if tileToBreak then shatter(tileToBreak, true) end
 	-- Remove their supporting panel too, so an invalid step always causes a visible fall.
 	local standingTile = lanes[info.lane].tiles[info.index]
-	if standingTile ~= tileToBreak then shatter(standingTile) end
+	if standingTile ~= tileToBreak then shatter(standingTile, true) end
 	message = player.DisplayName .. " fell! (" .. reason .. ")"
 	if publish then publish() end
 end
@@ -262,6 +360,8 @@ local function crack(player)
 		eliminate(player, "three cracks", currentTile)
 	else
 		currentTile.Color = info.cracks == 1 and AMBER or RED
+		showCrackLines(currentTile, info.cracks)
+		glassBurst(currentTile, AMBER, 6)
 	end
 end
 
