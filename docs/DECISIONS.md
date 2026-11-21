@@ -31,6 +31,8 @@ Use this file to separate **confirmed project rules** from **ideas not yet appro
 
 - **2026-11-21:** The user rejected the dark/neon v0.3 aesthetic and requested the usual **bright Roblox style**. **v0.4 code** switches to daylight, grass, sky-blue bridges, white UI and blue/green/yellow controls. Core mechanics remain unchanged; **Studio verification pending**. [Game 01](../games/game-01/README.md).
 
+- **2026-11-21:** Owner supplied three reference screenshots showing the desired bright social-hub style. Approved direction: **free-roam island, spectator access during matches, reserved shop/leaderboard/rewards areas, more attractive finish, smaller player labels**. A detailed spatial design is recorded in [Game 01 world-layout blueprint](../games/game-01/WORLD_LAYOUT_BLUEPRINT.md). **The layout is planned, not implemented**; the previous v0.4 arena remains the installed build.
+
 ## Open decisions
 
 | Question | Options | Status |
