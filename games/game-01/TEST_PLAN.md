@@ -1,6 +1,23 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status:** Tests specified, not yet run on a Roblox Studio server.
+**Status (2026-11-21):** User reports the Studio installer succeeded and the prototype behaved as expected during **solo Play testing** under several conditions. This is a general solo smoke-test pass, not a verified pass for every numbered acceptance case. **Two-player and higher-player tests remain pending.**
+
+## Playtest log
+
+| Date | Environment | Result | Remaining validation |
+|---|---|---|---|
+| 2026-11-21 | Roblox Studio, 1 client (user-reported) | Installer worked; user reports trying different conditions and expected behavior | Exact cases not itemized; multiplayer voting, collisions, finish races, ties and late joining remain unverified |
+
+### Priority next test: two local clients
+
+1. Choose **Test → Server & Clients** and set **2 clients** in Studio.
+2. Press **JOIN NEXT MATCH** on both clients before the join countdown finishes.
+3. Vote differently (e.g. A=5, B=3); both should be permitted to walk their respective distances.
+4. In another turn, both vote the same number (e.g. 5); both should receive a crack and remain on their panels.
+5. Test the forbidden step, eligible player standing still, and the third crack. Record any red errors in Output.
+6. Repeat with 3–4 clients if the two-player flow works.
+
+
 
 ## Setup
 
