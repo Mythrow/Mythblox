@@ -45,6 +45,8 @@ Use this file to separate **confirmed project rules** from **ideas not yet appro
 
 - **2026-11-22:** Owner's v0.9 screenshot identified a still-present **stock Baseplate SpawnLocation under lava**. **v0.10** adds narrowly scoped old-spawn removal in the Studio Edit-mode installer and at server startup, while keeping the raised custom lobby spawn. As the next small improvement, the existing near-spawn leaderboard displays **current-server-only Wins and Coins**, sorted by wins, without DataStore persistence. **Studio testing pending**, no game-rule changes.
 
+- **2026-11-22:** User approved four corrections from v0.10 screenshots: cleaner finish gate, flush bridge/spectator glass, a smaller **single-face** leaderboard with only names/wins/coins, and a better-looking island edge from the course. **v0.11 scripts and installer committed**: simple finish posts/beam, precise rail extents, compact scoreboard, layered soil/stone and sea backdrop. **Studio visual verification pending**; voting, match duration and rewards unchanged.
+
 ## Open decisions
 
 | Question | Options | Status |
