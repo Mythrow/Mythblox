@@ -1,4 +1,4 @@
--- Mythblox game-01: glass bridge race v0.8 (server)
+-- Mythblox game-01: glass bridge race v0.9 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -6,7 +6,7 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
-local BUILD_VERSION = "v0.8"
+local BUILD_VERSION = "v0.9"
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -101,6 +101,10 @@ local function textSign(parent, message, yOffset, width)
 		local surface = Instance.new("SurfaceGui")
 		surface.Name = name
 		surface.Face = side
+		-- Critical: 2026 Studio defaults can use FixedSize (800x600)
+		-- and stretch this wide 3D board's text horizontally. Select
+		-- PixelsPerStud explicitly so text preserves its real proportions.
+		surface.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
 		surface.PixelsPerStud = 48
 		surface.AlwaysOnTop = false
 		surface.LightInfluence = 0
@@ -113,7 +117,7 @@ local function textSign(parent, message, yOffset, width)
 		label.BackgroundTransparency = 1
 		label.TextColor3 = Color3.fromRGB(33, 92, 150)
 		label.TextScaled = false
-		label.TextSize = subheading and 27 or 33
+		label.TextSize = subheading and 44 or (parent.Name == "SharedPlatformSign" and 37 or 54)
 		label.TextWrapped = false
 		label.TextTruncate = Enum.TextTruncate.AtEnd
 		label.TextXAlignment = Enum.TextXAlignment.Center
@@ -130,7 +134,7 @@ local function textSign(parent, message, yOffset, width)
 			subtitle.BackgroundTransparency = 1
 			subtitle.TextColor3 = Color3.fromRGB(112, 137, 165)
 			subtitle.TextScaled = false
-			subtitle.TextSize = 18
+			subtitle.TextSize = 26
 			subtitle.TextWrapped = false
 			subtitle.TextTruncate = Enum.TextTruncate.AtEnd
 			subtitle.TextXAlignment = Enum.TextXAlignment.Center
@@ -518,6 +522,7 @@ local function markLane(tile, lane)
 	local gui = Instance.new("SurfaceGui")
 	gui.Name = "LaneNumber"
 	gui.Face = Enum.NormalId.Top
+	gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
 	gui.PixelsPerStud = 28
 	gui.Parent = tile
 	local number = Instance.new("TextLabel")
@@ -579,6 +584,7 @@ local function showCrackLines(tile, count)
 		overlay = Instance.new("SurfaceGui")
 		overlay.Name = "DamageLines"
 		overlay.Face = Enum.NormalId.Top
+		overlay.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
 		overlay.PixelsPerStud = 40
 		overlay.AlwaysOnTop = false
 		overlay.Parent = tile
