@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-22):** Owner supplied v0.10 Studio screenshots showing an unattractive finish, protruding spectator/bridge glass edges, a slab-like island side, and an oversized two-sided leaderboard with unnecessary text. **v0.11 addresses these four issues in code; Roblox Studio testing is still pending.**
+**Status (2026-11-22):** Owner reports **v0.11 works in Studio** after implementing the finish gate, leaderboard, barrier alignment and island-edge fixes. This confirms an overall test pass, but the owner did not enumerate each acceptance case. Mobile/spectator stress tests and release QA remain pending.
 
 ## Playtest log
 
@@ -9,6 +9,7 @@
 | 2026-11-21 | Roblox Studio, 1 client (user-reported), v0.1 | Installer worked; solo gameplay matched expectations under several unspecified conditions | Specific checklist cases not enumerated |
 | 2026-11-21 | Roblox Studio, multiple players (user-reported), v0.1 | Multiplayer worked across multiple unspecified conditions | Reported bugs: initial/respawn near lava, repeated FINISH signs, fixed 8 bridges during join, missing vote breakdown UI |
 | 2026-11-21 | GitHub v0.2 (owner-confirmed functional) | Owner reports revised game functions work | Improve UI later; perform mobile, performance, exploit and release QA separately |
+| 2026-11-22 | Roblox Studio v0.11 (owner-reported) | User says the updated environment works | Individual v0.11 visual checks not itemized; release QA, mobile and spectator stress testing still pending |
 
 ### Previously addressed: v0.2 fix verification (owner reports functionality works)
 
