@@ -41,6 +41,8 @@ Use this file to separate **confirmed project rules** from **ideas not yet appro
 
 - **2026-11-22:** Owner reports both sign-text distortion and centered results popup **still persist** after the v0.7 attempt. Inspected v0.7 GitHub code: the center results UI is already absent, so a stale/duplicate running Studio script is possible. **v0.8** adds cleanup of installed/stray older game scripts, exact Source checks, `BuildVersion` replicated marker, `v0.8` in the top HUD, and server/client runtime Output logs. Sign lettering is further reduced. **Studio verification pending**, no gameplay rules changed.
 
+- **2026-11-22:** Owner's screenshot shows the **v0.8 build marker**, confirming script replacement, yet world signs still have flattened/tiny lettering. Root issue traced to Roblox `SurfaceGui.SizingMode` possibly defaulting to `FixedSize` (800×600 canvas) on wide Parts; the previous code only set `PixelsPerStud`, which has no effect in FixedSize mode. **v0.9** explicitly selects `PixelsPerStud` for signs, lane numbers and cracks, and restores sensible text size. **Studio visual acceptance pending.**
+
 ## Open decisions
 
 | Question | Options | Status |
