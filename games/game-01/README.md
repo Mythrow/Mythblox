@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-22):** User reports **both sign distortion and centered results overlay still occur after the previous fix attempt**. The repository's v0.7 sources did not contain the centered popup, which suggests an older or duplicate Studio script may be running; this hypothesis is not yet confirmed. **v0.8 diagnostic/reinstallation package** is committed and requires Studio verification. The game remains unnamed and unpublished.  
+**Status (2026-11-22):** Owner's v0.8 screenshot confirms the **latest client was running** and the large centered results overlay is no longer the current issue, but shop/sign lettering remained distorted and tiny. **v0.9 explicitly fixes the SurfaceGui sizing mode**, addressing the underlying wide-part-to-fixed-canvas aspect-ratio mismatch; **Studio verification is still pending**. The game remains unnamed and unpublished.  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -34,6 +34,19 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 | Reward | Win +25 coins, participation +5 coins |
 
 **Rewards are session-only in v0.1.** There is no DataStore persistence, no purchasable items, and no paid power-ups. Do not publish this as a monetized finished game without playtests and a reviewed commerce implementation.
+
+## v0.9 — correct SurfaceGui canvas proportions (needs Studio confirmation)
+
+The owner supplied a v0.8 screenshot showing the game **really was running v0.8**, but board labels were still squashed into tiny, horizontally distorted text. After checking Roblox's API/reference history, the root problem was identified: **SurfaceGui's default sizing can be `FixedSize` (an 800×600 virtual canvas)**. Our sign creator set `PixelsPerStud` but **never set `SizingMode`**, so its wide, shallow 3D Parts inherited an incorrect canvas aspect ratio and stretched the labels. Font-only adjustments in v0.6–v0.8 could not solve that.
+
+**v0.9 fixes:**
+- Explicit `surface.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud` for **both faces** of every dynamically created shop, leaderboard, join, reward and finish sign.
+- Sets larger but bounded `TextSize` values now that text maps to the real surface dimensions (headings 44 or 54; dynamic join sign 37; subtitle 26 at 48 pixels/stud).
+- Uses explicit PixelsPerStud mode for the start-lane markers and crack overlays too.
+- Keeps no centered results popup, and retains the compact top match status strip; visible build marker now says **v0.9**.
+- All rules, shops, layout, wins, join and rewards unchanged.
+
+**Test:** Reinstall [the current installer](INSTALL_STUDIO_COMMAND_BAR.luau) in Studio Edit mode, verify `v0.9` appears in HUD, and look at COSMETICS / SHOP from the same location as the previous screenshot. The text should no longer be horizontally stretched or postage-stamp small. Please report if any sign still looks wrong; we have not executed this build in Studio.
 
 ## v0.8 — verified clean install and runtime version indicator (Studio test pending)
 
@@ -203,6 +216,6 @@ For repeat development, clone `Mythrow/Mythblox`, install [Rojo](https://rojo.sp
 
 ## Next step
 
-Functional prototype v0.2 was confirmed by the owner. **Next: verify the v0.8 runtime marker, then recheck world signs/results; don't assume prior fixes are active until Studio actually loads the new build.** See [TEST_PLAN.md](TEST_PLAN.md). Review mobile controls and map sightlines before considering persistence and cosmetics. Validate whether **5-second selection / 6-second walking / 20 tiles / 3 cracks** is enjoyable before adding features.
+Functional prototype v0.2 was confirmed by the owner. **Next: verify v0.9 running and compare the shop signs with the v0.8 screenshot.** Then complete the spectator and gameplay regression checklist in [TEST_PLAN.md](TEST_PLAN.md). Review mobile controls and map sightlines before considering persistence and cosmetics. Validate whether **5-second selection / 6-second walking / 20 tiles / 3 cracks** is enjoyable before adding features.
 
 See [the Mythblox game-design memo](../../docs/FIRST_GAME_GLASS_BRIDGE_CONCEPT.md) for earlier alternatives, including the spinner idea that was explicitly deferred.
