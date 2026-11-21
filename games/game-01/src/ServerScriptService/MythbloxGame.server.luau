@@ -490,6 +490,27 @@ local function glassBurst(tile, shade, amount)
 	Debris:AddItem(particles, 1.5)
 end
 
+local function finishConfetti()
+	if not finishCenter or not finishCenter.Parent then return end
+	local emitter = Instance.new("ParticleEmitter")
+	emitter.Name = "WinnerConfetti"
+	emitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	emitter.Rate = 0
+	emitter.Lifetime = NumberRange.new(0.7, 1.9)
+	emitter.Speed = NumberRange.new(13, 23)
+	emitter.SpreadAngle = Vector2.new(180, 180)
+	emitter.Size = NumberSequence.new(0.65)
+	emitter.LightEmission = 0.25
+	emitter.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 207, 52)),
+		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(81, 209, 132)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(74, 155, 251))
+	})
+	emitter.Parent = finishCenter
+	emitter:Emit(60)
+	Debris:AddItem(emitter, 3)
+end
+
 local function showCrackLines(tile, count)
 	if not tile then return end
 	local overlay = tile:FindFirstChild("DamageLines")
@@ -623,10 +644,32 @@ local function snapshot(player)
 end
 
 publish = function()
+	-- The single physical platform changes role by phase, without moving.
+	if phase == "JOIN" then
+		deckSignText.Text = ("JOIN NEXT ROUND  |  %ds  |  %d READY"):format(secondsLeft, numberReady())
+		deckPrompt.Enabled = true
+	elseif phase == "RESULTS" then
+		deckSignText.Text = "ROUND FINISHED  |  NEXT MATCH SOON"
+		deckPrompt.Enabled = false
+	else
+		deckSignText.Text = ("WATCH THE MATCH  |  %d RACERS LEFT"):format(#survivors())
+		deckPrompt.Enabled = false
+	end
 	for _, player in ipairs(Players:GetPlayers()) do
 		stateEvent:FireClient(player, snapshot(player))
 	end
 end
+
+local function joinQueue(player)
+	if player.Parent ~= Players or phase ~= "JOIN" or queue[player] or numberReady() >= SETTINGS.MaxPlayers then
+		return
+	end
+	queue[player] = true
+	publish()
+end
+
+-- Physical join pad and existing UI button call the SAME validated server path.
+deckPrompt.Triggered:Connect(joinQueue)
 
 local function makeLeaderstats(player)
 	if player:FindFirstChild("leaderstats") then return end
@@ -683,9 +726,7 @@ command.OnServerEvent:Connect(function(player, action, payload)
 	if action == "Sync" then
 		stateEvent:FireClient(player, snapshot(player))
 	elseif action == "Join" then
-		if phase ~= "JOIN" or queue[player] or numberReady() >= SETTINGS.MaxPlayers then return end
-		queue[player] = true
-		publish()
+		joinQueue(player)
 	elseif action == "Vote" then
 		if phase ~= "VOTE" then return end
 		local info = active[player]
@@ -745,6 +786,24 @@ RunService.Heartbeat:Connect(function(dt)
 	if accumulator < 0.09 then return end
 	accumulator = 0
 	if phase ~= "MOVE" and phase ~= "VOTE" and phase ~= "REVEAL" then return end
+	-- Spectators can roam the deck and protected side walks, but are
+	-- returned if they reach the actual glass-lane area by jumping past a rail.
+	for _, observer in ipairs(Players:GetPlayers()) do
+		local info = active[observer]
+		local character = observer.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		local isSpectator = not info or (not info.alive and info.root ~= root)
+		if isSpectator and root and humanoid and humanoid.Health > 0 then
+			local position = root.Position
+			if position.Z >= -3.5 and position.Z <= SETTINGS.BridgeLength * SETTINGS.TileSpacing + 4
+				and math.abs(position.X) < 42.5
+				and position.Y > SETTINGS.BridgeY - 9 and position.Y < SETTINGS.BridgeY + 18 then
+				root.CFrame = CFrame.new(0, SETTINGS.BridgeY + 4, -23)
+				root.AssemblyLinearVelocity = Vector3.zero
+			end
+		end
+	end
 	for player, info in pairs(active) do
 		if info.alive then
 			local character = player.Character
@@ -777,6 +836,7 @@ RunService.Heartbeat:Connect(function(dt)
 						if observed >= SETTINGS.BridgeLength and not winnerPlayer then
 							winnerPlayer = player
 							message = player.DisplayName .. " reached the finish!"
+							finishConfetti()
 						end
 					end
 				end
