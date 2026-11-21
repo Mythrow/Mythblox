@@ -300,9 +300,11 @@ end)
 -- participant after the join countdown has completed.
 local lanes = {}
 local bridgeModel = nil
+local finishCenter = nil
 local function clearBridges()
 	if bridgeModel then bridgeModel:Destroy() end
 	bridgeModel = nil
+	finishCenter = nil
 	lanes = {}
 end
 
@@ -342,24 +344,47 @@ local function buildBridges(count)
 		end
 	end
 
-	-- One shared finish banner, rather than a floating FINISH label per lane.
+	-- One festive finish arch across every generated lane.
 	local bannerWidth = math.max(12, count * SETTINGS.LaneSpacing)
-	local banner = part(
-		"SharedFinishBanner",
-		Vector3.new(bannerWidth, 1.5, 1.5),
-		Vector3.new(0, SETTINGS.BridgeY + 11, SETTINGS.BridgeLength * SETTINGS.TileSpacing),
-		AMBER, Enum.Material.Neon, bridgeModel
+	local finishZ = SETTINGS.BridgeLength * SETTINGS.TileSpacing
+	local beam = part(
+		"SharedFinishArchBeam",
+		Vector3.new(bannerWidth + 5, 2.7, 2.5),
+		Vector3.new(0, SETTINGS.BridgeY + 13.5, finishZ),
+		Color3.fromRGB(255, 204, 62), Enum.Material.SmoothPlastic, bridgeModel
 	)
-	banner.CanCollide = false
-	textSign(banner, "FINISH", 2, 180)
-	for _, edge in ipairs({-1, 1}) do
+	beam.CanCollide = false
+	finishCenter = beam
+	textSign(beam, "FINISH!", 2.6, 210)
+	for _, side in ipairs({-1, 1}) do
+		local postX = side * (bannerWidth / 2 + 0.5)
 		local post = part(
-			"FinishGlowPost",
-			Vector3.new(1.5, 13, 1.5),
-			Vector3.new(edge * (bannerWidth / 2 - 1), SETTINGS.BridgeY + 6, SETTINGS.BridgeLength * SETTINGS.TileSpacing),
-			AMBER, Enum.Material.Neon, bridgeModel
+			"FinishArchColumn",
+			Vector3.new(2.8, 14, 3.5),
+			Vector3.new(postX, SETTINGS.BridgeY + 6.5, finishZ),
+			Color3.fromRGB(56, 158, 246), Enum.Material.SmoothPlastic, bridgeModel
 		)
 		post.CanCollide = false
+		local cap = part(
+			"FinishArchFlag",
+			Vector3.new(6, 2.1, 2.1),
+			Vector3.new(postX + side * 1.7, SETTINGS.BridgeY + 15.2, finishZ),
+			side == -1 and Color3.fromRGB(255, 100, 141) or Color3.fromRGB(64, 210, 136),
+			Enum.Material.SmoothPlastic, bridgeModel
+		)
+		cap.CanCollide = false
+	end
+	-- Bright checker accents, all noncolliding. Winning remains at tile 20.
+	local checks = math.max(2, math.floor(bannerWidth / 4))
+	for i = 1, checks do
+		local block = part(
+			"FinishChecker",
+			Vector3.new(bannerWidth / checks, 0.85, 2.8),
+			Vector3.new(-bannerWidth / 2 + (i - 0.5) * (bannerWidth / checks), SETTINGS.BridgeY + 11.6, finishZ),
+			i % 2 == 0 and WHITE or Color3.fromRGB(45, 70, 106),
+			Enum.Material.SmoothPlastic, bridgeModel
+		)
+		block.CanCollide = false
 	end
 end
 
@@ -374,7 +399,6 @@ local voteOutcomes = {}
 local message = "Join the next match!"
 local winnerPlayer = nil
 local initialMatchCount = 0
-local labelFolder = nil
 local publish
 
 local function numberReady()
@@ -402,7 +426,7 @@ local function lobbyTeleport(player)
 	local humanoid = character:FindFirstChildOfClass("Humanoid")
 	if root then
 		local offset = math.random(-9, 9)
-		root.CFrame = CFrame.new(offset, SETTINGS.BridgeY + 4, -70)
+		root.CFrame = CFrame.new(offset, SETTINGS.BridgeY + 4, -76)
 		root.AssemblyLinearVelocity = Vector3.zero
 	end
 	if humanoid then
@@ -429,11 +453,22 @@ local function setWalking(player, canMove)
 	end
 end
 
-local function prepareMatchLabels()
-	if labelFolder then labelFolder:Destroy() end
-	labelFolder = Instance.new("Folder")
-	labelFolder.Name = "PlayerLaneLabels"
-	labelFolder.Parent = bridgeModel
+-- Tiny number printed on the starting glass. No giant floating name tags.
+local function markLane(tile, lane)
+	local gui = Instance.new("SurfaceGui")
+	gui.Name = "LaneNumber"
+	gui.Face = Enum.NormalId.Top
+	gui.PixelsPerStud = 28
+	gui.Parent = tile
+	local number = Instance.new("TextLabel")
+	number.Size = UDim2.fromScale(1, 1)
+	number.BackgroundTransparency = 1
+	number.Text = tostring(lane)
+	number.TextColor3 = Color3.fromRGB(24, 87, 139)
+	number.TextTransparency = 0.12
+	number.Font = Enum.Font.GothamBold
+	number.TextScaled = true
+	number.Parent = gui
 end
 
 -- Optional particles for important falls. Routine old-tile removal stays lightweight.
@@ -757,7 +792,6 @@ local function beginMatch(participants)
 	winnerPlayer = nil
 	turnNumber = 0
 	buildBridges(#participants)
-	prepareMatchLabels()
 	for lane, player in ipairs(participants) do
 		if player.Parent == Players then
 			local root = teleportToLane(player, lane)
@@ -771,9 +805,7 @@ local function beginMatch(participants)
 				alive = true,
 				root = root,
 			}
-			local sign = textSign(lanes[lane].tiles[0], player.DisplayName, 5, 175)
-			sign.Parent = labelFolder
-			sign.Adornee = lanes[lane].tiles[0]
+			markLane(lanes[lane].tiles[0], lane)
 		end
 	end
 end
@@ -862,7 +894,6 @@ end
 while true do
 	phase = "JOIN"
 	clearBridges()
-	if labelFolder then labelFolder = nil end
 	queue = {}
 	active = {}
 	unsafe = {}
