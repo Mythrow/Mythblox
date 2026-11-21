@@ -41,7 +41,8 @@ The owner supplied three bright Roblox lobby/mini-game screenshots and approved 
 
 - **[Game 01 world-layout blueprint](WORLD_LAYOUT_BLUEPRINT.md)** — top-down map, precise Roblox-stud layout targets, spectator safety, future landmarks, model architecture, visual palette and acceptance checks.
 - **No environment redesign has been coded yet.** Existing v0.4 Studio installer still installs the earlier simple world. Do not describe the blueprint as an installed update.
-- Recommended next implementation: static hub + front/side protected spectator decks + compact future-commerce landmarks + dynamic bridge arena + one finish arch + small lane markers; then rebuild installer and run gameplay regressions.
+- **Approved layout adjustment:** the **Join/Ready and Front Spectator areas are one shared platform**. The spawn plaza begins the main path; the leaderboard is placed beside spawn; future shops/cosmetics flank the path on both sides.
+- Recommended next implementation: persistent spawn plaza + main path + **one phase-aware join/spectator deck** + optional side promenades + shop placeholders beside the path + nearby leaderboard + dynamic glass lanes + one finish arch + small lane markers; then rebuild installer and run gameplay regressions.
 - Gameplay rules, server-led permissions and session rewards remain unchanged.
 
 ## v0.4 — bright Roblox-style visual revision (requires fresh install)
