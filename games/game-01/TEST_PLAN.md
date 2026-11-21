@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-22):** Owner reports **v0.11 works in Studio**. Approved **v0.12 gameplay feedback** is now in GitHub (server/client/installer) but **has not been tested in Studio**. Mobile/spectator stress tests and release QA remain pending.
+**Status (2026-11-22):** Owner reports **v0.12 works in Roblox Studio**. Exact sound/UI and multiplayer cases were not itemized, so individual acceptance checks remain open pending more detailed QA. Work is paused after v0.12; mobile/spectator stress tests and release QA remain pending.
 
 ## Playtest log
 
@@ -10,6 +10,7 @@
 | 2026-11-21 | Roblox Studio, multiple players (user-reported), v0.1 | Multiplayer worked across multiple unspecified conditions | Reported bugs: initial/respawn near lava, repeated FINISH signs, fixed 8 bridges during join, missing vote breakdown UI |
 | 2026-11-21 | GitHub v0.2 (owner-confirmed functional) | Owner reports revised game functions work | Improve UI later; perform mobile, performance, exploit and release QA separately |
 | 2026-11-22 | Roblox Studio v0.11 (owner-reported) | User says the updated environment works | Individual v0.11 visual checks not itemized; release QA, mobile and spectator stress testing still pending |
+| 2026-11-22 | Roblox Studio v0.12 (owner-reported) | User confirms updated gameplay feedback works | Specific regressions not individually enumerated; deeper mobile, multiplayer and audio verification pending |
 
 ### Previously addressed: v0.2 fix verification (owner reports functionality works)
 
@@ -49,7 +50,7 @@
 - [ ] Test Studio **Device Emulator**/narrow viewport: top status, five-number buttons and GO/STAY warning are readable; the extra feedback chip must not cover movement controls.
 - [ ] Check Audio Output for missing built-in sound paths, server/client Output for errors, and desktop/mobile performance when multiple players fall at once.
 
-**Status:** Planned tests, **not yet executed in Roblox Studio**. All gameplay changes in this phase are visual/audio only.
+**Status:** Overall v0.12 functionality confirmed by owner in Studio. The individual items above are still unchecked because detailed results were not provided. All changes in this phase are visual/audio only.
 
 ## v0.11 — visual fix verification
 
