@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-22):** Owner verified the newer island layout in Studio but reported **stretched/oversized physical board text** and an intrusive **center-screen round results popup**. **v0.7 fixes** are committed and packaged; **Studio retest remains pending**. The game remains unnamed and unpublished.  
+**Status (2026-11-22):** User reports **both sign distortion and centered results overlay still occur after the previous fix attempt**. The repository's v0.7 sources did not contain the centered popup, which suggests an older or duplicate Studio script may be running; this hypothesis is not yet confirmed. **v0.8 diagnostic/reinstallation package** is committed and requires Studio verification. The game remains unnamed and unpublished.  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -34,6 +34,28 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 | Reward | Win +25 coins, participation +5 coins |
 
 **Rewards are session-only in v0.1.** There is no DataStore persistence, no purchasable items, and no paid power-ups. Do not publish this as a monetized finished game without playtests and a reviewed commerce implementation.
+
+## v0.8 — verified clean install and runtime version indicator (Studio test pending)
+
+**Why:** After v0.7, the owner still sees both giant/distorted signs and a centered `ROUND COMPLETE` popup. GitHub v0.7 client code already omits that popup, so the first step is to **prove Studio actually runs the updated scripts**, not just edit them again.
+
+**Changes:**
+- The Command Bar installer now removes **all scripts named `MythbloxGame`** in the relevant Studio services, not only the first matching child. It also removes a stale `MythbloxGame01UI` object from StarterGui.
+- Installer additionally scans for **other Script/LocalScript copies** containing old Mythblox UI/world source signatures and **disables** those duplicates (preserves their contents). This is targeted at our own previous game scripts and will not disable unrelated scripts.
+- The installer performs **exact `Source` verification**, prints cleaned/disabled counts and the installed script paths, then instructs the owner to start a fresh Play session.
+- Server creates `ReplicatedStorage.MythbloxGame01.BuildVersion` and prints `SERVER RUNNING v0.8`; client checks the version and prints `CLIENT RUNNING v0.8`.
+- The top HUD now visibly starts with **`v0.8`** on JOIN, VOTE, MOVE and RESULTS. If the marker is absent, the new LocalScript did not run.
+- The game client clears duplicate `MythbloxGame01UI` screens at startup. World signs and lane numbers have **no `TextScaled = true`**, and shop fonts/boards were reduced further.
+- Center-screen results popup remains absent; winner/draw message is only in the **top status strip**. All approved game rules and geometry stay unchanged.
+
+**Upgrade instructions:**
+1. Stop **all** Play/Server & Clients sessions (Edit mode).
+2. Open the latest [installer](INSTALL_STUDIO_COMMAND_BAR.luau) in GitHub, refresh the page, click **Raw**, copy the **entire** script (not a previous Command Bar copy), paste into Command Bar and run.
+3. In Output, look for **`[Mythblox INSTALL] v0.8 VERIFIED`**, cleaned duplicate counts and both installed paths.
+4. Start a **new** Play session. The top status strip must visibly say **`v0.8`**; Output should contain **`SERVER RUNNING v0.8`** and **`CLIENT RUNNING v0.8`**. If not, do not assess the visuals yet: the new code was not loaded.
+5. Once the build is confirmed, inspect a shop sign and complete a round. If a centered popup still appears or shop text remains distorted, capture the running `v0.8` marker and Output for further diagnosis.
+
+**Safety:** The installer replaces/cleans previous Mythblox scripts and disables other scripts containing its old UI/world signatures; if you've manually customized those prior versions, save them first. The v0.8 engine behavior is **not yet verified**.
 
 ## v0.7 — properly sized signs and nonblocking results (Studio retest pending)
 
@@ -181,6 +203,6 @@ For repeat development, clone `Mythrow/Mythblox`, install [Rojo](https://rojo.sp
 
 ## Next step
 
-Functional prototype v0.2 was confirmed by the owner. **Next: retest v0.7 fixed sign typography and top-only results**, then confirm spectator safety and unchanged mechanics using [TEST_PLAN.md](TEST_PLAN.md). Review mobile controls and map sightlines before considering persistence and cosmetics. Validate whether **5-second selection / 6-second walking / 20 tiles / 3 cracks** is enjoyable before adding features.
+Functional prototype v0.2 was confirmed by the owner. **Next: verify the v0.8 runtime marker, then recheck world signs/results; don't assume prior fixes are active until Studio actually loads the new build.** See [TEST_PLAN.md](TEST_PLAN.md). Review mobile controls and map sightlines before considering persistence and cosmetics. Validate whether **5-second selection / 6-second walking / 20 tiles / 3 cracks** is enjoyable before adding features.
 
 See [the Mythblox game-design memo](../../docs/FIRST_GAME_GLASS_BRIDGE_CONCEPT.md) for earlier alternatives, including the spinner idea that was explicitly deferred.
