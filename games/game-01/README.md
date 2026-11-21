@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status:** First playable prototype, **not yet tested in Roblox Studio**.  
+**Status (2026-11-21):** User confirmed **solo and multiplayer behavior worked** in several tests of v0.1. **v0.2 fixes** below are committed but **not yet retested in Studio**.  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -35,13 +35,22 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 
 **Rewards are session-only in v0.1.** There is no DataStore persistence, no purchasable items, and no paid power-ups. Do not publish this as a monetized finished game without playtests and a reviewed commerce implementation.
 
+## v0.2 — feedback fixes (requires fresh install)
+
+- **Spawning/respawning:** sets `Player.RespawnLocation` to the elevated Mythblox lobby, moves the lobby away from the lava, and adds guard rails so players do not spawn/die in the lava under the Baseplate's original spawn point.
+- **Correct lane count:** the glass lanes are generated **only after the 10-second ready window closes**. Exactly one lane is built for each match participant (1 for Studio solo practice, 2–8 for multiplayer). The old lanes are removed before the next join period.
+- **Shared FINISH:** there is just **one shared finish banner** at the end of the bridges, not one text sign per player.
+- **Vote reveal:** after the secret vote, a compact overlay shows the total number of votes for **1–5**, the blocked number(s), and **each player's chosen number and outcome** (move up to N, crack, no vote, or out) during reveal, walking and results.
+
+The underlying selection, crack, walking and winner rules are unchanged. These are first-pass changes and **need a fresh two-client Studio test** before being considered verified.
+
 ## Quick start — easiest, no extra tools
 
 1. Open Roblox Studio and create/open a **new Baseplate place**, in **Edit mode** (not Play).
 2. Open **Script → Command Bar** (or **Window → Script → Command Bar**, depending on Studio layout).
-3. Open [INSTALL_STUDIO_COMMAND_BAR.luau](INSTALL_STUDIO_COMMAND_BAR.luau) on GitHub, choose **Raw**, copy the entire file, paste it into Studio's **Command Bar**, and execute it once.
+3. Open the **latest** [INSTALL_STUDIO_COMMAND_BAR.luau](INSTALL_STUDIO_COMMAND_BAR.luau) on GitHub, choose **Raw**, copy the entire file, paste it into Studio's **Command Bar**, and execute it once. **Stop Play first.** If v0.1 is already installed, the installer safely replaces the two scripts named `MythbloxGame` (custom edits to those scripts will be overwritten).
 4. Check that a `MythbloxGame` server Script exists under `ServerScriptService`, and a `MythbloxGame` LocalScript exists under `StarterPlayer > StarterPlayerScripts`.
-5. Click **Play**. The script generates the lobby, eight parallel lanes, glass tiles and lava at runtime. For multiplayer testing, use **Test → Server & Clients**, choose **2 clients** and start the test.
+5. Click **Play**. The script generates the safe lobby and lava initially, then creates **only as many lanes as there are joined players** after the countdown. For multiplayer testing, use **Test → Server & Clients**, choose **2 clients** and start the test.
 6. On each client, press **JOIN NEXT MATCH** before the 10-second join countdown ends. Secretly choose a number from 1–5, then physically walk on green glass (or remain still if your number is blocked).
 
 The installer installs **scripts**; the arena is generated when a test session starts, so it is normal not to see all glass in Studio Edit mode. It also replaces existing scripts **named `MythbloxGame`** in those two specific services; save or rename prior customizations before rerunning.
@@ -92,6 +101,6 @@ For repeat development, clone `Mythrow/Mythblox`, install [Rojo](https://rojo.sp
 
 ## Next step
 
-Run two-player Studio tests using [TEST_PLAN.md](TEST_PLAN.md). Capture the Output log if anything breaks. Validate whether **5-second selection / 6-second walking / 20 tiles / 3 cracks** is enjoyable before adding features.
+Reinstall the latest v0.2 script package and retest **respawning, dynamic lane count, shared FINISH banner, and vote reveal** in [TEST_PLAN.md](TEST_PLAN.md). Capture the Output log if anything breaks. Validate whether **5-second selection / 6-second walking / 20 tiles / 3 cracks** is enjoyable before adding features.
 
 See [the Mythblox game-design memo](../../docs/FIRST_GAME_GLASS_BRIDGE_CONCEPT.md) for earlier alternatives, including the spinner idea that was explicitly deferred.
