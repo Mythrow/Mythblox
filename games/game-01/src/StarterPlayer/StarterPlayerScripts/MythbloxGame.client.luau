@@ -188,6 +188,13 @@ local function updateRevealBoard(state)
 		table.insert(nums, ("%d:%d"):format(n, counts[n] or 0))
 	end
 	countLine.Text = table.concat(nums, "   ")
+	local blocked = {}
+	for n = 1, 5 do
+		if state.unsafe and state.unsafe[n] then
+			table.insert(blocked, tostring(n))
+		end
+	end
+	revealTitle.Text = "VOTES · BLOCKED: " .. (#blocked > 0 and table.concat(blocked, ", ") or "NONE")
 
 	local cacheKey = tostring(state.turn) .. ":" .. tostring(state.phase == "RESULTS")
 	if cachedRevealKey == cacheKey then return end
