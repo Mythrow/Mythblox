@@ -37,6 +37,8 @@ Use this file to separate **confirmed project rules** from **ideas not yet appro
 
 - **2026-11-21:** Owner provided a v0.5 screenshot and reported **unwanted on-screen leaderboard and join-area/glitching visuals**. v0.6 revision committed: physical double-sided SurfaceGui world signs replace giant BillboardGui labels; spectator deck surfaces are vertically offset to reduce z-fighting; barriers visually shortened; HUD leaderboard removed and top match status compacted. **Requires Studio verification** before calling the issues resolved. Game rules unchanged.
 
+- **2026-11-22:** Owner's v0.6 screenshot shows sign lettering distorted by `TextScaled`, plus an unwanted center-screen results popup. **v0.7 source/installer** switches to fixed-size world-sign fonts with separate small subtitles and removes the modal results card, retaining winner text in the compact top HUD. **Studio test pending; gameplay rules unchanged.**
+
 ## Open decisions
 
 | Question | Options | Status |
