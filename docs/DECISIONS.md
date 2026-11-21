@@ -35,6 +35,8 @@ Use this file to separate **confirmed project rules** from **ideas not yet appro
 
 - **2026-11-21:** **v0.5 island layout implemented in GitHub** with one phase-aware Join/Ready + spectator deck, spawn-first main path, two shop placeholders, near-spawn leaderboard, side viewing routes, new finish arch, and small lane markers. A shared in-world Join prompt uses existing server validation. **Studio verification pending**; underlying core game rules intentionally unchanged. See [v0.5 test plan](../games/game-01/TEST_PLAN.md).
 
+- **2026-11-21:** Owner provided a v0.5 screenshot and reported **unwanted on-screen leaderboard and join-area/glitching visuals**. v0.6 revision committed: physical double-sided SurfaceGui world signs replace giant BillboardGui labels; spectator deck surfaces are vertically offset to reduce z-fighting; barriers visually shortened; HUD leaderboard removed and top match status compacted. **Requires Studio verification** before calling the issues resolved. Game rules unchanged.
+
 ## Open decisions
 
 | Question | Options | Status |
