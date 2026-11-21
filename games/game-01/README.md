@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-21):** User confirmed **solo and multiplayer behavior worked** in several tests of v0.1. **v0.2 fixes** below are committed but **not yet retested in Studio**.  
+**Status (2026-11-21):** Owner confirmed **v0.2 functionality works in Roblox Studio** after earlier solo and multiplayer playtests. Visual/UI polish is acknowledged as a later phase, not a blocker for the functional prototype.  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -42,7 +42,7 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 - **Shared FINISH:** there is just **one shared finish banner** at the end of the bridges, not one text sign per player.
 - **Vote reveal:** after the secret vote, a compact overlay shows the total number of votes for **1–5**, the blocked number(s), and **each player's chosen number and outcome** (move up to N, crack, no vote, or out) during reveal, walking and results.
 
-The underlying selection, crack, walking and winner rules are unchanged. These are first-pass changes and **need a fresh two-client Studio test** before being considered verified.
+The underlying selection, crack, walking and winner rules are unchanged. **Owner subsequently confirmed v0.2 functionality works.** UI improvements remain deferred.
 
 ## Quick start — easiest, no extra tools
 
@@ -101,6 +101,6 @@ For repeat development, clone `Mythrow/Mythblox`, install [Rojo](https://rojo.sp
 
 ## Next step
 
-Reinstall the latest v0.2 script package and retest **respawning, dynamic lane count, shared FINISH banner, and vote reveal** in [TEST_PLAN.md](TEST_PLAN.md). Capture the Output log if anything breaks. Validate whether **5-second selection / 6-second walking / 20 tiles / 3 cracks** is enjoyable before adding features.
+Functional prototype confirmed by the owner. Next phase: **UI/visual refinement**, including readability and responsive layout, followed by mobile tests, persistence, cosmetic store, and release QA. See [TEST_PLAN.md](TEST_PLAN.md). Validate whether **5-second selection / 6-second walking / 20 tiles / 3 cracks** is enjoyable before adding features.
 
 See [the Mythblox game-design memo](../../docs/FIRST_GAME_GLASS_BRIDGE_CONCEPT.md) for earlier alternatives, including the spinner idea that was explicitly deferred.
