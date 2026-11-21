@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-21):** Owner confirmed functional v0.2 gameplay. **v0.5 island/spectator redesign is committed and installer updated but still untested in Studio.** Do not assume world geometry and spectator safety are proven until multiplayer testing.
+**Status (2026-11-21):** Owner tested v0.5 and shared a screenshot reporting oversized world signs, duplicate HUD information and glitches near the join area. **v0.6 addresses those issues in source; an in-Studio retest is still required.** Multiplayer spectator safety and geometry remain unverified.
 
 ## Playtest log
 
@@ -31,6 +31,22 @@
 6. Repeat with 3–4 clients if the two-player flow works.
 
 
+
+## v0.6 — join platform and information-display regression tests
+
+- [ ] Stop Play, run the latest [installer](INSTALL_STUDIO_COMMAND_BAR.luau) from GitHub Raw in Edit mode and confirm `v0.6 join/HUD fixes installed` in Output.
+- [ ] From spawn, verify that SHOP, COSMETICS, REWARDS, LEADERBOARD and FINISH signs are **fixed in the world**, not billboard overlays that cover the screen or overlap each other.
+- [ ] Move close to and far from the shared join/watching deck. Its sign should remain reasonably sized at all distances and show `JOIN ROUND` during join and `WATCH MATCH` while racing.
+- [ ] Walk around the gold join pad and the transitions to side promenades. Look for **flickering, white streaks, torn floor surfaces, overlapping panels or disappearing deck areas**; report a screenshot if any remains.
+- [ ] Confirm that a **physical leaderboard near spawn exists**, while **no duplicate leaderboard HUD** appears in the top-right.
+- [ ] Confirm top UI is a compact phase/timer/progress bar, instead of an oversized join banner. The vote buttons remain usable and legible.
+- [ ] During a race, contestants see vote UI when voting, voting outcomes when revealed, and a clear GO/STAY warning during movement; large results cards do **not** block movement.
+- [ ] Test with 3 clients: two racing, one on the shared platform. Spectator still observes but cannot enter the glass lanes even with shorter physical barrier.
+- [ ] Test initial spawn and respawn; confirm the new deck height and signage do not block walkway movement.
+- [ ] Test a full 2-client match; voting, cracks, movement, falls and wins are unchanged.
+- [ ] Check client/server Output for errors involving `SurfaceGui`, boards, or UI layout and report exact output lines.
+
+This checklist is **not yet passed**; screenshot-based diagnosis is a working hypothesis until the v0.6 world is tested.
 
 ## v0.5 island environment and spectator regression tests — source implemented, NOT yet verified
 
