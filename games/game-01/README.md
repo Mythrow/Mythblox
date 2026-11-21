@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-21):** Owner confirmed **v0.2 gameplay works in Roblox Studio**, in solo and multiplayer. The dark visual treatment of v0.3 was rejected. **v0.4 bright Roblox-style visuals** are committed but **not yet tested in Studio**. The game remains unnamed and unpublished.  
+**Status (2026-11-21):** Owner confirmed v0.2 gameplay works in Roblox Studio. **v0.5 social-island environment** is implemented in source and Studio installer, but **has not been run in Roblox Studio yet**. The game remains unnamed and unpublished.  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -35,15 +35,26 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 
 **Rewards are session-only in v0.1.** There is no DataStore persistence, no purchasable items, and no paid power-ups. Do not publish this as a monetized finished game without playtests and a reviewed commerce implementation.
 
-## Approved world-layout direction — blueprint created (not built)
+## v0.5 — social island and spectator hub (source implemented; Studio retest pending)
 
-The owner supplied three bright Roblox lobby/mini-game screenshots and approved a **compact, cheerful social island with spectator visibility**, reserved future shop and leaderboard areas, a more prominent finish, and reduced player-name labels.
+The owner supplied three bright Roblox lobby/mini-game screenshots and approved a **compact social island** with a combined Join/Ready + Front Spectator platform, shops beside the main path, leaderboard by spawn, and a more appealing finish arch.
 
-- **[Game 01 world-layout blueprint](WORLD_LAYOUT_BLUEPRINT.md)** — top-down map, precise Roblox-stud layout targets, spectator safety, future landmarks, model architecture, visual palette and acceptance checks.
-- **No environment redesign has been coded yet.** Existing v0.4 Studio installer still installs the earlier simple world. Do not describe the blueprint as an installed update.
-- **Approved layout adjustment:** the **Join/Ready and Front Spectator areas are one shared platform**. The spawn plaza begins the main path; the leaderboard is placed beside spawn; future shops/cosmetics flank the path on both sides.
-- Recommended next implementation: persistent spawn plaza + main path + **one phase-aware join/spectator deck** + optional side promenades + shop placeholders beside the path + nearby leaderboard + dynamic glass lanes + one finish arch + small lane markers; then rebuild installer and run gameplay regressions.
-- Gameplay rules, server-led permissions and session rewards remain unchanged.
+**Implemented in v0.5:**
+- Permanent, walkable grass hub island and spawn plaza at the start of a cream-colored central path.
+- **One shared Join/Ready / front spectator deck**. Its message shows the queue/countdown during JOIN, and changes to **WATCH THE MATCH** during active turns. The deck itself never disappears.
+- **Two optional side viewing promenades** with solid walkways and safety railings; a server-side bounds check returns unauthorized spectators to the shared deck if they reach live race glass.
+- A clickable in-world **ProximityPrompt join pad**, using the same server-validated queue as the existing on-screen JOIN button.
+- **Two future shops** flanking the central path, plus a nearby leaderboard placeholder and a rewards corner beside the spawn plaza. These are decorative and **do not sell anything or display invented global rankings**.
+- Small procedural blocky trees and bushes around the edges.
+- **One colorful FINISH arch** spanning the generated bridge count, checker accents, flags and a brief finish particle burst.
+- Removed oversized floating player-name tags in favor of small lane numbers printed on the start tiles.
+- Existing bridge generation still creates exactly one lane for each joined player **after** the join countdown.
+
+**Unchanged:** five-choice voting, popularity collisions, three-crack elimination, 20-tile length, manual 1–N movement, timer windows, winning rules, and temporary session-only rewards.
+
+**Install/test:** Stop Play, open [the current Command Bar installer](INSTALL_STUDIO_COMMAND_BAR.luau) on GitHub, copy the **Raw** contents, and execute in Roblox Studio Edit mode. Output should say **v0.5 island hub installed**. The two existing `MythbloxGame` scripts are replaced. This code **has not been verified in Studio**; test with one, two, and three clients (one spectating) before considering the environment complete.
+
+[Approved spatial blueprint](WORLD_LAYOUT_BLUEPRINT.md) · [v0.5 test checklist](TEST_PLAN.md)
 
 ## v0.4 — bright Roblox-style visual revision (requires fresh install)
 
@@ -139,6 +150,6 @@ For repeat development, clone `Mythrow/Mythblox`, install [Rojo](https://rojo.sp
 
 ## Next step
 
-Functional prototype v0.2 was confirmed by the owner. **Next: retest v0.4 bright graphics/UI** using [TEST_PLAN.md](TEST_PLAN.md). Once stable, review mobile controls, improve sound/camera if needed, and only then add persistent coins and cosmetics. Validate whether **5-second selection / 6-second walking / 20 tiles / 3 cracks** is enjoyable before adding features.
+Functional prototype v0.2 was confirmed by the owner. **Next: retest v0.5 island, join/spectator deck, side viewing, shops, finish arch, and unchanged game mechanics** using [TEST_PLAN.md](TEST_PLAN.md). Review mobile controls and map sightlines before considering persistence and cosmetics. Validate whether **5-second selection / 6-second walking / 20 tiles / 3 cracks** is enjoyable before adding features.
 
 See [the Mythblox game-design memo](../../docs/FIRST_GAME_GLASS_BRIDGE_CONCEPT.md) for earlier alternatives, including the spinner idea that was explicitly deferred.
