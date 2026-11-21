@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-21):** Owner confirmed v0.2 functionality works in Studio. **v0.3 visual polish is now in GitHub but untested in Studio.** The owner did not itemize every test case; this is not exhaustive release QA.
+**Status (2026-11-21):** Owner confirmed v0.2 functionality works in Studio. The dark v0.3 theme was rejected. **v0.4 bright-style revision is in GitHub but still needs an in-Studio test.** This is not exhaustive release QA.
 
 ## Playtest log
 
@@ -32,7 +32,17 @@
 
 
 
-## Visual polish v0.3 — priority regression tests
+## Bright theme v0.4 — visual review and regression
+
+- [ ] Stop Play; rerun the latest [installer](INSTALL_STUDIO_COMMAND_BAR.luau) in Edit mode. Output should say **v0.4 bright style installed**.
+- [ ] Observe daylight/blue sky, green grass around orange lava, bright glass, cheerful lobby colors and white signs.
+- [ ] Confirm light UI panels and legible dark text on both desktop and mobile-sized screens.
+- [ ] Confirm the five choice buttons are blue with white numbers; selected choice is yellow with dark numbers.
+- [ ] Confirm green/red feedback is legible and the shared finish label remains readable.
+- [ ] Run a two-client match. Voting, three cracks, manual movement, falling, finish and respawn must behave exactly as before.
+- [ ] Check both client/server Output for errors introduced by visual-only changes.
+
+## Visual polish v0.3 — earlier regression checks (mechanics retained)
 
 - [ ] Stop Play, rerun the **latest** [installer](INSTALL_STUDIO_COMMAND_BAR.luau) in the Command Bar (Edit mode). Verify the Output says **v0.3 installed**.
 - [ ] Play: safe lobby appears with accent lights; no unused bridges during join.
