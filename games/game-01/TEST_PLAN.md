@@ -32,6 +32,18 @@
 
 
 
+## Future world-layout build acceptance (blueprint only, not implemented yet)
+
+- [ ] Free-roam central grass island with marked spawn, join pad, visible cosmetics placeholder and leaderboard space.
+- [ ] Unqueued or late players can walk onto the central viewing deck and side platforms, and see matches as spectators.
+- [ ] Nonparticipants cannot access/interfere with race glass; participants cannot shortcut through the viewing promenade.
+- [ ] Finish arch is visually prominent and generated once regardless of racer count.
+- [ ] Overhead player-name tags no longer dominate the field of view; lane identity remains understandable.
+- [ ] Two-person Studio test and multiplayer regression: all v0.2 core mechanics still pass.
+- [ ] Mobile view: shop and spectator signage do not obstruct movement, selection, or vote reveal.
+
+See the [world-layout blueprint](WORLD_LAYOUT_BLUEPRINT.md). These boxes remain unchecked until code is implemented and retested.
+
 ## Bright theme v0.4 — visual review and regression
 
 - [ ] Stop Play; rerun the latest [installer](INSTALL_STUDIO_COMMAND_BAR.luau) in Edit mode. Output should say **v0.4 bright style installed**.
