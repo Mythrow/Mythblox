@@ -1,15 +1,25 @@
--- Mythblox Game 01 · streamlined screen UI v0.7
+-- Mythblox Game 01 · clean verified client v0.8
 -- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local BUILD_VERSION = "v0.8"
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local network = ReplicatedStorage:WaitForChild("MythbloxGame01")
 local command = network:WaitForChild("Command")
 local stateEvent = network:WaitForChild("State")
+local remoteBuild = network:FindFirstChild("BuildVersion")
+if not remoteBuild or remoteBuild.Value ~= BUILD_VERSION then
+	warn("[Mythblox] Client " .. BUILD_VERSION .. " does not match server version; old scripts may still be running.")
+end
+print("[Mythblox] CLIENT RUNNING " .. BUILD_VERSION)
 
-local previous = playerGui:FindFirstChild("MythbloxGame01UI")
-if previous then previous:Destroy() end
+-- Remove all previous copies (not just the first) of this game's GUI.
+for _, child in ipairs(playerGui:GetChildren()) do
+	if child.Name == "MythbloxGame01UI" and child:IsA("ScreenGui") then
+		child:Destroy()
+	end
+end
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "MythbloxGame01UI"
@@ -18,6 +28,13 @@ gui.IgnoreGuiInset = false
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 gui.DisplayOrder = 10
 gui.Parent = playerGui
+-- If a legacy LocalScript creates an older copy later, remove only that copy.
+playerGui.ChildAdded:Connect(function(child)
+	if child ~= gui and child.Name == "MythbloxGame01UI" and child:IsA("ScreenGui") then
+		warn("[Mythblox] Removed duplicate UI from another script: " .. child:GetFullName())
+		child:Destroy()
+	end
+end)
 
 -- Bright white panels + colorful blue/green buttons, readable against daylight.
 local COLOR = {
@@ -361,7 +378,7 @@ local function update(state)
 		lastTurnRendered = -1
 	end
 	local mine = state.mine
-	phaseText.Text = ("ROUND %d  ·  %s"):format(state.turn or 0, phaseNames[phase] or phase)
+	phaseText.Text = ("v0.8 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
 	clockText.Text = tostring(state.time or 0) .. "s"
 	description.Text = state.message or ""
 
@@ -370,7 +387,7 @@ local function update(state)
 	movement.Visible = phase == "MOVE" and mine ~= nil and mine.alive == true
 
 	if phase == "JOIN" then
-		phaseText.Text = "NEXT MATCH"
+		phaseText.Text = "v0.8 · NEXT MATCH"
 		description.Text = state.queued and "You're queued for the next race."
 			or "Join at the gold pad or use the button below."
 		ownStats.Text = ("%d/%d PLAYERS READY"):format(state.ready or 0, state.capacity or 8)
@@ -389,7 +406,7 @@ local function update(state)
 	if phase == "RESULTS" then
 		-- Server sends winner/draw text in state.message; show it only in
 		-- the small status panel and avoid blocking the camera.
-		phaseText.Text = "ROUND OVER"
+		phaseText.Text = "v0.8 · ROUND OVER"
 		ownStats.Text = "NEXT MATCH STARTS SOON"
 	end
 
