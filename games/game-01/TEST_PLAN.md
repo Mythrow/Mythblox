@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-21):** Owner reports **solo AND multiplayer v0.1 testing succeeded** across multiple gameplay conditions. Exact numbered cases were not individually recorded. Owner also reported four issues; changes for these are in **v0.2**, but this new build has **NOT YET BEEN TESTED IN STUDIO**.
+**Status (2026-11-21):** Owner confirmed **v0.2 functionality works in Studio** after reporting and retesting previous problems. UI/presentation still needs improvement and is intentionally **deferred to a dedicated polish phase**. The owner did not provide individual test-case results, so this is a reported overall functional pass, not exhaustive QA.
 
 ## Playtest log
 
@@ -8,9 +8,9 @@
 |---|---|---|---|
 | 2026-11-21 | Roblox Studio, 1 client (user-reported), v0.1 | Installer worked; solo gameplay matched expectations under several unspecified conditions | Specific checklist cases not enumerated |
 | 2026-11-21 | Roblox Studio, multiple players (user-reported), v0.1 | Multiplayer worked across multiple unspecified conditions | Reported bugs: initial/respawn near lava, repeated FINISH signs, fixed 8 bridges during join, missing vote breakdown UI |
-| 2026-11-21 | GitHub v0.2 (not tested) | Applied fixes to server/client/one-paste installer | Retest all four reported bugs on two clients, especially rejoining after death |
+| 2026-11-21 | GitHub v0.2 (owner-confirmed functional) | Owner reports revised game functions work | Improve UI later; perform mobile, performance, exploit and release QA separately |
 
-### Priority next test: re-install v0.2 and verify the four reported fixes
+### Previously addressed: v0.2 fix verification (owner reports functionality works)
 
 1. **Stop** the old Play session; open latest [installer](INSTALL_STUDIO_COMMAND_BAR.luau), copy **Raw**, paste into **Command Bar** and Run again while in Edit mode.
 2. Start single-player Play without joining. Confirm you spawn safely **inside the elevated lobby**, with no repeat lava deaths. Confirm **no glass lanes** exist before join closes.
@@ -79,6 +79,13 @@
 | 28 | All vote uniquely | No numbers blocked, everyone eligible to advance their chosen distance |
 | 29 | Inspect small/mobile viewport | Reveal remains readable and doesn't prevent movement |
 | 30 | Check Output, both client and server | No red runtime errors introduced by the new build |
+
+## Deferred UI and visual polish
+
+- Make post-vote results clearer and more engaging (counts, players, cracks, permissions).
+- Make HUD more responsive and legible on small screens; review panel placement.
+- Improve in-world feedback, glass cracks, falls and finish celebration.
+- Do not modify gameplay rules solely for cosmetic redesign.
 
 ## Balance questions to answer in playtests
 
