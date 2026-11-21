@@ -1,4 +1,4 @@
--- Mythblox game-01: glass bridge race v0.9 (server)
+-- Mythblox game-01: glass bridge race v0.10 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -6,7 +6,7 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
-local BUILD_VERSION = "v0.9"
+local BUILD_VERSION = "v0.10"
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -39,6 +39,27 @@ Lighting.Ambient = Color3.fromRGB(194, 211, 235)
 Lighting.OutdoorAmbient = Color3.fromRGB(216, 229, 247)
 Lighting.FogColor = Color3.fromRGB(198, 230, 255)
 Lighting.FogEnd = 1400
+
+-- Remove only the stock Baseplate SpawnLocation: its star icon is visible
+-- beneath the arena's lava even though our players use the elevated lobby.
+-- Ignore custom spawns elsewhere in the place.
+local function removeBaseplateSpawn()
+	local removed = 0
+	for _, obj in ipairs(workspace:GetDescendants()) do
+		if obj:IsA("SpawnLocation") and obj.Name == "SpawnLocation"
+			and math.abs(obj.Position.X) < 24
+			and math.abs(obj.Position.Z) < 24
+			and obj.Position.Y < SETTINGS.BridgeY - 10 then
+			obj.Enabled = false
+			obj:Destroy()
+			removed += 1
+		end
+	end
+	if removed > 0 then
+		print("[Mythblox] Hidden old baseplate spawn(s): " .. removed)
+	end
+end
+removeBaseplateSpawn()
 
 local oldWorld = workspace:FindFirstChild("MythbloxGame01")
 if oldWorld then oldWorld:Destroy() end
@@ -301,10 +322,100 @@ end
 makeStall("LeftShopComingSoon", -25, -49, ROOF_BLUE, "SHOP", "COMING SOON")
 makeStall("RightCosmeticsComingSoon", 25, -49, ROOF_PINK, "COSMETICS", "COMING SOON")
 
--- Near-spawn board: do not invent global data or live purchase controls.
+-- World leaderboard: genuine session stats only. No DataStore/global rankings.
 local boardPost = decorative("LeaderboardPost", Vector3.new(1.4, 10, 1.4), Vector3.new(33, 29, -82), WOOD, Enum.Material.Wood)
 local board = decorative("LeaderboardBoard", Vector3.new(15, 10, 1.3), Vector3.new(33, 34, -82), ROOF_BLUE)
-textSign(board, "LEADERBOARD | COMING SOON", 1.5, 245)
+
+local boardFaces = {}
+local function makeScoreFace(side)
+	local surface = Instance.new("SurfaceGui")
+	surface.Name = "ServerLeaderboard"
+	surface.Face = side
+	surface.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	surface.PixelsPerStud = 30
+	surface.LightInfluence = 0
+	surface.AlwaysOnTop = false
+	surface.Parent = board
+
+	local card = Instance.new("Frame")
+	card.Name = "WhiteScoreCard"
+	card.Position = UDim2.fromScale(0.04, 0.045)
+	card.Size = UDim2.fromScale(0.92, 0.91)
+	card.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	card.BorderSizePixel = 0
+	card.Parent = surface
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 12)
+	corner.Parent = card
+
+	local function makeLabel(name, content, y, h, fontSize, color, bold)
+		local t = Instance.new("TextLabel")
+		t.Name = name
+		t.Position = UDim2.new(0.04, 0, y, 0)
+		t.Size = UDim2.new(0.92, 0, h, 0)
+		t.BackgroundTransparency = 1
+		t.Text = content
+		t.TextColor3 = color
+		t.TextSize = fontSize
+		t.TextScaled = false
+		t.TextWrapped = false
+		t.TextTruncate = Enum.TextTruncate.AtEnd
+		t.TextXAlignment = Enum.TextXAlignment.Left
+		t.Font = bold and Enum.Font.GothamBold or Enum.Font.Gotham
+		t.Parent = card
+		return t
+	end
+
+	makeLabel("Title", "TOP RACERS", 0.04, 0.14, 31, Color3.fromRGB(33, 101, 183), true)
+	makeLabel("Scope", "THIS SERVER ONLY", 0.20, 0.09, 19, Color3.fromRGB(102, 124, 143), true)
+	local rows = {}
+	for i = 1, 4 do
+		rows[i] = makeLabel(
+			"Rank" .. i, "", 0.34 + (i - 1) * 0.142, 0.115,
+			24, Color3.fromRGB(35, 73, 111), i == 1
+		)
+	end
+	makeLabel("Note", "Resets when server closes", 0.92, 0.06, 16, Color3.fromRGB(114, 134, 154), false)
+	table.insert(boardFaces, rows)
+end
+makeScoreFace(Enum.NormalId.Front)
+makeScoreFace(Enum.NormalId.Back)
+
+local lastLeaderboardText = ""
+local function refreshSessionLeaderboard()
+	local contestants = Players:GetPlayers()
+	local function values(p)
+		local stats = p:FindFirstChild("leaderstats")
+		local wins = stats and stats:FindFirstChild("Wins")
+		local coins = stats and stats:FindFirstChild("Coins")
+		return wins and wins.Value or 0, coins and coins.Value or 0
+	end
+	table.sort(contestants, function(a, b)
+		local aw, ac = values(a)
+		local bw, bc = values(b)
+		if aw ~= bw then return aw > bw end
+		if ac ~= bc then return ac > bc end
+		return a.UserId < b.UserId
+	end)
+	local textRows = {}
+	for i = 1, 4 do
+		local player = contestants[i]
+		if player then
+			local wins, coins = values(player)
+			textRows[i] = string.format("%d. %s  ·  %dW  %dC", i, player.DisplayName, wins, coins)
+		else
+			textRows[i] = i == 1 and "No players yet" or ""
+		end
+	end
+	local key = table.concat(textRows, "\n")
+	if key == lastLeaderboardText then return end
+	lastLeaderboardText = key
+	for _, rows in ipairs(boardFaces) do
+		for i, label in ipairs(rows) do
+			label.Text = textRows[i]
+		end
+	end
+end
 local rewardsBase = decorative("FutureRewardsPodium", Vector3.new(12, 1.5, 10), Vector3.new(-33, 24.75, -82), Color3.fromRGB(255, 195, 91))
 local rewardSign = decorative("FutureRewardsSignAnchor", Vector3.new(1, 1, 1), Vector3.new(-33, 27, -82), WHITE)
 rewardSign.CanCollide = false
@@ -711,6 +822,7 @@ local function snapshot(player)
 end
 
 publish = function()
+	refreshSessionLeaderboard()
 	-- The single physical platform changes role by phase, without moving.
 	if phase == "JOIN" then
 		deckSignText.Text = ("JOIN ROUND  ·  %ds  ·  %d READY"):format(secondsLeft, numberReady())
