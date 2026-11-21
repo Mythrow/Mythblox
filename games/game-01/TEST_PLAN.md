@@ -44,7 +44,7 @@
 
 | # | Action | Expected result |
 |---|---|---|
-| 1 | Press Play once in Studio | An elevated lobby, 8 glass lanes, and lava appear; no startup errors |
+| 1 | Press Play once in Studio | A safe elevated lobby and lava appear; **no glass lanes** until players finish joining; no startup errors |
 | 2 | Solo Studio: press JOIN | A solo-practice match begins after 10 seconds |
 | 3 | Test with 2 clients; both press JOIN | Both receive separate lanes |
 | 4 | A chooses 5; B chooses 3 | Both may walk, A up to 5 tiles and B up to 3 |
