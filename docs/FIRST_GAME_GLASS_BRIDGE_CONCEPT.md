@@ -1,3 +1,37 @@
+> **Update (2026-11-21): Direction revised after discussion.** The fixed five selectable values **1–5 now represent a maximum number of tiles the player may move**, rather than identifiers that always grant one step. This addresses the automatic two-player vote tie: when players choose different numbers, each can progress by a different distance. **No spinner or tie wheel for the MVP.** Players walk manually; if an advancing player doesn't leave their old tile by the next voting phase, that tile falls. See **Current rule proposal** immediately below. Earlier single-step/spinner analysis remains as historical exploration only and is superseded where it differs.
+
+## Current rule proposal (replaces earlier prototype default)
+
+- **Five fixed choices**: 1, 2, 3, 4, 5, displayed as potential maximum steps for the current round, regardless of player count.
+- **Voting**: Players secretly select one number during the countdown. A **most-popular number** selected by **at least 2 players** is blocked; if multiple numbers tie for the highest count of 2 or more, **all tied most-popular numbers are blocked**. Numbers with fewer votes are safe; if all selected numbers are distinct, everyone is safe.
+- **Blocked choice**: player earns one crack, cannot advance this round. Their current tile stays safe unless this is their third crack, in which case it breaks and eliminates them.
+- **Safe choice**: player may physically walk **1 up to N tiles** forward, where N is the number they chose. Only those N next tiles become safe for that player while their movement window is active.
+- **Mandatory movement**: A safe player must leave their old tile and enter at least the next tile before the next voting phase; otherwise the **old tile breaks** and they fall. They may voluntarily stop earlier than N, keeping only the distance actually traveled. Unused allowed steps expire.
+- **Overstepping**: Touching a tile beyond the permitted range, or touching the next tile when blocked, makes that unauthorized tile shatter and causes a fall. No automatic movement.
+- **Cracks**: Three blocked outcomes cause elimination; failure to move or an illegal step causes immediate fall, regardless of cracks.
+- **Race**: First player to physically reach the end wins, or last survivor wins; handle simultaneous finish/elimination explicitly. Keep coins and cosmetics for a later phase.
+- **Initial prototype values to test**: 20 advanceable tiles per lane; 10-second join countdown; 5-second vote; about 6-second movement; 3 cracks maximum. Timing and length are not yet playtested.
+- **Readability/safety**: Show a progress counter, current cracks, eligible green tiles, unsafe red tiles, and movement timer. Disable jumping or validate skipped tiles to enforce lane limits.
+- **Potential dominant strategy**: High values (4/5) may be overselected, while lower values could be unattractive in two-player play; validate with humans before changing the rules.
+
+### Example with 2 players
+
+- A chooses 5 and B chooses 3: both are unique. A may manually move 1–5 tiles, B 1–3 tiles; distances can differ.
+- A and B both choose 5: number 5 has two votes, so neither advances and both gain one crack.
+
+### Example with 5 players
+
+Votes: 5, 5, 4, 3, 2. The two 5s are blocked, gain a crack, and stay. The other players can move up to 4, 3 and 2 tiles respectively.
+
+Votes: 5, 5, 4, 4, 3. Numbers 5 and 4 tie for most popular with two votes each, so both groups are blocked; 3 can advance.
+
+### Explicitly parked for later
+
+- Random spinner as tie-breaker: **not included** in MVP.
+- Special bonus/surprise rounds: **not included** in MVP.
+
+---
+
 # First Game — Glass Bridge Voting (Unnamed Concept)
 
 **Status:** Concept discussion / candidate for Mythblox game 1; *not* a locked specification  
