@@ -193,6 +193,16 @@ local function decorative(name, size, position, color, material)
 	return part(name, size, position, color, material or Enum.Material.SmoothPlastic, hub)
 end
 
+-- Layered terrain gives the island a proper visible edge from the bridge.
+-- These are behind the spectator rails and do not alter the match.
+local islandSoil = decorative(
+	"IslandSoil", Vector3.new(125, 12, 87),
+	Vector3.new(0, 16, -59), Color3.fromRGB(153, 113, 72), Enum.Material.Ground
+)
+local islandStone = decorative(
+	"IslandStoneBase", Vector3.new(120, 4, 83),
+	Vector3.new(0, 8, -59), Color3.fromRGB(174, 163, 137), Enum.Material.Slate
+)
 local ground = decorative("HubGrassIsland", Vector3.new(130, 4, 91), Vector3.new(0, 22, -59), GRASS, Enum.Material.Grass)
 local plaza = decorative("SpawnPlaza", Vector3.new(26, 0.4, 23), Vector3.new(0, 24.2, -76), CREAM)
 local path = decorative("MainWalkPath", Vector3.new(11, 0.25, 36), Vector3.new(0, 24.14, -53), CREAM)
@@ -240,8 +250,8 @@ local deckSignText = deckSignGui:FindFirstChildOfClass("TextLabel")
 -- to this deck by an additional server-side bounds check.
 local barrier = decorative(
 	"FrontSpectatorGlassBarrier",
-	Vector3.new(91, 7, 1.5),
-	Vector3.new(0, 28, -9.6),
+	Vector3.new(90, 8.5, 0.45),
+	Vector3.new(0, 28.8, -10.25),
 	Color3.fromRGB(177, 238, 252),
 	Enum.Material.Glass
 )
@@ -263,24 +273,24 @@ local function makePromenade(side)
 	)
 	local inner = decorative(
 		"InnerViewingSafetyGlass",
-		Vector3.new(1.5, 7, 84),
-		Vector3.new(side * 43.75, 28, 31),
+		Vector3.new(0.45, 8.5, 79.8),
+		Vector3.new(side * 44.5, 28.8, 30.1),
 		Color3.fromRGB(177, 238, 252),
 		Enum.Material.Glass
 	)
 	inner.Transparency = 0.78
 	local outer = decorative(
 		"OuterViewingFence",
-		Vector3.new(1.5, 7, 95),
-		Vector3.new(side * 54.1, 27.5, 22.5),
+		Vector3.new(0.75, 7, 95),
+		Vector3.new(side * 53.5, 28.05, 22.5),
 		WOOD,
 		Enum.Material.Wood
 	)
 	outer.Transparency = 0.05
 	local endRail = decorative(
 		"ViewingEndFence",
-		Vector3.new(11, 7, 1.4),
-		Vector3.new(x, 27.5, 70),
+		Vector3.new(9, 7, 0.7),
+		Vector3.new(x, 28.05, 69.65),
 		WOOD,
 		Enum.Material.Wood
 	)
@@ -461,12 +471,14 @@ for _, side in ipairs({-1, 1}) do
 	end
 end
 
--- Under-island lawn and lava are scenery/physics separate from the hub.
-local grass = part(
-	"GrassSurround", Vector3.new(190, 2, 320),
-	Vector3.new(0, 0, 58), Color3.fromRGB(103, 205, 88), Enum.Material.Grass
+-- Calm sea backdrop covers the template's empty gray baseplate when viewed
+-- from the arena; unlike the grass island it has no collision.
+local ocean = part(
+	"OceanBackdrop", Vector3.new(820, 1.5, 820),
+	Vector3.new(0, 0.6, 58), Color3.fromRGB(72, 185, 234), Enum.Material.SmoothPlastic
 )
-grass.CanTouch = false
+ocean.CanCollide = false
+ocean.CanTouch = false
 local lava = part("Lava", Vector3.new(105, 2, 235), Vector3.new(0, 7, 68), Color3.fromRGB(255, 105, 35), Enum.Material.Neon)
 lava.CanCollide = false
 lava.Transparency = 0.12
