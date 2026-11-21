@@ -8,7 +8,7 @@ local playerGui = player:WaitForChild("PlayerGui")
 local network = ReplicatedStorage:WaitForChild("MythbloxGame01")
 local command = network:WaitForChild("Command")
 local stateEvent = network:WaitForChild("State")
-local remoteBuild = network:FindFirstChild("BuildVersion")
+local remoteBuild = network:WaitForChild("BuildVersion", 5)
 if not remoteBuild or remoteBuild.Value ~= BUILD_VERSION then
 	warn("[Mythblox] Client " .. BUILD_VERSION .. " does not match server version; old scripts may still be running.")
 end
