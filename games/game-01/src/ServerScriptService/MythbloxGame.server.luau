@@ -71,25 +71,44 @@ local function part(name, size, position, color, material, parent)
 	return p
 end
 
-local function textSign(parent, text, yOffset, width)
-	local gui = Instance.new("BillboardGui")
-	gui.Size = UDim2.fromOffset(width or 220, 55)
-	gui.StudsOffset = Vector3.new(0, yOffset or 4, 0)
-	gui.AlwaysOnTop = true
-	gui.Parent = parent
+-- World-space signage: a fixed 3D board, NOT a BillboardGui overlay.
+-- The old AlwaysOnTop Billboards made labels enormous at a distance and
+-- overlapped one another in the shared ready/spectator area.
+local function textSign(parent, message, yOffset, width)
+	local board = Instance.new("Part")
+	board.Name = "WorldSign_" .. parent.Name
+	board.Anchored = true
+	board.CanCollide = false
+	board.CanTouch = false
+	board.Size = Vector3.new(math.clamp((width or 220) / 16, 9, 22), 3.2, 0.55)
+	board.Position = parent.Position + Vector3.new(0, yOffset or 3, 0)
+	board.Material = Enum.Material.SmoothPlastic
+	board.Color = Color3.fromRGB(250, 251, 255)
+	board.Parent = parent.Parent or world
+
+	local surface = Instance.new("SurfaceGui")
+	surface.Name = "WorldText"
+	surface.Face = Enum.NormalId.Front
+	surface.PixelsPerStud = 38
+	surface.AlwaysOnTop = false
+	surface.LightInfluence = 0
+	surface.Parent = board
+
+	local padding = Instance.new("UIPadding")
+	padding.PaddingLeft = UDim.new(0.03, 0)
+	padding.PaddingRight = UDim.new(0.03, 0)
+	padding.Parent = surface
+
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.fromScale(1, 1)
-	label.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	label.BackgroundTransparency = 0.05
-	label.TextColor3 = Color3.fromRGB(23, 77, 140)
+	label.BackgroundTransparency = 1
+	label.TextColor3 = Color3.fromRGB(33, 92, 150)
 	label.TextScaled = true
+	label.TextWrapped = true
 	label.Font = Enum.Font.GothamBold
-	label.Text = text
-	label.Parent = gui
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 9)
-	corner.Parent = label
-	return gui
+	label.Text = message
+	label.Parent = surface
+	return surface
 end
 
 -- Persistent social island and phase-aware shared ready/spectator platform.
@@ -119,13 +138,13 @@ local spurRight = decorative("RightShopPath", Vector3.new(27, 0.22, 7), Vector3.
 local sharedDeck = decorative(
 	"SharedReadyAndSpectatorDeck",
 	Vector3.new(90, 1, 24),
-	Vector3.new(0, 23.5, -22),
+	Vector3.new(0, 24.05, -22),
 	Color3.fromRGB(228, 245, 254)
 )
 local deckCenter = decorative(
 	"JoinAndWatchFloorMarking",
 	Vector3.new(19, 0.17, 9),
-	Vector3.new(0, 24.11, -25),
+	Vector3.new(0, 24.7, -25),
 	Color3.fromRGB(255, 207, 67)
 )
 deckCenter.CanCollide = false
@@ -155,35 +174,35 @@ local deckSignText = deckSignGui:FindFirstChildOfClass("TextLabel")
 -- to this deck by an additional server-side bounds check.
 local barrier = decorative(
 	"FrontSpectatorGlassBarrier",
-	Vector3.new(91, 14, 1.5),
-	Vector3.new(0, 31, -9.6),
+	Vector3.new(91, 7, 1.5),
+	Vector3.new(0, 28, -9.6),
 	Color3.fromRGB(177, 238, 252),
 	Enum.Material.Glass
 )
-barrier.Transparency = 0.73
+barrier.Transparency = 0.79
 
 local function makePromenade(side)
 	local x = side * 49
 	local walkway = decorative(
 		side < 0 and "LeftSpectatorWalkway" or "RightSpectatorWalkway",
 		Vector3.new(9, 1, 95),
-		Vector3.new(x, 23.5, 22.5),
+		Vector3.new(x, 24.05, 22.5),
 		Color3.fromRGB(226, 244, 252)
 	)
 	local connector = decorative(
 		side < 0 and "LeftSpectatorConnector" or "RightSpectatorConnector",
 		Vector3.new(12, 1, 15),
-		Vector3.new(side * 44, 23.5, -17.5),
+		Vector3.new(side * 44, 24.05, -17.5),
 		Color3.fromRGB(226, 244, 252)
 	)
 	local inner = decorative(
 		"InnerViewingSafetyGlass",
-		Vector3.new(1.5, 14, 84),
-		Vector3.new(side * 43.75, 31, 31),
+		Vector3.new(1.5, 7, 84),
+		Vector3.new(side * 43.75, 28, 31),
 		Color3.fromRGB(177, 238, 252),
 		Enum.Material.Glass
 	)
-	inner.Transparency = 0.72
+	inner.Transparency = 0.78
 	local outer = decorative(
 		"OuterViewingFence",
 		Vector3.new(1.5, 7, 95),
@@ -229,7 +248,7 @@ local function makeStall(name, x, z, roofColor, line1, line2)
 		part("CornerPost", Vector3.new(1.2, 8.5, 1.2), Vector3.new(x + side * 7.2, 28.4, z - 4.5), WOOD, Enum.Material.Wood, group)
 	end
 	local roof = part("ColorfulRoof", Vector3.new(19, 1.3, 17), Vector3.new(x, 33.2, z), roofColor, Enum.Material.SmoothPlastic, group)
-	local header = part("StallSignAnchor", Vector3.new(1, 1, 1), Vector3.new(x, 31, z - 6.5), WHITE, Enum.Material.SmoothPlastic, group)
+	local header = part("StallSignAnchor", Vector3.new(1, 1, 1), Vector3.new(x, 29, z - 6.5), WHITE, Enum.Material.SmoothPlastic, group)
 	header.Transparency = 1
 	header.CanCollide = false
 	textSign(header, line1 .. " | " .. line2, 2, 210)
@@ -646,13 +665,13 @@ end
 publish = function()
 	-- The single physical platform changes role by phase, without moving.
 	if phase == "JOIN" then
-		deckSignText.Text = ("JOIN NEXT ROUND  |  %ds  |  %d READY"):format(secondsLeft, numberReady())
+		deckSignText.Text = ("JOIN ROUND  ·  %ds  ·  %d READY"):format(secondsLeft, numberReady())
 		deckPrompt.Enabled = true
 	elseif phase == "RESULTS" then
 		deckSignText.Text = "ROUND FINISHED  |  NEXT MATCH SOON"
 		deckPrompt.Enabled = false
 	else
-		deckSignText.Text = ("WATCH THE MATCH  |  %d RACERS LEFT"):format(#survivors())
+		deckSignText.Text = ("WATCH MATCH  ·  %d LEFT"):format(#survivors())
 		deckPrompt.Enabled = false
 	end
 	for _, player in ipairs(Players:GetPlayers()) do
