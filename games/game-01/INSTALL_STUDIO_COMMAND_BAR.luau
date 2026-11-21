@@ -331,7 +331,8 @@ local function onPlayerAdded(player)
 	player.CharacterAdded:Connect(function()
 		task.wait(0.2)
 		local info = active[player]
-		if not info or not info.alive then
+		if not info or not info.alive or phase == "JOIN" or phase == "RESULTS" then
+			-- Results-phase respawns are expected; they must not overwrite the win message.
 			lobbyTeleport(player)
 		else
 			-- A respawn while actively competing must not restore the player.
