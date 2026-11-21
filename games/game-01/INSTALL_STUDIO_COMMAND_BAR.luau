@@ -1,5 +1,5 @@
 -- Mythblox Game 01 — one-paste installation into Roblox Studio's Command Bar.
--- IMPORTANT: Run in EDIT mode, not during Play/Test. This adds 2 scripts.
+-- IMPORTANT: Run in EDIT mode, not during Play/Test. This REPLACES the two MythbloxGame scripts.
 -- This prototype intentionally has no permanent player-data storage or paid products.
 
 assert(not game:GetService("RunService"):IsRunning(), "Stop the test session before installing.")
@@ -93,11 +93,21 @@ lobby.Neutral = true
 lobby.Duration = 0
 lobby.Anchored = true
 lobby.Size = Vector3.new(34, 1.5, 24)
-lobby.Position = Vector3.new(0, SETTINGS.BridgeY, -39)
+lobby.Position = Vector3.new(0, SETTINGS.BridgeY, -70)
 lobby.Material = Enum.Material.SmoothPlastic
 lobby.Color = Color3.fromRGB(47, 61, 100)
 lobby.Parent = world
 textSign(lobby, "MYTHBLOX | GLASS RACE", 8, 350)
+-- Guard rails keep the waiting area safely away from the lava.
+for _, rail in ipairs({
+	{ "Back", Vector3.new(36, 5, 1), Vector3.new(0, SETTINGS.BridgeY + 3, -82) },
+	{ "Front", Vector3.new(36, 5, 1), Vector3.new(0, SETTINGS.BridgeY + 3, -58) },
+	{ "Left", Vector3.new(1, 5, 24), Vector3.new(-17, SETTINGS.BridgeY + 3, -70) },
+	{ "Right", Vector3.new(1, 5, 24), Vector3.new(17, SETTINGS.BridgeY + 3, -70) },
+}) do
+	local wall = part(rail[1] .. "LobbyRail", rail[2], rail[3], Color3.fromRGB(91, 120, 164), Enum.Material.Glass)
+	wall.Transparency = 0.35
+end
 
 local lava = part("Lava", Vector3.new(105, 2, 235), Vector3.new(0, 7, 68), Color3.fromRGB(255, 91, 30), Enum.Material.Neon)
 lava.CanCollide = false
@@ -108,22 +118,49 @@ lava.Touched:Connect(function(hit)
 	if humanoid then humanoid.Health = 0 end
 end)
 
+-- Glass lanes do not exist in the lobby. We build exactly one per ready
+-- participant after the join countdown has completed.
 local lanes = {}
-for lane = 1, SETTINGS.MaxPlayers do
-	local x = (lane - (SETTINGS.MaxPlayers + 1) / 2) * SETTINGS.LaneSpacing
-	lanes[lane] = { x = x, tiles = {} }
-	for index = 0, SETTINGS.BridgeLength do
-		local tile = part(
-			("Lane%02d_Tile%02d"):format(lane, index),
-			Vector3.new(6.7, 0.9, 6.7),
-			Vector3.new(x, SETTINGS.BridgeY, index * SETTINGS.TileSpacing),
-			index == SETTINGS.BridgeLength and AMBER or GLASS,
-			Enum.Material.Glass
-		)
-		tile.Transparency = 0.22
-		lanes[lane].tiles[index] = tile
+local bridgeModel = nil
+local function clearBridges()
+	if bridgeModel then bridgeModel:Destroy() end
+	bridgeModel = nil
+	lanes = {}
+end
+
+local function buildBridges(count)
+	clearBridges()
+	bridgeModel = Instance.new("Model")
+	bridgeModel.Name = "CurrentMatchBridges"
+	bridgeModel.Parent = world
+
+	for lane = 1, count do
+		local x = (lane - (count + 1) / 2) * SETTINGS.LaneSpacing
+		lanes[lane] = { x = x, tiles = {} }
+		for index = 0, SETTINGS.BridgeLength do
+			local tile = part(
+				("Lane%02d_Tile%02d"):format(lane, index),
+				Vector3.new(6.7, 0.9, 6.7),
+				Vector3.new(x, SETTINGS.BridgeY, index * SETTINGS.TileSpacing),
+				index == SETTINGS.BridgeLength and AMBER or GLASS,
+				Enum.Material.Glass,
+				bridgeModel
+			)
+			tile.Transparency = 0.22
+			lanes[lane].tiles[index] = tile
+		end
 	end
-	textSign(lanes[lane].tiles[SETTINGS.BridgeLength], "FINISH", 5, 115)
+
+	-- One shared finish banner, rather than a floating FINISH label per lane.
+	local bannerWidth = math.max(12, count * SETTINGS.LaneSpacing)
+	local banner = part(
+		"SharedFinishBanner",
+		Vector3.new(bannerWidth, 1.5, 1.5),
+		Vector3.new(0, SETTINGS.BridgeY + 11, SETTINGS.BridgeLength * SETTINGS.TileSpacing),
+		AMBER, Enum.Material.Neon, bridgeModel
+	)
+	banner.CanCollide = false
+	textSign(banner, "FINISH", 2, 180)
 end
 
 local phase = "JOIN"
@@ -132,6 +169,8 @@ local turnNumber = 0
 local queue = {}
 local active = {}
 local unsafe = {}
+local voteCounts = {0, 0, 0, 0, 0}
+local voteOutcomes = {}
 local message = "Join the next match!"
 local winnerPlayer = nil
 local initialMatchCount = 0
@@ -163,7 +202,7 @@ local function lobbyTeleport(player)
 	local humanoid = character:FindFirstChildOfClass("Humanoid")
 	if root then
 		local offset = math.random(-9, 9)
-		root.CFrame = CFrame.new(offset, SETTINGS.BridgeY + 4, -39)
+		root.CFrame = CFrame.new(offset, SETTINGS.BridgeY + 4, -70)
 		root.AssemblyLinearVelocity = Vector3.zero
 	end
 	if humanoid then
@@ -190,20 +229,11 @@ local function setWalking(player, canMove)
 	end
 end
 
-local function resetTiles()
-	for _, lane in ipairs(lanes) do
-		for index = 0, SETTINGS.BridgeLength do
-			local tile = lane.tiles[index]
-			tile.CanCollide = true
-			tile.CanTouch = true
-			tile.Transparency = 0.22
-			tile.Color = index == SETTINGS.BridgeLength and AMBER or GLASS
-		end
-	end
+local function prepareMatchLabels()
 	if labelFolder then labelFolder:Destroy() end
 	labelFolder = Instance.new("Folder")
 	labelFolder.Name = "PlayerLaneLabels"
-	labelFolder.Parent = world
+	labelFolder.Parent = bridgeModel
 end
 
 local function shatter(tile)
@@ -302,6 +332,8 @@ local function snapshot(player)
 			start = mine.startIndex,
 		} or nil,
 		unsafe = unsafe,
+		voteCounts = phase == "VOTE" and {} or voteCounts,
+		voteOutcomes = phase == "VOTE" and {} or voteOutcomes,
 		roster = publicRoster(),
 		message = message,
 	}
@@ -328,6 +360,14 @@ end
 
 local function onPlayerAdded(player)
 	makeLeaderstats(player)
+	-- Override any Baseplate SpawnLocation: spawning at (0,0,0) can land
+	-- underneath the glass arena and inside its lava region.
+	player.RespawnLocation = lobby
+	if player.Character then
+		task.defer(function()
+			if player.Parent == Players then lobbyTeleport(player) end
+		end)
+	end
 	player.CharacterAdded:Connect(function()
 		task.wait(0.2)
 		local info = active[player]
@@ -468,7 +508,8 @@ local function beginMatch(participants)
 	unsafe = {}
 	winnerPlayer = nil
 	turnNumber = 0
-	resetTiles()
+	buildBridges(#participants)
+	prepareMatchLabels()
 	for lane, player in ipairs(participants) do
 		if player.Parent == Players then
 			local root = teleportToLane(player, lane)
@@ -490,30 +531,49 @@ local function beginMatch(participants)
 end
 
 local function resolveVotes()
-	local counts = {}
+	local counts = {0, 0, 0, 0, 0}
 	local highest = 0
 	for player, info in pairs(active) do
 		if player.Parent == Players and info.alive and info.vote then
-			counts[info.vote] = (counts[info.vote] or 0) + 1
+			counts[info.vote] += 1
 			highest = math.max(highest, counts[info.vote])
 		end
 	end
+	voteCounts = counts
 	unsafe = {}
 	if highest >= 2 then
-		for choice, count in pairs(counts) do
-			if count == highest then unsafe[choice] = true end
+		for choice = 1, 5 do
+			if counts[choice] == highest then unsafe[choice] = true end
 		end
 	end
+
+	local outcomes = {}
 	for player, info in pairs(active) do
 		if info.alive then
 			info.startIndex = info.index
-			if not info.vote or unsafe[info.vote] then
+			local status
+			if not info.vote then
+				status = "NO_VOTE"
+				crack(player)
+			elseif unsafe[info.vote] then
+				status = "CRACK"
 				crack(player)
 			else
 				info.allowed = info.vote
+				status = "GO"
 			end
+			table.insert(outcomes, {
+				name = player.DisplayName,
+				number = info.vote,
+				status = status,
+				steps = info.allowed,
+				cracks = info.cracks,
+				out = not info.alive,
+			})
 		end
 	end
+	table.sort(outcomes, function(a, b) return a.name < b.name end)
+	voteOutcomes = outcomes
 end
 
 local function finishMovePhase()
@@ -553,9 +613,13 @@ end
 
 while true do
 	phase = "JOIN"
+	clearBridges()
+	if labelFolder then labelFolder = nil end
 	queue = {}
 	active = {}
 	unsafe = {}
+	voteCounts = {0, 0, 0, 0, 0}
+	voteOutcomes = {}
 	message = "Press JOIN to enter the next bridge race."
 	countdown(SETTINGS.JoinSeconds, false)
 	local participants = {}
@@ -580,6 +644,8 @@ while true do
 		turnNumber = turn
 		phase = "VOTE"
 		unsafe = {}
+		voteCounts = {0, 0, 0, 0, 0}
+		voteOutcomes = {}
 		message = "Secretly choose 1–5 steps. Most popular picks crack!"
 		for _, info in pairs(active) do info.vote = nil end
 		for player, info in pairs(active) do
@@ -790,6 +856,93 @@ hintConstraint.MaxSize = Vector2.new(510, 58)
 hintConstraint.Parent = hint
 local hintText = text(hint, "Hint", "", UDim2.new(0.04, 0, 0.12, 0), UDim2.new(0.92, 0, 0.76, 0), Enum.Font.GothamBold, WHITE)
 
+-- During the reveal and movement phases, show exactly how every player voted.
+-- This is read-only: all vote counts/outcomes come from the server.
+local revealPanel = panel("VoteReveal", UDim2.fromOffset(10, 150), UDim2.fromOffset(265, 270))
+revealPanel.BackgroundTransparency = 0.05
+
+local revealTitle = text(revealPanel, "RevealTitle", "VOTE RESULTS", UDim2.new(0, 10, 0, 8), UDim2.new(1, -20, 0, 26), Enum.Font.GothamBold, GOLD)
+revealTitle.TextXAlignment = Enum.TextXAlignment.Left
+revealTitle.TextScaled = false
+revealTitle.TextSize = 17
+
+local countLine = text(revealPanel, "VoteCounts", "1:0  2:0  3:0  4:0  5:0", UDim2.new(0, 10, 0, 39), UDim2.new(1, -20, 0, 26), Enum.Font.GothamBold, WHITE)
+countLine.TextXAlignment = Enum.TextXAlignment.Left
+countLine.TextScaled = false
+countLine.TextSize = 15
+
+local nameRows = Instance.new("Frame")
+nameRows.Name = "PlayersAndPicks"
+nameRows.BackgroundTransparency = 1
+nameRows.Position = UDim2.new(0, 10, 0, 75)
+nameRows.Size = UDim2.new(1, -20, 1, -85)
+nameRows.Parent = revealPanel
+
+local rowLayout = Instance.new("UIListLayout")
+rowLayout.FillDirection = Enum.FillDirection.Vertical
+rowLayout.Padding = UDim.new(0, 2)
+rowLayout.SortOrder = Enum.SortOrder.LayoutOrder
+rowLayout.Parent = nameRows
+
+local cachedRevealKey = ""
+local function updateRevealBoard(state)
+	local visible = state.phase == "REVEAL" or state.phase == "MOVE" or state.phase == "RESULTS"
+	revealPanel.Visible = visible and state.turn > 0
+	if not revealPanel.Visible then return end
+
+	local viewport = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1200, 700)
+	local compact = viewport.X < 700
+	revealPanel.Size = UDim2.fromOffset(compact and 193 or 265, 270)
+	countLine.TextSize = compact and 12 or 15
+
+	local counts = state.voteCounts or {}
+	local nums = {}
+	for n = 1, 5 do
+		table.insert(nums, ("%d:%d"):format(n, counts[n] or 0))
+	end
+	countLine.Text = table.concat(nums, "   ")
+	local blocked = {}
+	for n = 1, 5 do
+		if state.unsafe and state.unsafe[n] then
+			table.insert(blocked, tostring(n))
+		end
+	end
+	revealTitle.Text = "VOTES · BLOCKED: " .. (#blocked > 0 and table.concat(blocked, ", ") or "NONE")
+
+	local cacheKey = tostring(state.turn) .. ":" .. tostring(state.phase == "RESULTS")
+	if cachedRevealKey == cacheKey then return end
+	cachedRevealKey = cacheKey
+	for _, child in ipairs(nameRows:GetChildren()) do
+		if child:IsA("TextLabel") then child:Destroy() end
+	end
+
+	for i, result in ipairs(state.voteOutcomes or {}) do
+		local label = Instance.new("TextLabel")
+		label.Name = "VoteRow" .. i
+		label.LayoutOrder = i
+		label.BackgroundTransparency = 1
+		label.Size = UDim2.new(1, 0, 0, 21)
+		label.TextXAlignment = Enum.TextXAlignment.Left
+		label.TextScaled = false
+		label.TextSize = compact and 12 or 14
+		label.TextTruncate = Enum.TextTruncate.AtEnd
+		label.Font = Enum.Font.GothamMedium
+		label.TextColor3 = result.status == "GO" and Color3.fromRGB(95, 245, 154) or Color3.fromRGB(255, 121, 111)
+		local name = tostring(result.name or "Player")
+		local selection = result.number and tostring(result.number) or "-"
+		local outcome
+		if result.status == "GO" then
+			outcome = "MOVE " .. tostring(result.steps or 0)
+		elseif result.status == "NO_VOTE" then
+			outcome = "NO PICK · CRACK"
+		else
+			outcome = result.out and "OUT" or "CRACK " .. tostring(result.cracks or 0) .. "/3"
+		end
+		label.Text = name .. "  [" .. selection .. "]  " .. outcome
+		label.Parent = nameRows
+	end
+end
+
 local phaseLabels = {
 	JOIN = "JOINING",
 	VOTE = "SECRET VOTE",
@@ -800,6 +953,7 @@ local phaseLabels = {
 
 local function update(state)
 	local phase = state.phase or "JOIN"
+	updateRevealBoard(state)
 	local mine = state.mine
 	timer.Text = ("%s  ·  %ds  ·  Turn %d"):format(phaseLabels[phase] or phase, state.time or 0, state.turn or 0)
 	description.Text = state.message or ""
@@ -859,6 +1013,7 @@ end
 join.Visible = false
 choicePanel.Visible = false
 hint.Visible = false
+revealPanel.Visible = false
 stateEvent.OnClientEvent:Connect(update)
 command:FireServer("Sync")
 ]====]
@@ -877,4 +1032,4 @@ end
 
 install(game:GetService("ServerScriptService"), "Script", "MythbloxGame", SERVER_SOURCE)
 install(game:GetService("StarterPlayer"):WaitForChild("StarterPlayerScripts"), "LocalScript", "MythbloxGame", CLIENT_SOURCE)
-print("[Mythblox] Game 01 installed. Test with Play, or Test > Server & Clients (2 clients). The arena appears during Play.")
+print("[Mythblox] Game 01 v0.2 installed. Test with Play, or Test > Server & Clients (2 clients). Bridges are generated only after the join countdown.")
