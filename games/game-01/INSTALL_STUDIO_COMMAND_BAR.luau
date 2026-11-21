@@ -31,19 +31,20 @@ local SETTINGS = {
 	StudioSoloPractice = true,
 }
 
-local GREEN = Color3.fromRGB(64, 235, 142)
-local RED = Color3.fromRGB(255, 85, 84)
-local GLASS = Color3.fromRGB(105, 201, 240)
-local AMBER = Color3.fromRGB(255, 192, 85)
-local VIOLET = Color3.fromRGB(145, 110, 255)
+-- Bright, classic Roblox palette. Visuals do not change gameplay permissions.
+local GREEN = Color3.fromRGB(51, 220, 105)
+local RED = Color3.fromRGB(255, 87, 87)
+local GLASS = Color3.fromRGB(138, 222, 248)
+local AMBER = Color3.fromRGB(255, 206, 75)
+local VIOLET = Color3.fromRGB(65, 173, 253) -- sky-blue accent, variable kept for compat.
 
--- Visual-only lighting adjustments (these do not affect voting or movement).
-Lighting.ClockTime = 18.7
-Lighting.Brightness = 2
-Lighting.Ambient = Color3.fromRGB(71, 85, 128)
-Lighting.OutdoorAmbient = Color3.fromRGB(85, 90, 125)
-Lighting.FogColor = Color3.fromRGB(30, 32, 70)
-Lighting.FogEnd = 500
+-- Sunny daytime instead of the previous dark neon/dusk atmosphere.
+Lighting.ClockTime = 13.5
+Lighting.Brightness = 3
+Lighting.Ambient = Color3.fromRGB(194, 211, 235)
+Lighting.OutdoorAmbient = Color3.fromRGB(216, 229, 247)
+Lighting.FogColor = Color3.fromRGB(198, 230, 255)
+Lighting.FogEnd = 1400
 
 local oldWorld = workspace:FindFirstChild("MythbloxGame01")
 if oldWorld then oldWorld:Destroy() end
@@ -85,9 +86,9 @@ local function textSign(parent, text, yOffset, width)
 	gui.Parent = parent
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.fromScale(1, 1)
-	label.BackgroundColor3 = Color3.fromRGB(23, 29, 48)
-	label.BackgroundTransparency = 0.16
-	label.TextColor3 = Color3.new(1, 1, 1)
+	label.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	label.BackgroundTransparency = 0.05
+	label.TextColor3 = Color3.fromRGB(23, 77, 140)
 	label.TextScaled = true
 	label.Font = Enum.Font.GothamBold
 	label.Text = text
@@ -106,16 +107,16 @@ lobby.Anchored = true
 lobby.Size = Vector3.new(34, 1.5, 24)
 lobby.Position = Vector3.new(0, SETTINGS.BridgeY, -70)
 lobby.Material = Enum.Material.SmoothPlastic
-lobby.Color = Color3.fromRGB(47, 61, 100)
+lobby.Color = Color3.fromRGB(85, 175, 255)
 lobby.Parent = world
 textSign(lobby, "MYTHBLOX | GLASS RACE", 8, 350)
 -- Subtle lobby lights and floor markings; no additional paths to the lava.
 for _, side in ipairs({-1, 1}) do
 	local stripe = part(
-		"LobbyGlowStrip",
+		"LobbyColorStripe",
 		Vector3.new(1, 0.15, 19),
 		Vector3.new(side * 14, SETTINGS.BridgeY + 0.83, -70),
-		VIOLET, Enum.Material.Neon
+		AMBER, Enum.Material.SmoothPlastic
 	)
 	stripe.CanCollide = false
 end
@@ -135,11 +136,17 @@ for _, rail in ipairs({
 	{ "Left", Vector3.new(1, 5, 24), Vector3.new(-17, SETTINGS.BridgeY + 3, -70) },
 	{ "Right", Vector3.new(1, 5, 24), Vector3.new(17, SETTINGS.BridgeY + 3, -70) },
 }) do
-	local wall = part(rail[1] .. "LobbyRail", rail[2], rail[3], Color3.fromRGB(91, 120, 164), Enum.Material.Glass)
+	local wall = part(rail[1] .. "LobbyRail", rail[2], rail[3], Color3.fromRGB(181, 231, 255), Enum.Material.Glass)
 	wall.Transparency = 0.35
 end
 
-local lava = part("Lava", Vector3.new(105, 2, 235), Vector3.new(0, 7, 68), Color3.fromRGB(255, 91, 30), Enum.Material.Neon)
+-- Sunny green ground is scenery only; the lava and match checks still eliminate falls.
+local grass = part(
+	"GrassSurround", Vector3.new(190, 2, 320),
+	Vector3.new(0, 0, 58), Color3.fromRGB(103, 205, 88), Enum.Material.Grass
+)
+grass.CanTouch = false
+local lava = part("Lava", Vector3.new(105, 2, 235), Vector3.new(0, 7, 68), Color3.fromRGB(255, 105, 35), Enum.Material.Neon)
 lava.CanCollide = false
 lava.Transparency = 0.12
 lava.Touched:Connect(function(hit)
@@ -179,18 +186,18 @@ local function buildBridges(count)
 			tile.Transparency = 0.22
 			lanes[lane].tiles[index] = tile
 		end
-		-- Decorative glowing rails sit below the glass and cannot be stood on.
+		-- Pale-blue decorative rails sit below the glass and cannot be stood on.
 		-- Only two rails per player, keeping the world small on mobile devices.
 		for _, edge in ipairs({-1, 1}) do
 			local rail = part(
 				("Lane%02d_EdgeGlow"):format(lane),
 				Vector3.new(0.35, 0.35, SETTINGS.TileSpacing * SETTINGS.BridgeLength + 7),
 				Vector3.new(x + edge * 3.25, SETTINGS.BridgeY - 1.1, SETTINGS.BridgeLength * SETTINGS.TileSpacing / 2),
-				VIOLET, Enum.Material.Neon, bridgeModel
+				VIOLET, Enum.Material.SmoothPlastic, bridgeModel
 			)
 			rail.CanCollide = false
 			rail.CanTouch = false
-			rail.Transparency = 0.32
+			rail.Transparency = 0.12
 		end
 	end
 
@@ -327,7 +334,7 @@ local function showCrackLines(tile, count)
 		line.Position = UDim2.fromScale(0.5 + ((index % 2) * 0.13 - 0.06), 0.5)
 		line.Size = UDim2.fromScale(0.012, 0.78)
 		line.Rotation = ({33, -48, 73})[index] or 20
-		line.BackgroundColor3 = Color3.fromRGB(30, 36, 56)
+		line.BackgroundColor3 = Color3.fromRGB(40, 102, 149)
 		line.BorderSizePixel = 0
 		line.Parent = overlay
 	end
@@ -811,7 +818,7 @@ end
 ]====]
 
 local CLIENT_SOURCE = [====[
--- Mythblox Game 01 · visual polish v0.3
+-- Mythblox Game 01 · bright Roblox-style visuals v0.4
 -- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -832,16 +839,19 @@ gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 gui.DisplayOrder = 10
 gui.Parent = playerGui
 
+-- Bright white panels + colorful blue/green buttons, readable against daylight.
 local COLOR = {
-	Ink = Color3.fromRGB(18, 24, 45),
-	InkBright = Color3.fromRGB(29, 40, 71),
-	Text = Color3.fromRGB(248, 250, 255),
-	Muted = Color3.fromRGB(177, 198, 219),
-	Blue = Color3.fromRGB(66, 141, 245),
-	Green = Color3.fromRGB(42, 189, 128),
-	Red = Color3.fromRGB(234, 89, 98),
-	Gold = Color3.fromRGB(247, 194, 94),
-	Purple = Color3.fromRGB(158, 122, 255),
+	Ink = Color3.fromRGB(255, 255, 255),         -- cards
+	InkBright = Color3.fromRGB(231, 244, 255),   -- alternate rows and tracks
+	Text = Color3.fromRGB(29, 63, 103),          -- dark text on bright cards
+	Muted = Color3.fromRGB(90, 119, 151),
+	Blue = Color3.fromRGB(41, 137, 242),
+	Green = Color3.fromRGB(35, 180, 100),
+	Red = Color3.fromRGB(224, 73, 83),
+	Gold = Color3.fromRGB(255, 198, 63),
+	Purple = Color3.fromRGB(35, 112, 211),       -- blue accent, kept variable name
+	Border = Color3.fromRGB(179, 218, 247),
+	White = Color3.fromRGB(255, 255, 255),
 }
 
 local function addCorner(parent, radius)
@@ -853,9 +863,9 @@ end
 
 local function addStroke(parent, color, thickness)
 	local stroke = Instance.new("UIStroke")
-	stroke.Color = color or COLOR.Purple
+	stroke.Color = color or COLOR.Border
 	stroke.Thickness = thickness or 1
-	stroke.Transparency = 0.52
+	stroke.Transparency = 0.25
 	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	stroke.Parent = parent
 	return stroke
@@ -865,11 +875,11 @@ local function panel(name)
 	local frame = Instance.new("Frame")
 	frame.Name = name
 	frame.BackgroundColor3 = COLOR.Ink
-	frame.BackgroundTransparency = 0.055
+	frame.BackgroundTransparency = 0.015
 	frame.BorderSizePixel = 0
 	frame.Parent = gui
 	addCorner(frame, 13)
-	addStroke(frame, COLOR.Purple, 1)
+	addStroke(frame, COLOR.Border, 1)
 	return frame
 end
 
@@ -895,7 +905,7 @@ local function button(parent, name, content, bg)
 	local b = Instance.new("TextButton")
 	b.Name = name
 	b.Text = content
-	b.TextColor3 = COLOR.Text
+	b.TextColor3 = COLOR.White
 	b.Font = Enum.Font.GothamBold
 	b.TextSize = 23
 	b.BackgroundColor3 = bg or COLOR.Blue
@@ -903,7 +913,7 @@ local function button(parent, name, content, bg)
 	b.AutoButtonColor = true
 	b.Parent = parent
 	addCorner(b, 11)
-	addStroke(b, COLOR.Text, 1)
+	addStroke(b, COLOR.White, 1)
 	return b
 end
 
@@ -912,7 +922,7 @@ local top = panel("StatusPanel")
 top.AnchorPoint = Vector2.new(0.5, 0)
 top.Position = UDim2.new(0.5, 0, 0, 8)
 local phaseText = label(top, "Phase", "JOINING", 16, 7, -125, 25, 17, COLOR.Purple, true)
-local clockText = label(top, "Clock", "10s", 16, 7, -32, 26, 21, COLOR.Gold, true)
+local clockText = label(top, "Clock", "10s", 16, 7, -32, 26, 21, COLOR.Purple, true)
 clockText.TextXAlignment = Enum.TextXAlignment.Right
 local description = label(top, "Guidance", "Join the next round.", 16, 36, -32, 47, 15, COLOR.Text, false)
 local ownStats = label(top, "Progress", "", 16, 86, -32, 24, 14, COLOR.Muted, true)
@@ -935,7 +945,7 @@ addCorner(progressFill, 4)
 -- Optional standings on desktop; hidden on smaller screens.
 local standings = panel("Standings")
 standings.AnchorPoint = Vector2.new(1, 0)
-local standingsHeader = label(standings, "Header", "LEADERBOARD", 12, 7, -24, 27, 15, COLOR.Gold, true)
+local standingsHeader = label(standings, "Header", "LEADERBOARD", 12, 7, -24, 27, 15, COLOR.Purple, true)
 local standingsRows = label(standings, "Rows", "Waiting for racers", 12, 40, -24, 128, 13, COLOR.Text)
 standingsRows.TextYAlignment = Enum.TextYAlignment.Top
 
@@ -977,6 +987,7 @@ for n = 1, 5 do
 		command:FireServer("Vote", number)
 		for chosen, other in ipairs(choiceButtons) do
 			other.BackgroundColor3 = chosen == number and COLOR.Gold or COLOR.Blue
+			other.TextColor3 = chosen == number and COLOR.Text or COLOR.White
 		end
 		voteHint.Text = "Choice " .. number .. " selected · you can change it before time ends"
 	end)
@@ -993,7 +1004,7 @@ movementText.TextXAlignment = Enum.TextXAlignment.Center
 local result = panel("ResultPanel")
 result.AnchorPoint = Vector2.new(0.5, 0.5)
 result.Position = UDim2.fromScale(0.5, 0.48)
-local resultKicker = label(result, "Kicker", "ROUND COMPLETE", 18, 10, -36, 30, 17, COLOR.Gold, true)
+local resultKicker = label(result, "Kicker", "ROUND COMPLETE", 18, 10, -36, 30, 17, COLOR.Purple, true)
 resultKicker.TextXAlignment = Enum.TextXAlignment.Center
 local resultMessage = label(result, "Winner", "", 18, 43, -36, 76, 22, COLOR.Text, true)
 resultMessage.TextXAlignment = Enum.TextXAlignment.Center
@@ -1001,7 +1012,7 @@ resultMessage.TextXAlignment = Enum.TextXAlignment.Center
 -- Reveal panel displays every player's number, risk and permitted movement.
 -- No one can see choices during secret voting; the server only publishes after.
 local reveal = panel("RevealPanel")
-local revealHeader = label(reveal, "Heading", "NUMBER REVEAL", 13, 7, -26, 26, 16, COLOR.Gold, true)
+local revealHeader = label(reveal, "Heading", "NUMBER REVEAL", 13, 7, -26, 26, 16, COLOR.Purple, true)
 local revealSubtitle = label(reveal, "Rule", "MOST PICKED = CRACK", 13, 34, -26, 25, 13, COLOR.Muted)
 local countsRow = Instance.new("Frame")
 countsRow.Name = "CountRow"
@@ -1057,7 +1068,7 @@ local function drawOutcomes(state)
 	for n = 1, 5 do
 		local hit = state.unsafe and state.unsafe[n] == true
 		local card = countCards[n]
-		card.frame.BackgroundColor3 = hit and Color3.fromRGB(100, 39, 53) or COLOR.InkBright
+		card.frame.BackgroundColor3 = hit and Color3.fromRGB(255, 225, 226) or COLOR.InkBright
 		card.number.TextColor3 = hit and COLOR.Red or COLOR.Text
 		card.votes.Text = tostring(counts[n] or 0) .. " picked"
 		if hit then table.insert(blocked, tostring(n)) end
@@ -1077,7 +1088,7 @@ local function drawOutcomes(state)
 		row.Name = "Outcome" .. idx
 		row.Size = UDim2.new(1, -3, 0, 29)
 		row.LayoutOrder = idx
-		row.BackgroundColor3 = idx % 2 == 0 and COLOR.InkBright or Color3.fromRGB(32, 43, 75)
+		row.BackgroundColor3 = idx % 2 == 0 and COLOR.InkBright or Color3.fromRGB(248, 252, 255)
 		row.BorderSizePixel = 0
 		row.Parent = revealList
 		addCorner(row, 7)
@@ -1216,6 +1227,7 @@ local function update(state)
 	if voting.Visible and mine then
 		for n, b in ipairs(choiceButtons) do
 			b.BackgroundColor3 = mine.vote == n and COLOR.Gold or COLOR.Blue
+			b.TextColor3 = mine.vote == n and COLOR.Text or COLOR.White
 		end
 		voteHint.Text = mine.vote
 			and ("Number " .. mine.vote .. " locked in · tap another to change")
@@ -1225,10 +1237,12 @@ local function update(state)
 	if movement.Visible and mine then
 		local allowed = mine.allowed or 0
 		if allowed > 0 then
-			movement.BackgroundColor3 = Color3.fromRGB(17, 88, 64)
+			movement.BackgroundColor3 = Color3.fromRGB(220, 252, 231)
+			movementText.TextColor3 = Color3.fromRGB(22, 128, 72)
 			movementText.Text = ("GO! Walk 1–%d GREEN tiles. Leave your old tile!"):format(allowed)
 		else
-			movement.BackgroundColor3 = Color3.fromRGB(102, 39, 51)
+			movement.BackgroundColor3 = Color3.fromRGB(255, 229, 230)
+			movementText.TextColor3 = Color3.fromRGB(198, 47, 68)
 			movementText.Text = "STAY! Your next tile is unsafe. Do not walk forward."
 		end
 	end
@@ -1276,4 +1290,4 @@ end
 
 install(game:GetService("ServerScriptService"), "Script", "MythbloxGame", SERVER_SOURCE)
 install(game:GetService("StarterPlayer"):WaitForChild("StarterPlayerScripts"), "LocalScript", "MythbloxGame", CLIENT_SOURCE)
-print("[Mythblox] Game 01 v0.3 installed. Test with Play, or Test > Server & Clients (2 clients). Bridges are generated only after the join countdown.")
+print("[Mythblox] Game 01 v0.4 bright style installed. Test with Play, or Test > Server & Clients (2 clients). Bridges are generated only after the join countdown.")
