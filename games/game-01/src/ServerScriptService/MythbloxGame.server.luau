@@ -1,4 +1,4 @@
--- Mythblox game-01: glass bridge race v0.11 (server)
+-- Mythblox game-01: glass bridge race v0.12 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -6,7 +6,7 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
-local BUILD_VERSION = "v0.11"
+local BUILD_VERSION = "v0.12"
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -693,7 +693,11 @@ local function glassBurst(tile, shade, amount)
 	particles.Lifetime = NumberRange.new(0.25, 0.65)
 	particles.Speed = NumberRange.new(8, 16)
 	particles.SpreadAngle = Vector2.new(160, 160)
-	particles.Size = NumberSequence.new(0.35)
+	particles.Size = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.6),
+		NumberSequenceKeypoint.new(0.55, 0.3),
+		NumberSequenceKeypoint.new(1, 0)
+	})
 	particles.Color = ColorSequence.new(shade)
 	particles.LightEmission = 0.8
 	particles.EmissionDirection = Enum.NormalId.Top
@@ -702,8 +706,10 @@ local function glassBurst(tile, shade, amount)
 	Debris:AddItem(particles, 1.5)
 end
 
+local finishCelebrated = false
 local function finishConfetti()
-	if not finishCenter or not finishCenter.Parent then return end
+	if finishCelebrated or not finishCenter or not finishCenter.Parent then return end
+	finishCelebrated = true
 	local emitter = Instance.new("ParticleEmitter")
 	emitter.Name = "WinnerConfetti"
 	emitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
@@ -752,7 +758,31 @@ end
 
 local function shatter(tile, dramatic)
 	if not tile or not tile.CanCollide then return end
-	if dramatic then glassBurst(tile, RED, 16) end
+	if dramatic then
+		glassBurst(tile, Color3.fromRGB(180, 237, 255), 23)
+		-- A few temporary, harmless glass fragments make the fall visible
+		-- to spectators without changing any collision or movement rules.
+		for index = 1, 7 do
+			local shard = Instance.new("Part")
+			shard.Name = "GlassFragment"
+			shard.Size = Vector3.new(0.45, 0.18, 0.75)
+			shard.Color = GLASS
+			shard.Material = Enum.Material.Glass
+			shard.Transparency = 0.18
+			shard.CanCollide = false
+			shard.CanTouch = false
+			shard.CanQuery = false
+			shard.Position = tile.Position + Vector3.new(
+				math.cos(index * 2.4) * 1.2, 0.5, math.sin(index * 2.4) * 1.2
+			)
+			shard.Parent = world
+			shard.AssemblyLinearVelocity = Vector3.new(
+				math.cos(index * 2.4) * 11, math.random(11, 18),
+				math.sin(index * 2.4) * 11
+			)
+			Debris:AddItem(shard, 1.3)
+		end
+	end
 	tile.CanCollide = false
 	tile.CanTouch = false
 	tile.Color = RED
@@ -847,6 +877,7 @@ local function snapshot(player)
 			vote = mine.vote,
 			allowed = mine.allowed,
 			start = mine.startIndex,
+			elimination = mine.elimination,
 		} or nil,
 		unsafe = unsafe,
 		voteCounts = phase == "VOTE" and {} or voteCounts,
@@ -1118,6 +1149,7 @@ local function resolveVotes()
 			end
 			table.insert(outcomes, {
 				name = player.DisplayName,
+				userId = player.UserId,
 				number = info.vote,
 				status = status,
 				steps = info.allowed,
@@ -1192,6 +1224,7 @@ while true do
 	end
 
 	beginMatch(participants)
+	finishCelebrated = false
 	local winners = nil
 	for turn = 1, SETTINGS.MaxTurns do
 		turnNumber = turn
@@ -1247,6 +1280,7 @@ while true do
 
 	phase = "RESULTS"
 	unsafe = {}
+	if #winners > 0 then finishConfetti() end
 	if #winners == 0 then
 		message = "DRAW — every bridge fell! Next race soon."
 	elseif #winners == 1 then
