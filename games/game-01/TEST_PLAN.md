@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-21):** Owner confirmed v0.2 functionality works in Studio. The dark v0.3 theme was rejected. **v0.4 bright-style revision is in GitHub but still needs an in-Studio test.** This is not exhaustive release QA.
+**Status (2026-11-21):** Owner confirmed functional v0.2 gameplay. **v0.5 island/spectator redesign is committed and installer updated but still untested in Studio.** Do not assume world geometry and spectator safety are proven until multiplayer testing.
 
 ## Playtest log
 
@@ -32,7 +32,26 @@
 
 
 
-## Future world-layout build acceptance (blueprint only, not implemented yet)
+## v0.5 island environment and spectator regression tests — source implemented, NOT yet verified
+
+- [ ] Stop Play; run the latest [installer](INSTALL_STUDIO_COMMAND_BAR.luau) in the Command Bar while in Edit mode; Output confirms **v0.5 island hub installed**.
+- [ ] Solo Play: spawn on a safe grassy island with a paved spawn plaza **at the start of the main path**. No repeated lava deaths; walk to deck.
+- [ ] Verify the **leaderboard is near spawn**, decorative shops/cosmetics stand on **both sides** of the main path, and rewards area is nearby.
+- [ ] Visit the **one shared Join/Ready + Front Spectator deck**: JOIN countdown and queue status appear. Use the in-world **E / ProximityPrompt** once; confirm joined status in the HUD.
+- [ ] Start a round (solo Studio fallback or two queued clients). Shared deck sign now says **WATCH THE MATCH**; the deck itself is the same physical platform and is still freely walkable by spectators.
+- [ ] Start **three clients**, join with only two, and leave one unqueued. Confirm the third can spectate from the shared deck/side walkways but cannot enter or block glass lanes.
+- [ ] Deliberately try to jump over the front barrier and inner side guardrails. Spectators should not get onto a competitor's glass; check the server-side return-to-deck fallback if necessary.
+- [ ] Fall during the round; after respawning, walk from spawn back to the shared deck. Do not autojoin a running match.
+- [ ] Two contestants: exactly two glass bridges generated, and **one big FINISH arch** spanning them. Run a subsequent match with a different queue count and verify arch/lane widths update.
+- [ ] Small numbered markers on start tiles replace the large floating player name labels; no visual obstruction from labels.
+- [ ] Finish a match: player wins at tile 20, confetti appears at the arch, and the bridge model disappears for the next JOIN phase; hub/shopping/leaderboard structures persist.
+- [ ] Recheck identical/different voting selections, MOVE/STAY, 3 cracks, forbidden steps, timeout, lava death, and win awarding. Original round timings must match v0.2.
+- [ ] Review desktop and phone-size views: choices and controls remain usable; decks, stalls, trees, and signs do not block the camera or bridge visibility.
+- [ ] Inspect both server/client Output for syntax and runtime errors, especially during the first server startup, prompt interaction, and respawn.
+
+**Important:** All items above are unchecked pending a Studio engine test. 'Source implemented' is not a claim that the design has already passed real gameplay testing.
+
+## World-layout acceptance checklist (designed; check after actual playtest)
 
 - [ ] Spawn plaza is **the beginning of the main path**, with the **leaderboard near spawn** and shops/cosmetic stalls **on both sides of the path**.
 - [ ] Only **one combined Join/Ready + Front Spectator platform** exists; during joining it shows ready status/countdown, while during active play the same platform lets players watch.
