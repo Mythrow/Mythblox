@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-22):** Owner confirms **v0.14 cosmetics shop works in Roblox Studio**, following the previously verified v0.13 coin-persistence test. Individual purchase/restart checks were not itemized; cosmetic ownership persistence, saved wins, private published-server behavior, and release/mobile QA still require explicit verification. The game remains unnamed and not publicly released.  
+**Status (2026-11-22):** Owner confirms **v0.14 cosmetics shop works in Roblox Studio** and earlier v0.13 coins persisted. **v0.15 reliability hardening is committed, not yet tested in Studio**. The owner explicitly states the current prototype is **not pretty or feature-rich enough to launch**; a substantial feature expansion and major art overhaul must follow reliability testing, before any public release. The game is unnamed and private.  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -34,6 +34,17 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 | Reward | Win +25 coins, participation +5 coins |
 
 **Progress storage:** Wins and coins were session-only through v0.12. **v0.13 introduces DataStore persistence**, pending Roblox Studio and published-server verification. v0.14 adds a coin-only cosmetics stall (no Robux or paid items). Do not publicly launch or monetize before testing data recovery and purchases.
+
+## v0.15 — reliability checkpoint, NOT a launch candidate
+
+The owner approved a multiplayer/mobile/reliability pass, while explicitly requiring **a lot more features and significantly better visuals before public launch**. See the [pre-launch roadmap](PRELAUNCH_ROADMAP.md); technical QA alone does **not** make Game 01 ready to release.
+
+- Implemented conservative per-player rate limiting for repeated `Sync`, `Join`, `Vote` and `Shop` remote commands, plus duplicate `Browse colors` proximity-prompt triggers. Normal clicking and changing a vote remain permitted; invalid/unknown remote actions are rejected immediately. Throttle state is cleared on player leave.
+- No world, shop prices, cosmetic colors, gameplay phases, voting, movement, cracks, number of tiles or match rewards changed.
+- One-paste installer now labels **v0.15** and correctly states that earned coins/wins and coin-only cosmetics use DataStore.
+- Source/installer checks done; **real Studio multiplayer, mobile, private-server and save tests remain outstanding**.
+
+**Install:** Stop Play and run the latest [Studio Command Bar installer](INSTALL_STUDIO_COMMAND_BAR.luau) in Edit mode, then confirm `v0.15 VERIFIED` in Output and `v0.15` in the Play HUD. Follow the [v0.15 test checklist](TEST_PLAN.md).
 
 ## v0.14 — glass-color cosmetics stall (owner-confirmed working in Studio)
 
@@ -276,17 +287,18 @@ The two `src/` files are authoritative for editing. The installer is a snapshot 
 
 For repeat development, clone `Mythrow/Mythblox`, install [Rojo](https://rojo.space/docs/v7/), and run Rojo from `games/game-01/` with `default.project.json`. Connect Rojo's Studio plugin to sync the server and client scripts. Rojo is **optional** for the first test because the one-paste Command Bar installer is simpler. Never use the installer and Rojo sync simultaneously without understanding which version wins.
 
-## What is deliberately missing
+## What remains before public launch
 
-- Final game name, branding and polished map art
-- Session-to-session data saving
-- Shop, cosmetics, passes or developer products
-- Sound design and advanced glass-fragment visual effects
-- Robust production-level anti-exploit/movement validation
-- Real mobile playtests and server/load measurements
+- **Mandatory expanded features** and a **major visual/art-quality overhaul**, with the exact feature scope and art direction to be approved by the owner.
+- Final game name, distinctive branding, icon, thumbnails, description and attractive public screenshots.
+- Robust 2–8-player multiplayer, mobile/tablet layout, security, performance and data-loss regression verification.
+- Verified persistent Wins, owned cosmetics, equipment and purchase deductions in private published-server tests, not just Studio.
+- More complete production-level exploit, moderation, accessibility/audience and release checks.
+
+See the [pre-launch roadmap](PRELAUNCH_ROADMAP.md). Cosmetic stall, sound effects, glass fragments and basic DataStore saving **already exist**; these are not missing features.
 
 ## Next step
 
-**Test v0.14 in Roblox Studio**: install it, open the cosmetics stall via E, buy and equip a glass color, confirm your balance drops once, and check ownership/equipment after restarting Play. Also separately verify that **Wins** persist and check saving in a private published-server test. Complete the [test checklist](TEST_PLAN.md) before considering public release. The original voting and movement rules remain unchanged.
+**Test v0.15's reliability fixes in Roblox Studio** using [TEST_PLAN.md](TEST_PLAN.md), then agree on the next expanded feature set and visual direction. The current prototype is **not launch-ready** and is not to be released merely because tests pass. The baseline 1–5 glass-bridge voting game rules remain unchanged.
 
 See [the Mythblox game-design memo](../../docs/FIRST_GAME_GLASS_BRIDGE_CONCEPT.md) for earlier alternatives, including the spinner idea that was explicitly deferred.
