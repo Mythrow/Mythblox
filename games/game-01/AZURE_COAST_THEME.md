@@ -1,6 +1,6 @@
-# Azure Coast Resort — Game 01 art direction (v0.20)
+# Azure Coast Resort — Game 01 art direction (v0.21)
 
-**Status:** Theme approved as the direction for the environment. This is an **art/theme label, not the final public name** of Game 01. Mythblox remains the umbrella project. v0.20 source and Studio installer implement the first cohesive art/lobby/world pass; **owner visual and gameplay testing still required**.
+**Status:** Azure Coast Resort is an approved **environment theme, not the final public title**. v0.20 was visually tested by the owner, who identified non-solid nature/lights, benches that couldn't be sat on, and incomplete unstaffed kiosks. **v0.21 adds real props, functional two-player benches and staffed storefronts; owner/friend Studio QA pending.**
 
 ## Creative direction
 
@@ -55,7 +55,7 @@ The island's enlarged grass top is **186 × 124** studs, centered at `(0, 22, -7
 | JOIN/spectator deck | `(0, 24, -22)` | Preserved shared platform with unchanged join interaction |
 | Side promenade | `x=±49, z≈-25..70` | Preserved spectator viewing walks |
 
-Furniture, lights and landscaping are **noncolliding visual decorations** wherever possible, leaving intended routes open.
+**v0.21 physical interaction rule:** Players must encounter tangible tree trunks/low canopies, planter bodies and foliage, lamp bases/posts, pergola columns/roofs, fountain/trophy structure and storefront walls/counters. Do **not** apply collision to tiny gold strips, decorative elevated lanterns, non-walkable ocean/islands or other objects that would impede the race. Each bench uses **two real Roblox Seats** with Sit prompts, and shops use solid counters with customer access from the front.
 
 ## Sky, water and safety
 
@@ -73,7 +73,7 @@ Furniture, lights and landscaping are **noncolliding visual decorations** wherev
 - [ ] No visible stock baseplate, floating stock spawn, walkable water, under-map routes or unwanted default terrain.
 - [ ] Dynamic clouds visible on supported graphics settings; horizon has distant islands and ocean depth.
 - [ ] No invisible wall blocks the left/right spectator connections.
-- [ ] No surprise collisions from lamps, pergolas, fountain accents, benches or planters.
+- [ ] Collision is present on meaningful props (trees, lamp poles, planters, kiosks, roofs), without blocking intended footpaths. Both players can sit on a bench, and each shopkeeper appears behind a front counter.
 - [ ] Movement/jumping and **v0.19's forbidden-tile shatter/elimination fix** still work.
 - [ ] Cosmetics ownership/Wins/Coins unchanged; private-server and mobile tests still pending.
 - [ ] 2–8 client performance acceptable and no excessive lighting/postprocessing glare.
