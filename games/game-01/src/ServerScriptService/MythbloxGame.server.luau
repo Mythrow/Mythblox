@@ -302,14 +302,14 @@ local hub = Instance.new("Model")
 hub.Name = "HubIsland"
 hub.Parent = world
 
-local GRASS = Color3.fromRGB(91, 174, 128)
-local CREAM = Color3.fromRGB(232, 225, 209)
-local WOOD = Color3.fromRGB(123, 89, 66)
-local ROOF_BLUE = Color3.fromRGB(53, 125, 176)
-local ROOF_PINK = Color3.fromRGB(192, 110, 160)
-local WHITE = Color3.fromRGB(248, 247, 244)
-local METAL_TRIM = Color3.fromRGB(186, 157, 103)
-local DEEP_NAVY = Color3.fromRGB(38, 77, 107)
+local GRASS = THEME.Evergreen
+local CREAM = THEME.Ivory
+local WOOD = Color3.fromRGB(143, 111, 86)
+local ROOF_BLUE = THEME.Teal
+local ROOF_PINK = THEME.Coral
+local WHITE = THEME.Ivory
+local METAL_TRIM = THEME.Brass
+local DEEP_NAVY = THEME.DeepTeal
 
 local function decorative(name, size, position, color, material)
 	return part(name, size, position, color, material or Enum.Material.SmoothPlastic, hub)
@@ -328,26 +328,82 @@ end
 -- Layered terrain gives the island a proper visible edge from the bridge.
 -- These are behind the spectator rails and do not alter the match.
 local islandSoil = decorative(
-	"IslandSoil", Vector3.new(125, 12, 87),
-	Vector3.new(0, 16, -59), Color3.fromRGB(139, 115, 91), Enum.Material.Ground
+	"IslandSoil", Vector3.new(182, 12, 120),
+	Vector3.new(0, 16, -71), THEME.Sandstone, Enum.Material.Ground
 )
 local islandStone = decorative(
-	"IslandStoneBase", Vector3.new(120, 4, 83),
-	Vector3.new(0, 8, -59), Color3.fromRGB(137, 143, 153), Enum.Material.Granite
+	"IslandStoneBase", Vector3.new(179, 4, 117),
+	Vector3.new(0, 8, -71), THEME.Stone, Enum.Material.Rock
 )
-local ground = decorative("HubGrassIsland", Vector3.new(130, 4, 91), Vector3.new(0, 22, -59), GRASS, Enum.Material.Grass)
-local plaza = decorative("SpawnPlaza", Vector3.new(26, 0.4, 23), Vector3.new(0, 24.2, -76), CREAM, Enum.Material.Marble)
-local path = decorative("MainWalkPath", Vector3.new(11, 0.25, 36), Vector3.new(0, 24.14, -53), CREAM, Enum.Material.Pavement)
+local ground = decorative("HubGrassIsland", Vector3.new(186, 4, 124), Vector3.new(0, 22, -71), GRASS, Enum.Material.Grass)
+local plaza = decorative("SpawnPlaza", Vector3.new(56, 0.4, 39), Vector3.new(0, 24.2, -83), CREAM, Enum.Material.Limestone)
+local path = decorative("MainWalkPath", Vector3.new(13, 0.25, 39), Vector3.new(0, 24.14, -51.5), CREAM, Enum.Material.Pavement)
 local spurLeft = decorative("LeftShopPath", Vector3.new(27, 0.22, 7), Vector3.new(-19, 24.13, -48), CREAM, Enum.Material.Pavement)
 local spurRight = decorative("RightShopPath", Vector3.new(27, 0.22, 7), Vector3.new(19, 24.13, -48), CREAM, Enum.Material.Pavement)
+-- Additional social/gallery paths stay behind the original game-facing deck.
+for _, side in ipairs({-1, 1}) do
+	decorative("WestEastLoungePath", Vector3.new(57, 0.20, 6),
+		Vector3.new(side * 56, 24.1, -88), CREAM, Enum.Material.Limestone)
+	decorative("LoungeReturnPath", Vector3.new(7, 0.20, 25),
+		Vector3.new(side * 67, 24.1, -75), CREAM, Enum.Material.Limestone)
+end
+-- Pale ocean-stone inlays divide the oversized plaza into smaller elegant bays.
+for _, x in ipairs({-27, 27}) do
+	detail("PlazaEdgeChampagne", Vector3.new(0.17, 0.045, 38),
+		Vector3.new(x, 24.42, -83), METAL_TRIM)
+end
+for _, z in ipairs({-101, -66}) do
+	detail("PlazaBorderChampagne", Vector3.new(54, 0.045, 0.17),
+		Vector3.new(0, 24.42, z), METAL_TRIM)
+end
 
 -- Inlaid gold guide strips are thin, noncolliding and stop at the join deck.
-for _, x in ipairs({-5.05, 5.05}) do
-	detail("PromenadeInlay", Vector3.new(0.13, 0.04, 34), Vector3.new(x, 24.3, -52.5), METAL_TRIM)
+for _, x in ipairs({-6.0, 6.0}) do
+	detail("PromenadeInlay", Vector3.new(0.13, 0.04, 38),
+		Vector3.new(x, 24.3, -51.5), METAL_TRIM)
 end
-for _, z in ipairs({-86, -65.5}) do
-	detail("SpawnPlazaInlay", Vector3.new(23, 0.035, 0.14), Vector3.new(0, 24.42, z), METAL_TRIM)
+for _, z in ipairs({-97, -75}) do
+	detail("SpawnPlazaInlay", Vector3.new(48, 0.035, 0.14),
+		Vector3.new(0, 24.43, z), THEME.Sandstone, Enum.Material.Limestone)
 end
+
+-- A tall, invisible safety perimeter prevents walking off the expanded hub.
+-- It does NOT change WalkSpeed, jump power, or a player's free movement within
+-- the island. It leaves both side-spectator promenade entrances open.
+local function invisibleBoundary(name, size, position)
+	local wall = part(name, size, position, DEEP_NAVY, Enum.Material.SmoothPlastic, hub)
+	wall.Transparency = 1
+	wall.CanCollide = true
+	wall.CanTouch = false
+	wall.CastShadow = false
+	return wall
+end
+invisibleBoundary("HubWestSafetyLimit", Vector3.new(1.5, 19, 124), Vector3.new(-93.2, 33, -71))
+invisibleBoundary("HubEastSafetyLimit", Vector3.new(1.5, 19, 124), Vector3.new(93.2, 33, -71))
+invisibleBoundary("HubBackSafetyLimit", Vector3.new(186, 19, 1.5), Vector3.new(0, 33, -133.2))
+for _, side in ipairs({-1, 1}) do
+	invisibleBoundary("HubFrontSafetyLimit", Vector3.new(35, 19, 1.5),
+		Vector3.new(side * 75.5, 33, -9.1))
+end
+-- Matching ivory, teal and brass visual rails sit INSIDE the invisible limit.
+for _, side in ipairs({-1, 1}) do
+	for _, z in ipairs({-122, -103, -84, -65, -46, -27}) do
+		detail("CoastPerimeterPier", Vector3.new(1.15, 4.6, 1.15),
+			Vector3.new(side * 90, 26.3, z), THEME.Limestone, Enum.Material.Limestone)
+		detail("PerimeterPostCap", Vector3.new(1.5, 0.18, 1.5),
+			Vector3.new(side * 90, 28.72, z), METAL_TRIM)
+	end
+	detail("CoastPerimeterTealRail", Vector3.new(0.28, 0.25, 114),
+		Vector3.new(side * 90, 27.6, -75), DEEP_NAVY)
+end
+for x = -81, 81, 18 do
+	detail("BackPromenadePier", Vector3.new(1.15, 4.6, 1.15),
+		Vector3.new(x, 26.3, -129.8), THEME.Limestone, Enum.Material.Limestone)
+	detail("BackPierCap", Vector3.new(1.4, 0.18, 1.4),
+		Vector3.new(x, 28.72, -129.8), METAL_TRIM)
+end
+detail("BackPromenadeBrassRail", Vector3.new(180, 0.25, 0.28),
+	Vector3.new(0, 27.6, -129.8), DEEP_NAVY)
 
 -- The platform is BOTH ready and spectator space. It persists for the whole
 -- server session; we change its message, never create a second front deck.
