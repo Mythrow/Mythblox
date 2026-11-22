@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-22):** Owner reports joining, movement and cosmetics work in v0.15 Studio testing; the rest of its multiplayer, data and mobile QA remains open. **v0.16 adds the approved five-number avatar reveal, committed in GitHub but not yet Studio-tested.** Saving Wins/skins across restarts and private published-server behavior require verification. Significant features and visuals are mandatory before launch.
+**Status (2026-11-22):** Owner reports v0.15 joining/movement/cosmetics work, with further feedback on the v0.16 reveal being too brief and the large bottom MOVE warning redundant. **v0.17 implements a five-second reveal, removes the warning panel and adds a winner dance; Studio QA pending.** Stored Wins/skins after restart, published-server persistence and mobile/multiplayer QA remain open. Significant features and visual improvements remain mandatory before launch.
 
 ## Playtest log
 
@@ -37,6 +37,26 @@
 
 
 
+## v0.17 — longer results reveal, streamlined MOVE and celebration
+
+**Not yet run in Roblox Studio.** Test with 2 clients so the reveal and winner dance are observable.
+
+- [ ] In Edit mode, with all Play sessions stopped, reinstall [the Studio installer](INSTALL_STUDIO_COMMAND_BAR.luau). Output should show `v0.17 VERIFIED` and HUD should display v0.17.
+- [ ] Confirm JOIN lasts 10 seconds, secret VOTE lasts **5 seconds**, REVEAL lasts **5 seconds**, MOVE lasts **6 seconds**, and RESULTS lasts **5 seconds**.
+- [ ] During VOTE, no public avatars, choice counts or SAFE/BLOCKED result cards appear. Local number-selection controls still work normally.
+- [ ] During REVEAL, all five green/red number cards appear with correct avatars and totals and stay visible for the full **5 seconds**. Results remain non-clickable. At MOVE start, they disappear for players and spectators.
+- [ ] During MOVE, the **large bottom warning panel is absent**. The small top text should show `GO · WALK 1–N GREEN TILES` for safe votes or `STAY · THIS TURN` for blocked votes. The old "Your next tile is unsafe" text must not appear anywhere.
+- [ ] Confirm allowed tiles still paint GREEN, blocked tiles still paint RED, jumping/skipping/backwards and no-forward-movement penalties work, and the winner rules are unchanged.
+- [ ] When a **solo Studio practice** player reaches the last tile, or a competitive player wins, confetti should appear and the winning avatar should **dance in place during RESULTS**.
+- [ ] Test a R15 winner and a R6 winner, where available. Neither victory animation may prevent scoring, interfere with the next match or persist after results/respawn.
+- [ ] Test **last-survivor** and **tied winners**: all eligible living winners should dance; eliminated players should not dance. Confetti should still be emitted once.
+- [ ] If default dance animation fails to load, Output may show `[Mythblox] Victory dance unavailable ...`, but gameplay/results/rewards should continue.
+- [ ] Confirm no excess screen overlays or animation problems on narrow mobile viewports. Continue separately testing 2–8-player reliability, saved Wins, saved cosmetic ownership, and published-server data.
+
+### Results UI regression inherited from v0.16
+
+The v0.16 checklist below remains applicable, except the old **2-second reveal** expectation is now **5 seconds** in v0.17. Do not assume v0.17 passed any Studio test solely because its source/installer matched.
+
 ## v0.16 — secret voting and avatar result cards
 
 **Owner-approved scope:** Exactly five numbered **results** cards appear only during the two-second REVEAL, showing voter avatars above each number, count below, GREEN safe/RED blocked. Keep voting selection controls, game rules and phase timing unchanged. Complete these tests after installing v0.16:
@@ -50,7 +70,7 @@
 - [ ] With **4 players choosing 2,2,3,3**, both cards 2 and 3 show `2 PICKS`, two avatars, and **RED**; the other three are GREEN.
 - [ ] With **one player voting nothing**, no avatar should appear on their behalf; the total counts should reflect only actual votes and a missed vote still causes one crack.
 - [ ] With **8 players all choosing the same number**, that result shows **eight distinct headshots** in a grid without covering its number or count; no avatars should be duplicated or dropped.
-- [ ] The full reveal is on screen only for **2 seconds**. When **MOVE** starts, it disappears for both racers and spectators; the original GO/STAY UI and movement controls remain usable.
+- [ ] The full reveal appears only during REVEAL (**5 seconds in current v0.17**, historically 2 seconds in v0.16). When MOVE starts, it disappears for both racers and spectators; the compact GO/STAY top HUD and movement controls remain usable.
 - [ ] Restart the next vote; no stale avatars/tallies or unsafe colors from the prior turn are visible before the next REVEAL.
 - [ ] Test narrow Studio Device Emulator phone and tablet screens. All five numbers, counts and green/red status must fit; thumbnails should remain recognizably circular. Report blank avatars, clipped text, or unreadably small cards.
 - [ ] Check wins, coins and purchased skins continue saving, and complete the rest of the v0.15 multiplayer/mobile QA before any public release.
