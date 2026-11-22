@@ -518,65 +518,101 @@ local function layoutForViewport()
 	if compact then feedback.Visible = false end
 	local shortScreen = height < 570
 
-	local topW = math.min(width - 20, compact and 410 or 470)
-	top.Size = UDim2.fromOffset(topW, 83)
-	phaseText.Size = UDim2.new(1, -107, 0, 23)
-	phaseText.TextSize = compact and 13 or 15
-	clockText.Position = UDim2.new(1, -82, 0, 6)
-	clockText.Size = UDim2.fromOffset(68, 23)
+	-- Phones get a 49px two-line HUD, NOT the old 83px three-row billboard.
+	-- ScreenGui respects Roblox's top safe inset; no UI overlaps phone chrome.
+	local topW = math.min(width - (compact and 30 or 20), compact and 344 or 470)
+	top.Size = UDim2.fromOffset(topW, compact and 49 or 83)
+	top.Position = UDim2.new(0.5, 0, 0, compact and 4 or 8)
+	top.BackgroundTransparency = compact and 0.10 or 0.07
+	phaseText.Position = UDim2.fromOffset(compact and 10 or 14, compact and 3 or 6)
+	phaseText.Size = UDim2.new(1, compact and -72 or -107, 0, compact and 20 or 23)
+	phaseText.TextSize = compact and 12 or 15
+	phaseText.TextWrapped = false
+	phaseText.TextTruncate = Enum.TextTruncate.AtEnd
+	clockText.Position = UDim2.new(1, compact and -56 or -82, 0, compact and 3 or 6)
+	clockText.Size = UDim2.fromOffset(compact and 46 or 68, compact and 20 or 23)
+	clockText.TextSize = compact and 15 or 19
+	description.Visible = not compact
 	description.Position = UDim2.fromOffset(14, 30)
 	description.Size = UDim2.new(1, -28, 0, 20)
-	description.TextSize = compact and 12 or 13
-	ownStats.Position = UDim2.fromOffset(14, 53)
-	ownStats.Size = UDim2.new(1, -28, 0, 18)
-	ownStats.TextSize = compact and 11 or 12
+	description.TextSize = 13
+	ownStats.Position = UDim2.fromOffset(compact and 10 or 14, compact and 27 or 53)
+	ownStats.Size = UDim2.new(1, compact and -100 or -28, 0, compact and 15 or 18)
+	ownStats.TextSize = compact and 10 or 12
+	ownStats.TextWrapped = false
+	ownStats.TextTruncate = Enum.TextTruncate.AtEnd
+	currencyChip.Visible = compact
+	currencyChip.Position = UDim2.new(1, -89, 0, 27)
+	currencyChip.Size = UDim2.fromOffset(79, 15)
+	currencyChip.TextSize = 10
+	currencyChip.TextWrapped = false
+	progressBackground.Visible = not compact
 
 	local voteW = math.min(width - 18, 535)
-	voting.Size = UDim2.fromOffset(voteW, shortScreen and 121 or 140)
-	voting.Position = UDim2.new(0.5, 0, 1, -18)
+	local voteHeight = compact and (shortScreen and 111 or 120) or 140
+	voting.Size = UDim2.fromOffset(voteW, voteHeight)
+	voting.Position = UDim2.new(0.5, 0, 1, -14)
+	voteTitle.Position = UDim2.fromOffset(12, compact and 4 or 7)
+	voteTitle.Size = UDim2.new(1, -24, 0, compact and 22 or 25)
 	voteTitle.TextSize = compact and 15 or 18
-	voteHint.TextSize = compact and 11 or 13
-	choiceRow.Position = UDim2.new(0, 12, 0, shortScreen and 57 or 66)
-	choiceRow.Size = UDim2.new(1, -24, 0, shortScreen and 53 or 64)
+	voteHint.Position = UDim2.fromOffset(12, compact and 27 or 34)
+	voteHint.Size = UDim2.new(1, -24, 0, compact and 18 or 24)
+	voteHint.TextSize = compact and 10 or 13
+	choiceRow.Position = UDim2.new(0, 12, 0, compact and 52 or 66)
+	choiceRow.Size = UDim2.new(1, -24, 0, compact and (shortScreen and 47 or 53) or 64)
 	for _, b in ipairs(choiceButtons) do
-		b.Size = UDim2.new(0.19, 0, 0, shortScreen and 50 or 61)
+		b.Size = UDim2.new(0.19, 0, 0, compact and (shortScreen and 47 or 53) or 61)
 		b.TextSize = compact and 19 or 23
 	end
 
-	join.Size = UDim2.fromOffset(math.min(width - 28, 345), 58)
-	join.Position = UDim2.new(0.5, 0, 1, -26)
+	join.Size = UDim2.fromOffset(math.min(width - 28, 345), compact and 48 or 58)
+	join.TextSize = compact and 17 or 21
+	join.Position = UDim2.new(0.5, 0, 1, -20)
 
 	local shopW = math.min(width - 20, 350)
 	shop.Size = UDim2.fromOffset(shopW, math.max(218, math.min(358, height - 118)))
 	shop.AnchorPoint = compact and Vector2.new(0.5, 0.5) or Vector2.new(1, 0.5)
 	shop.Position = compact and UDim2.new(0.5, 0, 0.56, 0) or UDim2.new(1, -18, 0.54, 0)
 
-	-- A centered row of five result cards, shown for REVEAL only.
-	local revealW = math.min(width - 16, compact and 580 or 780)
-	local revealH = math.max(172, math.min(228, height - 110))
+	-- The same five reveal cards fit into a shorter 156–172px phone tray.
+	-- They still appear ONLY for the existing five-second reveal phase.
+	local revealW = math.min(width - 18, compact and 560 or 780)
+	local revealH = compact and (shortScreen and 156 or 172)
+		or math.max(178, math.min(228, height - 110))
 	reveal.Size = UDim2.fromOffset(revealW, revealH)
-	reveal.Position = UDim2.new(0.5, 0, 0, 100)
-	revealHeader.TextSize = compact and 16 or 19
-	revealSubtitle.TextSize = compact and 11 or 13
-	local cardHeight = revealH - 72
-	local avatarHeight = math.min(55, math.max(39, cardHeight - 80))
-	local approximateCardWidth = (revealW - 20) * 0.19
-	local columns = approximateCardWidth < 90 and 3 or 4
+	reveal.Position = UDim2.new(0.5, 0, 0, compact and 59 or 100)
+	revealHeader.Position = UDim2.fromOffset(8, compact and 1 or 7)
+	revealHeader.Size = UDim2.new(1, -16, 0, compact and 21 or 27)
+	revealHeader.TextSize = compact and 14 or 19
+	revealSubtitle.Position = UDim2.fromOffset(8, compact and 23 or 34)
+	revealSubtitle.Size = UDim2.new(1, -16, 0, compact and 14 or 20)
+	revealSubtitle.TextSize = compact and 10 or 13
+	resultRow.Position = UDim2.fromOffset(compact and 6 or 10, compact and 40 or 60)
+	resultRow.Size = UDim2.new(1, compact and -12 or -20, 1, compact and -45 or -72)
+	local cardHeight = revealH - (compact and 45 or 72)
+	local avatarHeight = compact and (shortScreen and 37 or 43) or 55
+	local cardWidth = (revealW - (compact and 12 or 20)) * 0.19
+	local columns = cardWidth < 80 and 3 or 4
 	local rows = math.ceil(8 / columns)
-	local avatarSize = math.max(11, math.min(24,
-		math.floor((approximateCardWidth - 11 - (columns - 1) * 2) / columns),
+	local avatarSize = math.max(10, math.min(24,
+		math.floor((cardWidth - 12 - (columns - 1) * 2) / columns),
 		math.floor((avatarHeight - (rows - 1) * 2) / rows)))
 	for _, card in ipairs(resultCards) do
-		card.avatars.Size = UDim2.new(1, -8, 0, avatarHeight)
+		card.avatars.Position = UDim2.fromOffset(compact and 3 or 4, compact and 2 or 7)
+		card.avatars.Size = UDim2.new(1, compact and -6 or -8, 0, avatarHeight)
 		card.grid.FillDirectionMaxCells = columns
 		card.grid.CellSize = UDim2.fromOffset(avatarSize, avatarSize)
-		card.number.Position = UDim2.new(0, 0, 0, 8 + avatarHeight)
-		card.number.Size = UDim2.new(1, 0, 0, math.max(24, cardHeight - avatarHeight - 55))
-		card.number.TextSize = compact and 29 or 39
-		card.votes.Position = UDim2.new(0, 0, 1, -45)
-		card.votes.TextSize = compact and 10 or 13
-		card.status.Position = UDim2.new(0, 0, 1, -23)
-		card.status.TextSize = compact and 10 or 12
+		card.number.Position = UDim2.new(0, 0, 0, avatarHeight + (compact and 3 or 8))
+		card.number.Size = UDim2.new(1, 0, 0, compact
+			and math.max(25, cardHeight - avatarHeight - 39)
+			or math.max(24, cardHeight - avatarHeight - 55))
+		card.number.TextSize = compact and math.floor(math.clamp(cardWidth * 0.42, 20, 29)) or 39
+		card.votes.Position = UDim2.new(0, 0, 1, compact and -34 or -45)
+		card.votes.Size = UDim2.new(1, 0, 0, compact and 15 or 23)
+		card.votes.TextSize = compact and 9 or 13
+		card.status.Position = UDim2.new(0, 0, 1, compact and -18 or -23)
+		card.status.Size = UDim2.new(1, 0, 0, compact and 14 or 20)
+		card.status.TextSize = compact and 9 or 12
 	end
 end
 
