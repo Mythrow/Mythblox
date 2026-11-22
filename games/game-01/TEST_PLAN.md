@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-22):** **v0.26** adjusts the oversized blank scoreboard back, moves the lamp pair that intersects leaderboard/rewards displays, and removes same-plane paving junction overlaps identified after the owner's v0.25 screenshot. This is a layout/collision visual patch, not a new mechanic. Real Studio, phone, multiplayer, and saving checks are still required.
+**Status (2026-11-22):** **v0.27** adds reward-free one-player live practice after JOIN, keeps competitive rewards exclusive to 2–8 ready players, waits for server JOIN acknowledgement, shrinks/repositions the mobile status card, and grounds floating props. **Live Roblox-app/Studio tests are pending**, including one-player join, two-player rewards, UI safe-area and the earlier glass-break regression.
 
 ## Playtest log
 
@@ -38,6 +38,20 @@
 6. Repeat with 3–4 clients if the two-player flow works.
 
 
+
+## v0.27 — published mobile JOIN, safe-area card, grounded objects
+
+**Studio alone is no longer sufficient for this acceptance test.** Republish the private place after installing the matching scripts.
+
+- [ ] Stop Play, paste the current [installer](INSTALL_STUDIO_COMMAND_BAR.luau) into the Studio Command Bar in Edit mode; confirm `v0.27 VERIFIED`, server and client logs both `v0.27`.
+- [ ] **Published one-player phone:** Open the private Roblox experience as its only player, press JOIN with at least a few seconds on the timer, and verify the server queue acknowledges the tap. After the JOIN countdown reaches zero, **one glass lane is built and the player enters VOTE → REVEAL → MOVE**. This is now SOLO PRACTICE; no other player is required.
+- [ ] **No solo farming:** Complete solo practice in the published Roblox app, record Wins/Coins before and after and rejoin to confirm **zero new coins/wins**. Studio solo may retain its preexisting test rewards and uses a separate store.
+- [ ] **Two-account published match:** Have two friends/accounts join the same private server and JOIN before the timer ends. Two lanes should spawn; verify blocked-majority/tied votes, illegal steps, first finisher and regular +25 winner/+5 participant awards are unchanged. Confirm no server error.
+- [ ] **Late JOIN handling:** Tap JOIN near the countdown boundary or during intermittent lag. If the server did not accept it, the client must not permanently hide the Join button; it should be available next JOIN window. Check `[Mythblox QUEUE]` Output where available.
+- [ ] **Mobile HUD:** Confirm the round card is a 43px-high right-aligned strip below Roblox's native top inset, not a wide centered obstruction. Check a narrow portrait phone and a short landscape phone, including vote/countdown, optional save warnings and Wins/Coins.
+- [ ] **Floating-prop audit:** Walk beneath the join and rewards boards, around each bench, planter and lamp base, inside both pergolas, and around the fountain/trophy. Confirm no visible gaps to the ground or unattached lanterns, and no new collisions/blockages.
+- [ ] **Regression:** Walking/jumping remain free, the forbidden glass attempt shatters and kills/respawns the racer, shops and two-person seats still work, v0.25 clouds and matte materials remain, and live persistence is not lost.
+- [ ] Send phone screenshots for the HUD and a Studio screenshot of any remaining detached object. Roblox engine/mobile visual verification must be recorded separately from code checks.
 
 ## v0.26 — lobby display overlap and paving seam QA
 
