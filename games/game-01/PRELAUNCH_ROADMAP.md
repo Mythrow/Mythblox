@@ -9,7 +9,8 @@
 - **v0.14** — Owner confirms the cosmetics stall works in Studio. v0.13 saved coins across restarting Studio Play. **Individual win persistence, purchased cosmetic retention, private published-server DataStore persistence, 2–8-client stress testing and mobile usability are not all confirmed.**
 - **v0.15** — Reliability source pass and detailed QA checklist. Owner reports joining, movement and cosmetics working; broader multiplayer/mobile and saving tests still pending.
 - **v0.16** — Owner-approved five-number avatar reveal; owner noted the original two-second display was too brief and bottom MOVE instructions redundant.
-- **v0.17** — Longer five-second reveal, removal of the large bottom MOVE warning, and a winner dance during RESULTS. **GitHub sources and installer prepared; Studio test pending.**
+- **v0.17** — Five-second reveal, no big bottom MOVE warning, and a winner dance (historical checkpoint).
+- **v0.18** — Free walking/jumping in every phase, no red/green safe-step glass spoilers, configurable R15/R6 dance, and richer coastal materials/lighting/decor. **GitHub scripts and installer committed; Studio visual, movement and performance checks pending.** This does not replace the mandatory later custom-art/features phase.
 - No Robux purchases, paid power-ups or public launch are authorized.
 
 ## Ordered future stages — versions and features are not yet approved
