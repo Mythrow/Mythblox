@@ -1,4 +1,4 @@
--- Mythblox game-01: glass bridge race v0.15 (server)
+-- Mythblox game-01: glass bridge race v0.16 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -8,7 +8,7 @@ local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
 local DataStoreService = game:GetService("DataStoreService")
 local HttpService = game:GetService("HttpService")
-local BUILD_VERSION = "v0.15"
+local BUILD_VERSION = "v0.16"
 
 local SETTINGS = {
 	MaxPlayers = 8,
