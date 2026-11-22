@@ -234,8 +234,9 @@ local function textSign(parent, message, yOffset, width)
 	board.CanTouch = false
 	board.Size = Vector3.new(math.clamp((width or 220) / 21, 8, 16), 2.35, 0.45)
 	board.Position = parent.Position + Vector3.new(0, yOffset or 3, 0)
-	board.Material = Enum.Material.SmoothPlastic
-	board.Color = Color3.fromRGB(250, 251, 255)
+	board.Material = Enum.Material.Metal
+	board.Color = THEME.DeepTeal
+	board.Reflectance = 0.08
 	board.Parent = parent.Parent or world
 
 	local function face(side, name)
@@ -256,7 +257,7 @@ local function textSign(parent, message, yOffset, width)
 		label.Position = UDim2.fromScale(0.04, subheading and 0.12 or 0.08)
 		label.Size = UDim2.fromScale(0.92, subheading and 0.51 or 0.84)
 		label.BackgroundTransparency = 1
-		label.TextColor3 = Color3.fromRGB(33, 92, 150)
+		label.TextColor3 = THEME.Ivory
 		label.TextScaled = false
 		label.TextSize = subheading and 44 or (parent.Name == "SharedPlatformSign" and 37 or 54)
 		label.TextWrapped = false
@@ -273,7 +274,7 @@ local function textSign(parent, message, yOffset, width)
 			subtitle.Position = UDim2.fromScale(0.04, 0.64)
 			subtitle.Size = UDim2.fromScale(0.92, 0.25)
 			subtitle.BackgroundTransparency = 1
-			subtitle.TextColor3 = Color3.fromRGB(112, 137, 165)
+			subtitle.TextColor3 = THEME.Brass
 			subtitle.TextScaled = false
 			subtitle.TextSize = 26
 			subtitle.TextWrapped = false
@@ -526,9 +527,9 @@ local function makeStall(name, x, z, roofColor, line1, line2)
 	group.Name = name
 	group.Parent = hub
 	part("DisplayFloor", Vector3.new(17, 0.6, 14), Vector3.new(x, 24.4, z),
-		Color3.fromRGB(224, 217, 197), Enum.Material.Marble, group)
+		THEME.Limestone, Enum.Material.Limestone, group)
 	part("BackWall", Vector3.new(17, 8, 1), Vector3.new(x, 28.4, z + 6),
-		WOOD, Enum.Material.WoodPlanks, group)
+		THEME.DeepTeal, Enum.Material.Metal, group)
 	detail("StallWallInlay", Vector3.new(13.8, 0.18, 0.11),
 		Vector3.new(x, 29.7, z + 5.43), METAL_TRIM, Enum.Material.Metal, group)
 	detail("StallCounter", Vector3.new(11.6, 0.42, 1.8),
@@ -706,28 +707,174 @@ local function makeTree(x, z, height)
 		end
 	end
 end
+-- Azure Coast greenery is organized around lounge edges, not across paths.
 for _, spot in ipairs({
-	{-56, -88, 9}, {-56, -53, 10}, {-56, -24, 8},
-	{56, -88, 9}, {56, -53, 10}, {56, -24, 8}
+	{-84, -117, 9}, {-84, -55, 10}, {-79, -29, 8},
+	{84, -117, 9}, {84, -55, 10}, {79, -29, 8},
+	{-54, -116, 8}, {54, -116, 8},
 }) do
 	makeTree(spot[1], spot[2], spot[3])
 end
-for _, spot in ipairs({{-49,-92},{-43,-92},{45,-92},{50,-93},{-50,-39},{50,-39}}) do
-	local bush = decorative("HubBush", Vector3.new(5, 3, 5),
-		Vector3.new(spot[1], 25.5, spot[2]), Color3.fromRGB(76, 158, 106), Enum.Material.LeafyGrass)
+for _, spot in ipairs({
+	{-78, -106}, {-79, -40}, {-49, -108},
+	{78, -106}, {79, -40}, {49, -108},
+}) do
+	local bush = decorative("CoastalFernCluster", Vector3.new(5, 3.4, 5),
+		Vector3.new(spot[1], 25.65, spot[2]), THEME.Evergreen, Enum.Material.LeafyGrass)
 	bush.Shape = Enum.PartType.Ball
 	bush.CanCollide = false
 	bush.CanTouch = false
 	bush.CanQuery = false
 end
+
+-- A landscaped central arrival courtyard, behind the original spawn. Its
+-- focal point is decorative and cannot obstruct the actual race path.
+decorative("FountainApproach", Vector3.new(10, 0.17, 19),
+	Vector3.new(0, 24.11, -109), CREAM, Enum.Material.Limestone)
+local function horizontalCylinder(item)
+	item.Shape = Enum.PartType.Cylinder
+	item.CFrame = CFrame.new(item.Position) * CFrame.Angles(0, 0, math.pi / 2)
+	return item
+end
+local basin = horizontalCylinder(decorative("CentralResortFountainBasin",
+	Vector3.new(0.95, 16, 16), Vector3.new(0, 24.8, -118),
+	THEME.Limestone, Enum.Material.Limestone))
+local waterMirror = horizontalCylinder(detail("FountainStillWater",
+	Vector3.new(0.13, 13, 13), Vector3.new(0, 25.36, -118),
+	THEME.Foam, Enum.Material.Glass))
+waterMirror.Transparency = 0.22
+waterMirror.Reflectance = 0.14
+local pedestal = horizontalCylinder(detail("FountainCrystalPedestal",
+	Vector3.new(2.3, 4.5, 4.5), Vector3.new(0, 26.5, -118),
+	THEME.Brass, Enum.Material.Metal))
+local crystal = detail("FountainSeaGlassSculpture", Vector3.new(3.5, 5.7, 3.5),
+	Vector3.new(0, 29.3, -118), THEME.Foam, Enum.Material.Glass)
+crystal.Shape = Enum.PartType.Ball
+crystal.Transparency = 0.12
+crystal.Reflectance = 0.18
+local sparkle = Instance.new("PointLight")
+sparkle.Name = "FountainGlow"
+sparkle.Color = THEME.Foam
+sparkle.Range = 13
+sparkle.Brightness = 0.32
+sparkle.Shadows = false
+sparkle.Parent = crystal
 for _, side in ipairs({-1, 1}) do
-	for _, z in ipairs({-89, -74, -59, -44}) do
-		local post = decorative("IslandEdgeFencePost", Vector3.new(1.5, 5, 1.5),
-			Vector3.new(side * 63, 26.5, z), DEEP_NAVY, Enum.Material.Metal)
-		detail("IslandPostCap", Vector3.new(2, 0.21, 2),
-			Vector3.new(side * 63, 29.13, z), METAL_TRIM)
+	detail("FountainStoneSideSeat", Vector3.new(5, 0.55, 2.2),
+		Vector3.new(side * 13, 25.0, -118), THEME.Limestone, Enum.Material.Limestone)
+end
+
+-- Lounge furniture is built from matching limestone, teak and teal rather
+-- than bare multicolored primitive placeholders.
+local function coastBench(x, z)
+	detail("ResortTeakSeat", Vector3.new(8.3, 0.55, 2.3),
+		Vector3.new(x, 25.65, z), WOOD, Enum.Material.WoodPlanks)
+	detail("ResortTeakBack", Vector3.new(8.3, 2, 0.46),
+		Vector3.new(x, 26.65, z + 1), WOOD, Enum.Material.WoodPlanks)
+	for _, side in ipairs({-1, 1}) do
+		detail("ResortBenchLeg", Vector3.new(0.6, 1.4, 2),
+			Vector3.new(x + side * 3.4, 24.8, z),
+			THEME.DeepTeal, Enum.Material.Metal)
 	end
 end
+for _, side in ipairs({-1, 1}) do
+	coastBench(side * 42, -99)
+	coastBench(side * 53, -71)
+	coastBench(side * 75, -95)
+end
+
+local function planter(x, z)
+	detail("CoastCeramicPlanter", Vector3.new(4.5, 2.7, 4.5),
+		Vector3.new(x, 25.65, z), THEME.Ivory, Enum.Material.Limestone)
+	local foliage = detail("CoastShrub", Vector3.new(5.1, 4.2, 5.1),
+		Vector3.new(x, 28.15, z), THEME.Evergreen, Enum.Material.LeafyGrass)
+	foliage.Shape = Enum.PartType.Ball
+end
+for _, pair in ipairs({
+	{-32, -102}, {32, -102}, {-33, -65}, {33, -65},
+	{-72, -113}, {72, -113}, {-74, -52}, {74, -52}
+}) do planter(pair[1], pair[2]) end
+
+-- Miniature shaded sitting lounges flank the gallery at x=+-67; all props
+-- are noncolliding to avoid changing social-lobby traversal or shopping.
+for _, side in ipairs({-1, 1}) do
+	local x = side * 68
+	local z = -71
+	for _, dx in ipairs({-8, 8}) do
+		for _, dz in ipairs({-7, 7}) do
+			detail("CoastPergolaColumn", Vector3.new(0.85, 7.2, 0.85),
+				Vector3.new(x + dx, 28.1, z + dz), THEME.Limestone, Enum.Material.Limestone)
+		end
+	end
+	detail("CoastPergolaRoof", Vector3.new(18.3, 0.55, 16),
+		Vector3.new(x, 31.95, z), THEME.DeepTeal, Enum.Material.Metal)
+	for _, slatX in ipairs({-6, -3, 0, 3, 6}) do
+		detail("PergolaChampagneSlat", Vector3.new(0.2, 0.1, 15.5),
+			Vector3.new(x + slatX, 32.27, z), THEME.Brass)
+	end
+	coastBench(x, -70)
+	local lantern = detail("PergolaHangingLantern", Vector3.new(1.4, 1.4, 1.4),
+		Vector3.new(x, 30.7, z - 4), THEME.Foam, Enum.Material.Glass)
+	local light = Instance.new("PointLight")
+	light.Name = "LoungeAmbientLight"
+	light.Color = Color3.fromRGB(255, 228, 183)
+	light.Brightness = 0.22
+	light.Range = 12
+	light.Shadows = false
+	light.Parent = lantern
+end
+
+-- Lamps guide players naturally from the expanded plaza to JOIN without
+-- screenspace arrows or intrusive floating titles.
+local function resortLamp(x, z)
+	detail("ResortLampPedestal", Vector3.new(2.0, 0.7, 2.0),
+		Vector3.new(x, 24.65, z), THEME.Limestone, Enum.Material.Limestone)
+	detail("ResortLampColumn", Vector3.new(0.5, 7.3, 0.5),
+		Vector3.new(x, 28.4, z), THEME.DeepTeal, Enum.Material.Metal)
+	local lamp = detail("ResortLantern", Vector3.new(1.5, 1.6, 1.5),
+		Vector3.new(x, 32.8, z), THEME.Foam, Enum.Material.Glass)
+	detail("LanternChampagneCap", Vector3.new(1.8, 0.2, 1.8),
+		Vector3.new(x, 33.67, z), THEME.Brass)
+	local glow = Instance.new("PointLight")
+	glow.Name = "AzureCoastLampLight"
+	glow.Color = Color3.fromRGB(255, 234, 198)
+	glow.Range = 15
+	glow.Brightness = 0.23
+	glow.Shadows = false
+	glow.Parent = lamp
+end
+for _, pair in ipairs({
+	{-34, -83}, {34, -83},
+	{-12, -64}, {12, -64},
+	{-12, -34}, {12, -34},
+	{-79, -91}, {79, -91},
+}) do resortLamp(pair[1], pair[2]) end
+
+-- Two small scenic attractions give the wider island a reason to explore:
+-- a photo frame facing the ocean and a compact trophy-sculpture courtyard.
+local photoX, photoZ = 70, -110
+for _, side in ipairs({-1, 1}) do
+	detail("PhotoArchColumn", Vector3.new(1.5, 11, 1.5),
+		Vector3.new(photoX + side * 6, 29.5, photoZ),
+		THEME.DeepTeal, Enum.Material.Metal)
+end
+detail("PhotoArchHeader", Vector3.new(14.2, 1.25, 1.6),
+	Vector3.new(photoX, 35.3, photoZ), THEME.Brass)
+local photoAnchor = detail("CoastPhotoSpotSignAnchor", Vector3.new(0.5, 0.5, 0.5),
+	Vector3.new(photoX, 32.4, photoZ - 1), THEME.DeepTeal)
+textSign(photoAnchor, "PHOTO SPOT | AZURE COAST", 1.0, 210)
+
+local trophyX, trophyZ = -67, -110
+local trophyStand = horizontalCylinder(detail("AzureTrophyPedestal",
+	Vector3.new(1.6, 7, 7), Vector3.new(trophyX, 25.3, trophyZ),
+	THEME.Limestone, Enum.Material.Limestone))
+local trophy = detail("AzureTrophySculpture", Vector3.new(3.4, 6, 3.4),
+	Vector3.new(trophyX, 29.0, trophyZ), THEME.Brass)
+trophy.Shape = Enum.PartType.Ball
+trophy.Reflectance = 0.17
+local trophyAnchor = detail("TrophyCourtyardSignAnchor", Vector3.new(0.5, 0.5, 0.5),
+	Vector3.new(trophyX, 33.3, trophyZ - 1.5), THEME.DeepTeal)
+textSign(trophyAnchor, "TROPHY GARDEN | SOCIAL PLAZA", 0.3, 230)
 
 -- Calm sea backdrop covers the template's empty gray baseplate when viewed
 -- from the arena; unlike the grass island it has no collision.
