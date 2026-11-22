@@ -1,4 +1,4 @@
--- Mythblox game-01: glass bridge race v0.16 (server)
+-- Mythblox game-01: glass bridge race v0.17 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -8,13 +8,13 @@ local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
 local DataStoreService = game:GetService("DataStoreService")
 local HttpService = game:GetService("HttpService")
-local BUILD_VERSION = "v0.16"
+local BUILD_VERSION = "v0.17"
 
 local SETTINGS = {
 	MaxPlayers = 8,
 	JoinSeconds = 10,
 	VoteSeconds = 5,
-	RevealSeconds = 2,
+	RevealSeconds = 5,
 	MoveSeconds = 6,
 	ResultsSeconds = 5,
 	BridgeLength = 20,
@@ -762,6 +762,55 @@ local function finishConfetti()
 	emitter.Parent = finishCenter
 	emitter:Emit(60)
 	Debris:AddItem(emitter, 3)
+end
+
+-- v0.17: winners dance during RESULTS only, visible to all players.
+-- The IDs are Roblox's built-in character dance animations, selected by rig.
+-- This is presentation only; no teleport, extra reward or new match outcome.
+local function startWinnerDances(winners)
+	local tracks = {}
+	for _, winner in ipairs(winners) do
+		if winner.Parent == Players then
+			local character = winner.Character
+			local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+			if humanoid and humanoid.Health > 0 then
+				local animator = humanoid:FindFirstChildOfClass("Animator")
+				if not animator then
+					animator = Instance.new("Animator")
+					animator.Parent = humanoid
+				end
+				local animation = Instance.new("Animation")
+				animation.Name = "MythbloxVictoryDance"
+				animation.AnimationId = humanoid.RigType == Enum.HumanoidRigType.R15
+					and "rbxassetid://507771019" or "rbxassetid://182435998"
+				local ok, trackOrError = pcall(function()
+					local track = animator:LoadAnimation(animation)
+					track.Priority = Enum.AnimationPriority.Action
+					track.Looped = true
+					track:Play(0.2)
+					return track
+				end)
+				if ok then
+					table.insert(tracks, {track = trackOrError, animation = animation})
+				else
+					warn("[Mythblox] Victory dance unavailable for "
+						.. winner.Name .. ": " .. tostring(trackOrError))
+					animation:Destroy() -- Confetti and winner text still work.
+				end
+			end
+		end
+	end
+	return tracks
+end
+
+local function stopWinnerDances(tracks)
+	for _, entry in ipairs(tracks) do
+		pcall(function()
+			entry.track:Stop(0.2)
+			entry.track:Destroy()
+			entry.animation:Destroy()
+		end)
+	end
 end
 
 local function showCrackLines(tile, count)
@@ -1778,7 +1827,9 @@ while true do
 		message = "TIE! " .. #winners .. " players share the win (+25 each)."
 	end
 	scoreMatch(winners, participants)
+	local winnerDances = startWinnerDances(winners)
 	countdown(SETTINGS.ResultsSeconds, false)
+	stopWinnerDances(winnerDances)
 	for _, player in ipairs(participants) do
 		if player.Parent == Players then player:LoadCharacter() end
 	end
