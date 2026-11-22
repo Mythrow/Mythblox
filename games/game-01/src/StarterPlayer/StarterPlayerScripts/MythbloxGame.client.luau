@@ -1,10 +1,10 @@
--- Mythblox Game 01 · Azure Coast Resort staffed lobby v0.21
+-- Mythblox Game 01 · Soft Earth Coast mobile UI v0.22
 -- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
-local BUILD_VERSION = "v0.21"
+local BUILD_VERSION = "v0.22"
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local network = ReplicatedStorage:WaitForChild("MythbloxGame01")
@@ -39,20 +39,20 @@ playerGui.ChildAdded:Connect(function(child)
 	end
 end)
 
--- AZURE COAST UI: same ivory, deep teal and champagne metal as the lobby.
--- Green/red are reserved for genuine voting outcomes and warnings.
+-- Soft Earth Coast UI: warm cream/oat, muted sage and dusty rose.
+-- Only functional SAFE/BLOCKED indicators use a readable green/red.
 local COLOR = {
-	Ink = Color3.fromRGB(243, 235, 216),
-	InkBright = Color3.fromRGB(224, 215, 192),
-	Text = Color3.fromRGB(20, 65, 79),
-	Muted = Color3.fromRGB(91, 111, 111),
-	Blue = Color3.fromRGB(33, 116, 125),
-	Green = Color3.fromRGB(39, 158, 100),
-	Red = Color3.fromRGB(199, 67, 81),
-	Gold = Color3.fromRGB(198, 160, 92),
-	Purple = Color3.fromRGB(20, 91, 104),
-	Border = Color3.fromRGB(196, 164, 111),
-	White = Color3.fromRGB(250, 248, 239),
+	Ink = Color3.fromRGB(239, 230, 214),      -- warm cream
+	InkBright = Color3.fromRGB(217, 200, 174),-- oat beige
+	Text = Color3.fromRGB(110, 90, 75),       -- soft brown
+	Muted = Color3.fromRGB(127, 110, 95),
+	Blue = Color3.fromRGB(145, 160, 136),     -- sage vote button
+	Green = Color3.fromRGB(90, 144, 106),     -- safe result
+	Red = Color3.fromRGB(176, 103, 99),       -- blocked result
+	Gold = Color3.fromRGB(185, 137, 115),     -- terracotta selection
+	Purple = Color3.fromRGB(110, 90, 75),     -- brown phase heading
+	Border = Color3.fromRGB(191, 167, 144),
+	White = Color3.fromRGB(250, 244, 233),    -- legible on sage/dusty rose
 }
 
 local function addCorner(parent, radius)
@@ -76,17 +76,17 @@ local function panel(name)
 	local frame = Instance.new("Frame")
 	frame.Name = name
 	frame.BackgroundColor3 = COLOR.Ink
-	frame.BackgroundTransparency = 0.015
+	frame.BackgroundTransparency = 0.07
 	frame.BorderSizePixel = 0
 	frame.Parent = gui
 	addCorner(frame, 13)
 	addStroke(frame, COLOR.Border, 1)
 	-- A soft vertical color grade adds depth without relying on a texture ID.
 	local gradient = Instance.new("UIGradient")
-	gradient.Name = "AzureCoastLimestoneCard"
+	gradient.Name = "SoftEarthOatCard"
 	gradient.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 250, 233)),
-		ColorSequenceKeypoint.new(1, Color3.fromRGB(229, 220, 193)),
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(252, 247, 239)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(239, 228, 209)),
 	})
 	gradient.Rotation = 90
 	gradient.Parent = frame
@@ -166,6 +166,11 @@ local clockText = label(top, "Clock", "10s", 14, 6, -28, 23, 19, COLOR.Purple, t
 clockText.TextXAlignment = Enum.TextXAlignment.Right
 local description = label(top, "Guidance", "", 14, 29, -28, 21, 13, COLOR.Text, false)
 local ownStats = label(top, "Progress", "", 14, 53, -28, 19, 12, COLOR.Muted, true)
+-- Compact phone view keeps wins and coins in one tiny right-hand chip;
+-- the actual match instructions stay in the private vote/reveal controls.
+local currencyChip = label(top, "WinsAndCoins", "", 0, 0, 0, 18, 11, COLOR.Text, true)
+currencyChip.TextXAlignment = Enum.TextXAlignment.Right
+currencyChip.Visible = false
 local progressBackground = Instance.new("Frame")
 progressBackground.Name = "ProgressTrack"
 progressBackground.Position = UDim2.new(0, 14, 1, -7)
@@ -177,7 +182,7 @@ addCorner(progressBackground, 4)
 local progressFill = Instance.new("Frame")
 progressFill.Name = "ProgressFill"
 progressFill.Size = UDim2.fromScale(0, 1)
-progressFill.BackgroundColor3 = COLOR.Green
+progressFill.BackgroundColor3 = COLOR.Blue
 progressFill.BorderSizePixel = 0
 progressFill.Parent = progressBackground
 addCorner(progressFill, 4)
@@ -200,8 +205,8 @@ local function showFeedback(message, isGood)
 	if isCompact then return end
 	feedbackGeneration += 1
 	local generation = feedbackGeneration
-	feedback.BackgroundColor3 = isGood and Color3.fromRGB(224, 251, 235) or Color3.fromRGB(255, 227, 227)
-	feedbackText.TextColor3 = isGood and Color3.fromRGB(25, 133, 77) or Color3.fromRGB(192, 52, 72)
+	feedback.BackgroundColor3 = isGood and Color3.fromRGB(221, 230, 213) or Color3.fromRGB(239, 208, 203)
+	feedbackText.TextColor3 = isGood and COLOR.Green or COLOR.Red
 	feedbackText.Text = message
 	feedback.Visible = true
 	feedback.BackgroundTransparency = 0.02
@@ -273,7 +278,7 @@ end
 -- Results appear in the compact top status strip instead of a centered
 -- modal. The arena and other players remain visible when a match ends.
 
--- v0.21: Secret selections are never displayed to others while voting.
+-- v0.22: Secret selections are never displayed to others while voting.
 -- ONLY during the five-second REVEAL do five non-clickable results cards
 -- show every numbered choice, picking players' avatars, totals, and safety.
 -- The existing teal voting buttons remain PRIVATE selection controls.
@@ -307,7 +312,7 @@ for number = 1, 5 do
 	card.Name = "NumberResult_" .. number
 	card.LayoutOrder = number
 	card.Size = UDim2.new(0.19, 0, 1, 0)
-	card.BackgroundColor3 = Color3.fromRGB(219, 248, 231)
+	card.BackgroundColor3 = Color3.fromRGB(222, 231, 215)
 	card.BorderSizePixel = 0
 	card.Parent = resultRow
 	addCorner(card, 10)
@@ -367,7 +372,7 @@ local function drawOutcomes(state)
 		local total = (state.voteCounts and state.voteCounts[number]) or #ids
 
 		card.frame.BackgroundColor3 = blocked
-			and Color3.fromRGB(255, 222, 226) or Color3.fromRGB(218, 249, 232)
+			and Color3.fromRGB(236, 206, 199) or Color3.fromRGB(213, 226, 207)
 		card.outline.Color = blocked and COLOR.Red or COLOR.Green
 		card.number.TextColor3 = blocked and COLOR.Red or COLOR.Green
 		card.status.TextColor3 = blocked and COLOR.Red or COLOR.Green
@@ -640,7 +645,7 @@ local function update(state)
 	if phase == "JOIN" or phase == "VOTE" then
 		lastTurnRendered = -1
 	end
-	phaseText.Text = ("v0.21 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
+	phaseText.Text = ("v0.22 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
 	clockText.Text = tostring(state.time or 0) .. "s"
 	clockText.TextColor3 = phase == "VOTE" and (state.time or 0) <= 2 and COLOR.Red or COLOR.Purple
 	description.Text = state.message or ""
@@ -650,7 +655,7 @@ local function update(state)
 	if voting.Visible then shop.Visible = false end
 
 	if phase == "JOIN" then
-		phaseText.Text = "v0.21 · NEXT MATCH"
+		phaseText.Text = "v0.22 · NEXT MATCH"
 		description.Text = state.queued and "You're queued for the next race."
 			or "Join at the gold pad or use the button below."
 		ownStats.Text = ("%d/%d PLAYERS READY"):format(state.ready or 0, state.capacity or 8)
@@ -669,7 +674,7 @@ local function update(state)
 	if phase == "RESULTS" then
 		-- Server sends winner/draw text in state.message; show it only in
 		-- the small status panel and avoid blocking the camera.
-		phaseText.Text = "v0.21 · ROUND OVER"
+		phaseText.Text = "v0.22 · ROUND OVER"
 		ownStats.Text = "NEXT MATCH STARTS SOON"
 	end
 
@@ -677,7 +682,7 @@ local function update(state)
 		local hurry = (state.time or 0) <= 2
 		voteTitle.Text = hurry and ("CHOOSE NOW · " .. tostring(state.time) .. "s") or "PICK YOUR STEPS · 1–5"
 		voteTitle.TextColor3 = hurry and COLOR.Red or COLOR.Text
-		voting.BackgroundColor3 = hurry and Color3.fromRGB(255, 245, 230) or COLOR.Ink
+		voting.BackgroundColor3 = hurry and Color3.fromRGB(231, 211, 191) or COLOR.Ink
 		for n, b in ipairs(choiceButtons) do
 			b.BackgroundColor3 = mine.vote == n and COLOR.Gold or COLOR.Blue
 			b.TextColor3 = mine.vote == n and COLOR.Text or COLOR.White
