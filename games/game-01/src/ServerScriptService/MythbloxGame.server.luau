@@ -982,7 +982,60 @@ local function validRecord(value)
 			return false
 		end
 	end
+	if value.ownedSkins ~= nil and type(value.ownedSkins) ~= "table" then return false end
+	if value.equippedSkin ~= nil and type(value.equippedSkin) ~= "string" then return false end
 	return true
+end
+
+local function sanitizedOwned(saved)
+	local owned = {}
+	if type(saved) == "table" then
+		for id, value in pairs(saved) do
+			if id ~= "classic" and SKIN_BY_ID[id] and value == true then
+				owned[id] = true
+			end
+		end
+	end
+	return owned
+end
+
+local function sanitizedEquipped(saved, owned)
+	if saved == "classic" then return "classic" end
+	if type(saved) == "string" and owned[saved] and SKIN_BY_ID[saved] then
+		return saved
+	end
+	return "classic"
+end
+
+local function shopSnapshot(player)
+	local profile = profiles[player]
+	local coins = player:FindFirstChild("leaderstats")
+	coins = coins and coins:FindFirstChild("Coins")
+	local items = {}
+	for _, item in ipairs(SKIN_CATALOG) do
+		table.insert(items, {
+			id = item.id, title = item.title, price = item.price,
+			color = item.color,
+		})
+	end
+	return {
+		items = items,
+		owned = profile and sanitizedOwned(profile.ownedSkins) or {},
+		equipped = profile and profile.equippedSkin or "classic",
+		coins = coins and coins.Value or 0,
+		ready = profile ~= nil and profile.status == "ready",
+	}
+end
+
+local function sendShop(player, kind, message)
+	if player.Parent ~= Players then return end
+	shopEvent:FireClient(player, kind, shopSnapshot(player), message)
+end
+
+local function nearCosmetics(player)
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	return root ~= nil and (root.Position - cosmeticsFloor.Position).Magnitude <= 18
 end
 
 local function updateProfileView(player, profile)
@@ -1013,10 +1066,14 @@ local function loadProfile(player)
 		if ok and validRecord(stored) then
 			profile.baseWins = stored and safeStat(stored.wins) or 0
 			profile.baseCoins = stored and safeStat(stored.coins) or 0
+			profile.ownedSkins = sanitizedOwned(stored and stored.ownedSkins)
+			profile.equippedSkin = sanitizedEquipped(stored and stored.equippedSkin, profile.ownedSkins)
+			equippedSkins[player] = profile.equippedSkin
 			profile.status = "ready"
 			if player.Parent == Players then
 				updateProfileView(player, profile)
 				player:SetAttribute("MythbloxDataStatus", "READY")
+				sendShop(player, "Update", "")
 			end
 			print(("[Mythblox DATA] Loaded %s: %d wins, %d coins (%s)"):format(
 				player.Name, profile.baseWins, profile.baseCoins, DATA_STORE_NAME
@@ -1091,6 +1148,9 @@ local function saveProfile(player, reason)
 					schema = 1,
 					wins = safeStat(oldWins + winsDelta),
 					coins = safeStat(oldCoins + coinsDelta),
+					-- Preserve shop fields written by another live server.
+					ownedSkins = sanitizedOwned(stored and stored.ownedSkins),
+					equippedSkin = stored and stored.equippedSkin or "classic",
 					recentSaves = recent,
 				}
 			end)
@@ -1101,6 +1161,9 @@ local function saveProfile(player, reason)
 			profile.pendingCoins = math.max(0, profile.pendingCoins - coinsDelta)
 			profile.baseWins = safeStat(result.wins)
 			profile.baseCoins = safeStat(result.coins)
+			profile.ownedSkins = sanitizedOwned(result.ownedSkins)
+			profile.equippedSkin = sanitizedEquipped(result.equippedSkin, profile.ownedSkins)
+			equippedSkins[player] = profile.equippedSkin
 			profile.saving = false
 			updateProfileView(player, profile)
 			if player.Parent == Players then player:SetAttribute("MythbloxDataStatus", "READY") end
@@ -1172,6 +1235,8 @@ local function onPlayerAdded(player)
 		baseCoins = 0,
 		pendingWins = 0,
 		pendingCoins = 0,
+		ownedSkins = {},
+		equippedSkin = "classic",
 		status = "loading",
 		saving = false,
 	}
@@ -1207,6 +1272,7 @@ for _, player in ipairs(Players:GetPlayers()) do onPlayerAdded(player) end
 
 Players.PlayerRemoving:Connect(function(player)
 	queue[player] = nil
+	equippedSkins[player] = nil
 	if active[player] and active[player].alive then
 		eliminate(player, "left the server", nil)
 	end
