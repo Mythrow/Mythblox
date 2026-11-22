@@ -395,9 +395,13 @@ closeShop.TextSize = 15
 closeShop.MouseButton1Click:Connect(function()
 	shop.Visible = false
 end)
-local shopList = Instance.new("Frame")
+local shopList = Instance.new("ScrollingFrame")
 shopList.Name = "Items"
 shopList.BackgroundTransparency = 1
+shopList.BorderSizePixel = 0
+shopList.ScrollingDirection = Enum.ScrollingDirection.Y
+shopList.ScrollBarThickness = 4
+shopList.CanvasSize = UDim2.fromOffset(0, 230)
 shopList.Position = UDim2.fromOffset(12, 82)
 shopList.Size = UDim2.new(1, -24, 1, -124)
 shopList.Parent = shop
@@ -419,6 +423,7 @@ local function renderShop(info, response)
 	for _, child in ipairs(shopList:GetChildren()) do
 		if child:IsA("Frame") then child:Destroy() end
 	end
+	shopList.CanvasSize = UDim2.fromOffset(0, #info.items * 56)
 	for index, item in ipairs(info.items) do
 		if type(item) == "table" and type(item.id) == "string" then
 			local row = Instance.new("Frame")
@@ -522,7 +527,7 @@ local function layoutForViewport()
 	movementText.TextSize = compact and 14 or 17
 
 	local shopW = math.min(width - 20, 350)
-	shop.Size = UDim2.fromOffset(shopW, 358)
+	shop.Size = UDim2.fromOffset(shopW, math.max(218, math.min(358, height - 118)))
 	shop.AnchorPoint = compact and Vector2.new(0.5, 0.5) or Vector2.new(1, 0.5)
 	shop.Position = compact and UDim2.new(0.5, 0, 0.56, 0) or UDim2.new(1, -18, 0.54, 0)
 
