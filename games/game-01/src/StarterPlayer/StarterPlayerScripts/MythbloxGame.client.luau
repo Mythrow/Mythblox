@@ -1,10 +1,10 @@
--- Mythblox Game 01 · five-column secret vote reveal v0.16
+-- Mythblox Game 01 · longer reveal and winner dance v0.17
 -- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
-local BUILD_VERSION = "v0.16"
+local BUILD_VERSION = "v0.17"
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local network = ReplicatedStorage:WaitForChild("MythbloxGame01")
@@ -257,17 +257,14 @@ for n = 1, 5 do
 	choiceButtons[n] = b
 end
 
--- Movement warning: big enough to read but kept near the bottom.
-local movement = panel("MovementPanel")
-movement.AnchorPoint = Vector2.new(0.5, 1)
-local movementText = label(movement, "MovementText", "", 14, 8, -28, 50, 16, COLOR.Text, true)
-movementText.TextXAlignment = Enum.TextXAlignment.Center
+-- The large bottom GO/STAY banner was redundant with the bridge colors and
+-- compact top status. Removing it keeps the arena and touch controls clear.
 
 -- Results appear in the compact top status strip instead of a centered
 -- modal. The arena and other players remain visible when a match ends.
 
--- v0.16: Secret selections are never displayed to others while voting.
--- ONLY during the two-second REVEAL do five non-clickable results cards
+-- v0.17: Secret selections are never displayed to others while voting.
+-- ONLY during the five-second REVEAL do five non-clickable results cards
 -- show every numbered choice, picking players' avatars, totals, and safety.
 -- The existing blue voting buttons remain PRIVATE selection controls.
 local reveal = panel("RevealPanel")
@@ -533,9 +530,6 @@ local function layoutForViewport()
 
 	join.Size = UDim2.fromOffset(math.min(width - 28, 345), 58)
 	join.Position = UDim2.new(0.5, 0, 1, -26)
-	movement.Size = UDim2.fromOffset(math.min(width - 18, 545), 66)
-	movement.Position = UDim2.new(0.5, 0, 1, -26)
-	movementText.TextSize = compact and 14 or 17
 
 	local shopW = math.min(width - 20, 350)
 	shop.Size = UDim2.fromOffset(shopW, math.max(218, math.min(358, height - 118)))
@@ -636,7 +630,7 @@ local function update(state)
 	if phase == "JOIN" or phase == "VOTE" then
 		lastTurnRendered = -1
 	end
-	phaseText.Text = ("v0.16 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
+	phaseText.Text = ("v0.17 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
 	clockText.Text = tostring(state.time or 0) .. "s"
 	clockText.TextColor3 = phase == "VOTE" and (state.time or 0) <= 2 and COLOR.Red or COLOR.Purple
 	description.Text = state.message or ""
@@ -644,10 +638,9 @@ local function update(state)
 	join.Visible = phase == "JOIN" and state.queued ~= true and (state.ready or 0) < (state.capacity or 8)
 	voting.Visible = phase == "VOTE" and mine ~= nil and mine.alive == true
 	if voting.Visible then shop.Visible = false end
-	movement.Visible = phase == "MOVE" and mine ~= nil and mine.alive == true
 
 	if phase == "JOIN" then
-		phaseText.Text = "v0.16 · NEXT MATCH"
+		phaseText.Text = "v0.17 · NEXT MATCH"
 		description.Text = state.queued and "You're queued for the next race."
 			or "Join at the gold pad or use the button below."
 		ownStats.Text = ("%d/%d PLAYERS READY"):format(state.ready or 0, state.capacity or 8)
@@ -666,7 +659,7 @@ local function update(state)
 	if phase == "RESULTS" then
 		-- Server sends winner/draw text in state.message; show it only in
 		-- the small status panel and avoid blocking the camera.
-		phaseText.Text = "v0.16 · ROUND OVER"
+		phaseText.Text = "v0.17 · ROUND OVER"
 		ownStats.Text = "NEXT MATCH STARTS SOON"
 	end
 
@@ -684,31 +677,18 @@ local function update(state)
 			or "Most picked numbers crack · choose before time ends!"
 	end
 
-	if movement.Visible and mine then
-		local blocked = {}
-		for n = 1, 5 do
-			if state.unsafe and state.unsafe[n] then table.insert(blocked, tostring(n)) end
-		end
-		description.Text = #blocked > 0
-			and ("BLOCKED: " .. table.concat(blocked, ", ") .. "  ·  Watch your next tile")
-			or "NO BLOCKED NUMBERS · Watch your next tile"
+	-- Keep the essential permission in the compact HUD, not a separate banner.
+	if phase == "MOVE" and mine and mine.alive then
 		local allowed = mine.allowed or 0
-		if allowed > 0 then
-			movement.BackgroundColor3 = Color3.fromRGB(220, 252, 231)
-			movementText.TextColor3 = Color3.fromRGB(22, 128, 72)
-			movementText.Text = ("GO! Walk 1–%d GREEN tiles. Leave your old tile!"):format(allowed)
-		else
-			movement.BackgroundColor3 = Color3.fromRGB(255, 229, 230)
-			movementText.TextColor3 = Color3.fromRGB(198, 47, 68)
-			movementText.Text = "STAY! Your next tile is unsafe. Do not walk forward."
-		end
+		description.Text = allowed > 0 and ("GO · WALK 1–%d GREEN TILES"):format(allowed)
+			or "STAY · THIS TURN"
 	end
 
-	-- The five non-interactive number cards appear ONLY in the two-second reveal.
+	-- The five non-interactive number cards appear ONLY in the five-second reveal.
 	-- Never show aggregates, avatars or the previous turn's choices in VOTE/MOVE.
 	reveal.Visible = phase == "REVEAL"
 	if reveal.Visible then
-		-- The reveal is the only foreground feedback during these two seconds.
+		-- The reveal is the only foreground feedback during these five seconds.
 		-- Hide earlier vote chips and any open stall panel rather than overlap it.
 		shop.Visible = false
 		feedback.Visible = false
@@ -723,7 +703,6 @@ join.Visible = false
 shop.Visible = false
 feedback.Visible = false
 voting.Visible = false
-movement.Visible = false
 reveal.Visible = false
 stateEvent.OnClientEvent:Connect(update)
 command:FireServer("Sync")
