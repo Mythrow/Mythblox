@@ -7,7 +7,7 @@
 - The authoritative **Wins** and **Coins** values earned from completed matches.
 - Winners earn **1 win and 25 coins**; other participants earn **5 coins**. The existing game rules are unchanged.
 - Rewards are accumulated on the server, autosaved approximately every **150 seconds** (with jitter), and saved again on player exit or server shutdown.
-- This version **does not** save cosmetics, glass colors, purchases, or settings. No game shop or monetization has been added.
+- **v0.14 now additionally saves purchased glass-color cosmetics and the equipped color in this same DataStore record.** There is no Robux shop or paid monetization. Purchase/equipment is server validated and must be tested in Studio before release.
 - **Older v0.12 coin/win totals were session-only**, so they cannot be restored retroactively. A player with no v0.13 stored profile starts at zero.
 
 **Technical stores:** `MythbloxGame01_Progress_Studio_v1` in Roblox Studio and `MythbloxGame01_Progress_v1` in actual published servers. These stores are intentionally distinct so Studio tests cannot change live player data. Per-user keys use the Roblox user ID.
@@ -53,7 +53,7 @@ An orange Studio `GameSettingsPlugin...SecurityController` message read `Failed 
 - `GetAsync` and `UpdateAsync` are wrapped with guarded retries. If loading fails, the save path is disabled for that session.
 - `UpdateAsync` atomically adds earned rewards to the latest stored totals, with recently applied save IDs to avoid double-awarding a retry with an unknown outcome.
 - Pending rewards are saved together, not after every small action. Exit and server-shutdown handlers attempt a final save; a Roblox/cloud outage can still prevent a final write.
-- The data model currently supports **earned positive coins and wins only**. Future cosmetic purchases must use **server-validated, atomic spending transactions** before any coins can be deducted.
+- **v0.14 extends the same record to owned/equipped glass colors** and implements server-validated, atomic coin spending. Buying, restarting Play, earning more coins, then restarting again is required to verify the migration does not erase ownership. Older v0.13 game servers should be stopped before purchasing in v0.14, since old code does not preserve newly added cosmetic fields.
 - This is a prototype save system: test rapid reconnects, failures, simultaneous joins and live-server behavior before public release.
 
 Further reading: [Roblox DataStore best practices](https://create.roblox.com/docs/cloud-services/data-stores/best-practices) and [standard data store tutorial](https://create.roblox.com/docs/tutorials/use-case-tutorials/data-storage/save-player-data).
