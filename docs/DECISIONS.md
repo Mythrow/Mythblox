@@ -59,6 +59,8 @@ Use this file to separate **confirmed project rules** from **ideas not yet appro
 
 - **2026-11-22:** Following owner-confirmed Studio coin persistence in v0.13, implementation proceeded to **v0.14 coin-only cosmetics**. The right-hand Cosmetics stall opens a compact shop with Classic Blue free and three earned-coin glass tints (20/40/60 coins). Ownership and equipped color persist in the existing DataStore, and purchases are validated by the server in one atomic UpdateAsync record. Neutral lane glass reflects skin selection; all safe/unsafe/crack colors and original gameplay rules are unchanged. **Still to test in Studio:** shop UI, purchases, equipment survival after restart; also saved Wins and private published-server persistence remain unverified. No Robux monetization.
 
+- **2026-11-22:** Owner confirms the **v0.14 cosmetics shop works in Roblox Studio**. This is an overall report, not an itemized validation of transaction costs or ownership after restart. The next recommended focus is **v0.15 multiplayer/mobile/release QA**, specifically verifying saved Wins, skin ownership across restarts, secure purchases, and private published-server behavior. Not yet approved or implemented.
+
 ## Open decisions
 
 | Question | Options | Status |
