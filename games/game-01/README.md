@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-22):** **v0.23** adds round-end reward save attempts and clear session-only/save-error warnings inside the existing compact HUD. The approved **v0.22 Soft Earth Coast** matte oat/sage/rose theme, 49px phone HUD, social hub and game rules remain unchanged. Real Roblox Studio, mobile and live DataStore testing is still required, including the illegal-step shatter regression. **Not launch-ready.**  
+**Status (2026-11-22):** **v0.24** implements the owner-approved neutral-daylight fix after a Studio screenshot showed a yellowish global cast. The Soft Earth Coast palette, matte materials, 49px phone HUD, v0.23 round-end saves, social hub and gameplay remain unchanged. Lighting improvements are committed to source and installer, but **Studio/device visual retesting is pending**. The glass-elimination regression, friend testing and live data persistence also remain open. **Not launch-ready.**  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -34,6 +34,16 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 | Reward | Win +25 coins, participation +5 coins |
 
 **Progress storage:** Wins and coins were session-only through v0.12. **v0.13 introduces DataStore persistence**, pending Roblox Studio and published-server verification. v0.14 adds a coin-only cosmetics stall (no Robux or paid items). Do not publicly launch or monetize before testing data recovery and purchases.
+
+## v0.24 — remove yellow cast; keep the soft-earth materials (Studio/phone QA pending)
+
+The owner approved correcting the yellow/washed-out appearance visible in the v0.23 Studio screenshot. This changes the **environment-wide lighting**, not the approved material colors or gameplay.
+
+- **Neutral color correction:** the existing post-processing effect now has a white (255,255,255) tint, near-neutral saturation (-0.035), slight contrast (+0.015) and minimal brightness adjustment (-0.015). Retains the old effect instance to avoid stacking filters on reinstall.
+- **Balanced natural daylight:** neutral gray ambient/outdoor light replaces yellow-biased ambient tones; the warm top light shift is removed (top/bottom shifts set to black neutral). Brightness gently reduces from 1.85 to 1.75; bloom stays disabled, low specular reflections remain.
+- **Clearer coastal sky:** pale blue-gray atmospheric colors and reduced density/haze replace the old beige atmospheric wash; clouds become neutral off-white instead of yellow-cream. Ocean color, landscaping palette and terrain geometry stay unchanged.
+- **Safeguards:** 1–5 voting, 20-panel glass lanes, crack/shatter logic, free walking/jumping, two-player social interactions, cosmetic ownership and v0.23 saving behavior are unchanged. No new mechanics, animations or purchases.
+- **Install and test:** Stop Studio Play; run the updated [one-paste installer](INSTALL_STUDIO_COMMAND_BAR.luau) in Edit mode and confirm `v0.24 VERIFIED` plus matching server/client versions. Review the lobby and course in Studio and on a real phone: no whole-scene yellow filter, sky remains natural, greens stay readable and oat paths stay matte without glare. This code has not yet been visually verified in the Roblox engine.
 
 ## v0.23 — round-end reward saving and unobtrusive persistence warnings (QA pending)
 
@@ -400,6 +410,6 @@ See the [pre-launch roadmap](PRELAUNCH_ROADMAP.md). Cosmetic stall, sound effect
 
 ## Next step
 
-**Test v0.23 on a phone first:** verify the oat floor is comfortably matte, the 49px top strip no longer obscures play, all five reveal cards/avatars fit, and 1–5 voting remains tappable. Publish the updated private test experience to play with a friend; test bench seating, cosmetics and most importantly illegal-step glass shatter/elimination. Report a phone screenshot or any Output errors. Major additional features and independent multiplayer/data/security QA remain required before public launch.
+**Test v0.24 on a phone first:** verify the oat floor is comfortably matte, the 49px top strip no longer obscures play, all five reveal cards/avatars fit, and 1–5 voting remains tappable. Publish the updated private test experience to play with a friend; test bench seating, cosmetics and most importantly illegal-step glass shatter/elimination. Report a phone screenshot or any Output errors. Major additional features and independent multiplayer/data/security QA remain required before public launch.
 
 See [the Mythblox game-design memo](../../docs/FIRST_GAME_GLASS_BRIDGE_CONCEPT.md) for earlier alternatives, including the spinner idea that was explicitly deferred.
