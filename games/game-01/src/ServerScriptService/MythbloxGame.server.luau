@@ -1794,6 +1794,33 @@ RunService.Heartbeat:Connect(function(dt)
 	end
 end)
 
+-- Collision safety net for normal walking and jumping. The 0.09-second
+-- Heartbeat sweep below remains authoritative even when a leap skips a tile
+-- without touching it; this catches actual contact independently.
+local function validateGlassContact(player, laneNumber, tileIndex, hit)
+	if tileIndex == 0 or phase == "JOIN" or phase == "RESULTS" then return end
+	local character = player.Character
+	if not character or hit:FindFirstAncestorOfClass("Model") ~= character then return end
+	local info = active[player]
+	if not info or not info.alive or info.lane ~= laneNumber then return end
+	if tileIndex <= info.index then return end
+	local root = character:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+	-- Limbs can brush the edge of the next tile before the avatar actually
+	-- steps onto it. Require the root to enter the panel, preventing false
+	-- elimination while walking or jumping in place on the current glass.
+	if root.Position.Z < tileIndex * SETTINGS.TileSpacing - 2.55 then return end
+	local lane = lanes[laneNumber]
+	if not lane or not lane.tiles[tileIndex] then return end
+	if tileIndex > info.index + 1 then
+		eliminate(player, "skipped a tile", lane.tiles[tileIndex])
+	elseif phase ~= "MOVE" then
+		eliminate(player, "stepped before movement", lane.tiles[tileIndex])
+	elseif tileIndex > info.startIndex + info.allowed then
+		eliminate(player, "stepped onto forbidden glass", lane.tiles[tileIndex])
+	end
+end
+
 local function beginMatch(participants)
 	initialMatchCount = #participants
 	active = {}
@@ -1822,6 +1849,14 @@ local function beginMatch(participants)
 				root = root,
 			}
 			markLane(lanes[lane].tiles[0], lane)
+			-- Each lane only tests its assigned racer's body against its
+			-- panels; touching a spectator/other lane cannot award progress.
+			for index = 1, SETTINGS.BridgeLength do
+				local tile = lanes[lane].tiles[index]
+				tile.Touched:Connect(function(hit)
+					validateGlassContact(player, lane, index, hit)
+				end)
+			end
 		end
 	end
 end
