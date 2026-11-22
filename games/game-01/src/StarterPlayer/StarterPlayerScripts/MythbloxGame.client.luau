@@ -890,7 +890,10 @@ local function acceptUIState(data)
 	if type(data)~="table" or type(data.ui)~="table" then return end
 	-- Inventory may load before the cloud profile. Wait for a real server
 	-- READY/SESSION_ONLY status before deciding tutorialSeen is false.
-	if player:GetAttribute("MythbloxDataStatus")=="LOADING" then return end
+	if player:GetAttribute("MythbloxDataStatus")=="LOADING"
+		or (data.ready == false and player:GetAttribute("MythbloxDataStatus")=="READY") then
+		return
+	end
 	local first=not prefsReady
 	prefsReady=true
 	for key in pairs(prefs) do
@@ -1324,6 +1327,8 @@ local function update(state)
 		tutStep=1;drawTutorial();tutorial.Visible=true
 	end
 
+	-- A recently earned toast must never cover the five result cards.
+	if phase == "REVEAL" then toast.Visible=false end
 	-- The five non-interactive number cards appear ONLY in the five-second reveal.
 	-- Never show aggregates, avatars or the previous turn's choices in VOTE/MOVE.
 	reveal.Visible = phase == "REVEAL"
