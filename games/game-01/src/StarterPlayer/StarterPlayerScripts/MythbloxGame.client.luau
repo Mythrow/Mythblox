@@ -852,8 +852,18 @@ stop.MouseButton1Click:Connect(function()
 	ownCamera()
 	watchedName.Text="FOLLOW A RACER"
 end)
-player.CharacterAdded:Connect(function()
-	if isFollowing then ownCamera() end
+player.CharacterAdded:Connect(function(character)
+	if isFollowing then
+		isFollowing=false
+		task.spawn(function()
+			local humanoid=character:WaitForChild("Humanoid",5)
+			local camera=workspace.CurrentCamera
+			if camera and humanoid and not isFollowing then
+				camera.CameraType=Enum.CameraType.Custom
+				camera.CameraSubject=humanoid
+			end
+		end)
+	end
 end)
 
 bagButton.MouseButton1Click:Connect(function()
@@ -878,6 +888,9 @@ helpButton.MouseButton1Click:Connect(function()
 end)
 local function acceptUIState(data)
 	if type(data)~="table" or type(data.ui)~="table" then return end
+	-- Inventory may load before the cloud profile. Wait for a real server
+	-- READY/SESSION_ONLY status before deciding tutorialSeen is false.
+	if player:GetAttribute("MythbloxDataStatus")=="LOADING" then return end
 	local first=not prefsReady
 	prefsReady=true
 	for key in pairs(prefs) do
