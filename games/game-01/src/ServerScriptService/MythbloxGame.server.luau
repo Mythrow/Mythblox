@@ -879,8 +879,8 @@ textSign(trophyAnchor, "TROPHY GARDEN | SOCIAL PLAZA", 0.3, 230)
 -- Calm sea backdrop covers the template's empty gray baseplate when viewed
 -- from the arena; unlike the grass island it has no collision.
 local ocean = part(
-	"OceanBackdrop", Vector3.new(820, 1.5, 820),
-	Vector3.new(0, 0.6, 58), Color3.fromRGB(76, 163, 199), Enum.Material.SmoothPlastic
+	"OceanBackdrop", Vector3.new(1200, 1.5, 1200),
+	Vector3.new(0, 0.6, 58), Color3.fromRGB(57, 148, 157), Enum.Material.SmoothPlastic
 )
 ocean.CanCollide = false
 ocean.CanTouch = false
@@ -894,8 +894,38 @@ for i = 1, 32 do
 	local x = -145 + column * 95 + (i % 3) * 7
 	local z = -128 + band * 58
 	local shimmer = detail("OceanSunGlint", Vector3.new(10 + i % 5, 0.025, 0.3),
-		Vector3.new(x, 1.39, z), Color3.fromRGB(209, 241, 253), Enum.Material.SmoothPlastic, world)
+		Vector3.new(x, 1.39, z), THEME.Foam, Enum.Material.SmoothPlastic, world)
 	shimmer.Transparency = 0.65
+end
+
+-- Layered, low-poly destination silhouettes frame the horizon. These
+-- noncolliding islands are visual-only and cannot become a second playfield.
+for _, loc in ipairs({
+	{-290, -120, 1.15}, {-245, 180, 0.8}, {-355, 235, 0.7},
+	{290, -90, 1.1}, {255, 205, 0.85}, {365, 255, 0.65},
+}) do
+	local dx, dz, scale = loc[1], loc[2], loc[3]
+	local rock = detail("AzureCoastDistantCliff",
+		Vector3.new(62 * scale, 20 * scale, 50 * scale),
+		Vector3.new(dx, 4 + 3 * scale, dz),
+		THEME.Stone, Enum.Material.Rock, world)
+	rock.Shape = Enum.PartType.Ball
+	local cap = detail("DistantIslandEvergreen",
+		Vector3.new(54 * scale, 8 * scale, 44 * scale),
+		Vector3.new(dx, 13 * scale, dz), THEME.Evergreen,
+		Enum.Material.Grass, world)
+	cap.Shape = Enum.PartType.Ball
+	for _, side in ipairs({-1, 1}) do
+		local palm = detail("DistantTreeTrunk",
+			Vector3.new(1.7 * scale, 11 * scale, 1.7 * scale),
+			Vector3.new(dx + side * 12 * scale, 18 * scale, dz),
+			WOOD, Enum.Material.Wood, world)
+		local canopy = detail("DistantTreeCrown",
+			Vector3.new(13 * scale, 8 * scale, 13 * scale),
+			Vector3.new(dx + side * 12 * scale, 25 * scale, dz),
+			THEME.Evergreen, Enum.Material.LeafyGrass, world)
+		canopy.Shape = Enum.PartType.Ball
+	end
 end
 
 -- Roblox's built-in CrackedLava has physically textured dark crust rather
@@ -921,6 +951,41 @@ lava.Touched:Connect(function(hit)
 	local character = hit:FindFirstAncestorOfClass("Model")
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 	if humanoid then humanoid.Health = 0 end
+end)
+
+-- Ocean and skyline are decorative. Anyone falling below the suspended
+-- island/bridges is returned to the actual lobby spawn rather than being
+-- allowed to roam on old template parts or below the map.
+local fallReset = part("WorldFallReset", Vector3.new(1300, 1.5, 1300),
+	Vector3.new(0, 10.5, 0), THEME.DeepTeal, Enum.Material.SmoothPlastic, world)
+fallReset.CanCollide = false
+fallReset.CanTouch = true
+fallReset.CanQuery = false
+fallReset.Transparency = 1
+fallReset.CastShadow = false
+fallReset.Touched:Connect(function(hit)
+	local character = hit:FindFirstAncestorOfClass("Model")
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if humanoid and humanoid.Health > 0 and Players:GetPlayerFromCharacter(character) then
+		humanoid.Health = 0
+	end
+end)
+-- Touch events can be missed at high fall speeds or under lag. Independently
+-- verify root height every quarter second across JOIN/VOTE/REVEAL/MOVE.
+local fallCheckElapsed = 0
+RunService.Heartbeat:Connect(function(dt)
+	fallCheckElapsed += dt
+	if fallCheckElapsed < 0.25 then return end
+	fallCheckElapsed = 0
+	for _, player in ipairs(Players:GetPlayers()) do
+		local character = player.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		if root and humanoid and humanoid.Health > 0
+			and root.Position.Y < SETTINGS.BridgeY - 13 then
+			humanoid.Health = 0
+		end
+	end
 end)
 
 -- Glass lanes do not exist in the lobby. We build exactly one per ready
