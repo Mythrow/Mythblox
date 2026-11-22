@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-22):** **v0.27** fixes the owner-reported difference between Studio and the published Roblox app: a single published-server player may now run a **reward-free solo practice** round after the JOIN timer, while **2–8-player matches** retain competitive voting and Wins/Coins. The phone round-status card is smaller (43px) and right-aligned within Roblox's safe area; JOIN now waits for server acknowledgement before hiding the button. Floating signboards and small furniture/planter/lamp/fountain/roof gaps were anchored to their supports or the hub ground. **Source/installer committed; live Studio/mobile QA pending. Not launch-ready.**  
+**Status (2026-11-22):** **v0.28** removes the redundant `GREEN = SAFE / RED = BLOCKED` subtitle from the five-card reveal, reducing the phone reveal tray by 16px without reducing card content or its five-second duration. The v0.27 published solo-practice fix, 43px status HUD, grounded props and all gameplay/rewards remain unchanged. **Code and installer updated; mobile/Studio playtest remains pending. Not launch-ready.**  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -34,6 +34,13 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 | Reward | Win +25 coins, participation +5 coins |
 
 **Progress storage:** Wins and coins were session-only through v0.12. **v0.13 introduces DataStore persistence**, pending Roblox Studio and published-server verification. v0.14 adds a coin-only cosmetics stall (no Robux or paid items). Do not publicly launch or monetize before testing data recovery and purchases.
+
+## v0.28 — cleaner five-card vote reveal (visual QA pending)
+
+- Removed the unnecessary `GREEN = SAFE   RED = BLOCKED` subtitle from the reveal panel. Each 1–5 result card **already displays SAFE or BLOCKED** with its number, avatars and vote count.
+- Reclaimed the legend's space: the **phone reveal tray is 140–156px** instead of 156–172px, and the cards retain their usable height, avatar grid and readable statuses. The desktop tray is similarly shortened.
+- The reveal still lasts **five seconds**, only appears during REVEAL, never exposes private votes early, and preserves the existing red/green functional status colors. No movement, reward or server voting rules changed.
+- **Install** the latest [Studio Command Bar installer](INSTALL_STUDIO_COMMAND_BAR.luau) while not in Play, verify `v0.28 VERIFIED` and update the published private experience before phone testing.
 
 ## v0.27 — published solo practice, less obstructive phone status, grounded props (QA pending)
 
@@ -442,6 +449,6 @@ See the [pre-launch roadmap](PRELAUNCH_ROADMAP.md). Cosmetic stall, sound effect
 
 ## Next step
 
-**Test v0.27 on a phone first:** verify the oat floor is comfortably matte, the 49px top strip no longer obscures play, all five reveal cards/avatars fit, and 1–5 voting remains tappable. Publish the updated private test experience to play with a friend; test bench seating, cosmetics and most importantly illegal-step glass shatter/elimination. Report a phone screenshot or any Output errors. Major additional features and independent multiplayer/data/security QA remain required before public launch.
+**Test v0.28 on a phone first:** verify the oat floor is comfortably matte, the 49px top strip no longer obscures play, all five reveal cards/avatars fit, and 1–5 voting remains tappable. Publish the updated private test experience to play with a friend; test bench seating, cosmetics and most importantly illegal-step glass shatter/elimination. Report a phone screenshot or any Output errors. Major additional features and independent multiplayer/data/security QA remain required before public launch.
 
 See [the Mythblox game-design memo](../../docs/FIRST_GAME_GLASS_BRIDGE_CONCEPT.md) for earlier alternatives, including the spinner idea that was explicitly deferred.
