@@ -2647,11 +2647,15 @@ local function buildRoundSummary(participants, winners)
 	local lastDistance, lastCracks, lastWinner = nil, nil, nil
 	for index, item in ipairs(ordered) do
 		local winner = victorious[item.player.UserId] == true
-		if item.distance ~= lastDistance or item.cracks ~= lastCracks
+		if winner then
+			-- Every officially declared winner ranks first, including
+			-- ties where the racers happened to have different cracks.
+			rank = 1
+		elseif item.distance ~= lastDistance or item.cracks ~= lastCracks
 			or lastWinner ~= winner then
 			rank = index
-			lastDistance, lastCracks, lastWinner = item.distance, item.cracks, winner
 		end
+		lastDistance, lastCracks, lastWinner = item.distance, item.cracks, winner
 		byUser[item.player.UserId] = {
 			place = rank, distance = item.distance, cracks = item.cracks,
 			coins = practiceWithoutRewards and 0 or (winner and 25 or 5),
