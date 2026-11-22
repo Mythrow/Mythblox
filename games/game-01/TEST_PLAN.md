@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-22):** Owner reports **v0.14 works in Roblox Studio**; v0.13 coin persistence across Play restarts was separately confirmed. Cosmetic purchases/re-equipping after a restart, saved Wins, a private published-server test, mobile layouts, and release QA have not been individually confirmed.
+**Status (2026-11-22):** Owner confirms v0.14 works in Studio and Studio coins survived earlier restarts. **v0.15 server remote throttling/reliability changes have been committed, not tested in Studio.** Saving Wins and cosmetic purchases after restart, published-private server, 2–8 players and mobile layouts still require verification. User requires substantial feature additions and visual overhaul before public launch.
 
 ## Playtest log
 
@@ -35,6 +35,29 @@
 6. Repeat with 3–4 clients if the two-player flow works.
 
 
+
+## v0.15 — multiplayer, mobile and reliability checkpoint
+
+**Not a release sign-off.** The owner explicitly requires significantly more content and a major visual overhaul before launching. See [PRELAUNCH_ROADMAP.md](PRELAUNCH_ROADMAP.md).
+
+- [ ] **Installer/version:** Stop Play, reinstall latest [Command Bar installer](INSTALL_STUDIO_COMMAND_BAR.luau) in Edit mode, confirm `v0.15 VERIFIED`, then `SERVER RUNNING v0.15` and `CLIENT RUNNING v0.15` in Output and `v0.15` in the top HUD.
+- [ ] **Two players, unique votes:** Run **Test → Server & Clients**, choose 2 clients. Both queue; verify only 2 lanes, distinct valid votes, revealed totals, green eligible tiles and manual movement.
+- [ ] **Two players, identical votes:** Both pick the same number. Both receive 1 crack and must stay; red tiles remain unsafe. Three cracks still eliminate.
+- [ ] **Tied majority:** With 4+ clients, make two choices each receive 2 votes. Both tied top choices block, others safe.
+- [ ] **No vote and illegal movement:** No vote causes a crack; moving without permission or more than N manually entered tiles causes a fall, not free progress.
+- [ ] **Mid-round leave/reconnect:** A player leaves during a round; others continue, and departed player's lane doesn't rejoin the race. Rejoining does not permit jumping into another active lane.
+- [ ] **Spectator:** Start a race with a late-arriving nonparticipant; they remain on shared ready/spectator deck or side walks, cannot occupy glass lanes or interfere with racers, and can see vote results only after reveal.
+- [ ] **Remote load:** Rapidly click vote choices/Join/Shop/Sync in the ordinary UI. Valid deliberate clicks work; excessively repeated requests do not produce errors, duplicate charges or multiple UI copies. Do not modify game timing or reward rules.
+- [ ] **Saved Wins:** Win a match, stop Play, restart, and confirm Wins increased exactly once. This is **not yet separately verified**.
+- [ ] **Saved Coins and ownership:** Buy Candy Pink (20 coins), stop/restart Play, return to the stall. Balance should reflect one deduction, the skin must remain owned and equippable, and no second charge occurs.
+- [ ] **Saved rewards after purchases:** Earn another 25/5 coins after a purchase, stop/restart. Confirm skins and currency both persist without duplicates or resets.
+- [ ] **Different users:** Two real user accounts save separate coins, wins, cosmetics. Studio emulated player IDs may differ, so test a private published server before public launch.
+- [ ] **Mobile narrow screen:** Test at least a narrow phone portrait viewport and tablet via Studio Device Emulator. Join, vote numbers 1–5, GO/STAY, shop scrolling/close, spectator camera and Roblox movement controls must not overlap.
+- [ ] **8-player performance:** Start an 8-client Studio server if practical. Verify 8 lanes only, repeated crack fragments disappear, no significant framerate drops or large Output spikes.
+- [ ] **Private published server:** Verify live DataStore is deliberately separate from Studio test data; saved Wins, Coins, purchased skins and equipment survive leaving and rejoining actual Roblox sessions.
+- [ ] **Inspect Output:** Record any `[Mythblox DATA] LOAD FAILED`, `SAVE FAILED`, `SAVE_ERROR`, shop transaction warnings, UI version mismatches or new runtime errors. A Roblox Game Settings secrets-parsing warning can occur separately, but should not be treated as proof all DataStore writes succeed.
+
+**Static source and installer consistency checks are not Roblox-engine testing.** Do not mark this QA pass complete until the above cases are independently verified. After v0.15, move into the **feature and visual-development roadmap**, not directly to release.
 
 ## v0.14 — cosmetics purchases, equipment and data regression
 
