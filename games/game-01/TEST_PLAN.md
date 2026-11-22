@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-22):** User reports v0.21 lobby floor too bright and mobile top panel occupying too much screen. **v0.22 Soft Earth Coast** source and installer now add a muted earthy palette, matte low-glare materials/lighting, a two-row 49px phone HUD and condensed avatar-reveal/vote trays. **Real-phone and Studio v0.22 QA pending.** Previous v0.21 seats/shop collision and v0.19 illegal-step shatter fix also require full friend-session verification, as do mobile performance and saved purchase/win persistence.
+**Status (2026-11-22):** **v0.23** adds post-round reward save attempts and compact session-only/save-error status messages. Actual Studio/phone/data-store tests are still pending. Continue all prior v0.22 Soft Earth Coast glare/HUD checks, v0.21 lobby interaction checks and v0.19 forbidden-step shatter/elimination regression checks.
 
 ## Playtest log
 
@@ -38,6 +38,19 @@
 6. Repeat with 3–4 clients if the two-player flow works.
 
 
+
+## v0.23 — completed-round saving and status warnings (live QA required)
+
+This is a code-level reliability update; it has **not been run in Roblox Studio or on a real phone**.
+
+- [ ] Reinstall the latest one-paste installer in Studio Edit mode with Play stopped. Verify `v0.23 VERIFIED`, `SERVER RUNNING v0.23` and `CLIENT RUNNING v0.23`.
+- [ ] With a published test place and Studio API Services enabled, play through a match and confirm the server logs `[Mythblox DATA] Saved` with `round-end` **before closing the server**. Verify winner +1 Win/+25 Coins and participant +5 Coins.
+- [ ] Restart/rejoin, verify stats are unchanged except for the one earned award, then complete another round and repeat. Check that overlapping round-end, autosave, shop and shutdown saves never double-credit rewards.
+- [ ] In a private published Roblox-app server, test with two accounts; verify Wins, Coins, owned colors and equipped colors after both leave and join a fresh server. Studio and published DataStores are separate.
+- [ ] In a disposable Studio test with API Services disabled, check `SESSION ONLY · NO PROGRESS SAVED` appears within the **existing** top status line during JOIN/RESULTS, not during VOTE/MOVE. Do not expect this temporary progress to persist.
+- [ ] If a genuine save error occurs, verify `SAVE ERROR · REJOIN TO VERIFY` and a corresponding Output error. Do not claim this failure-path test passed without an actual failure or controlled mock.
+- [ ] On a narrow portrait and short landscape phone, verify the status panel remains 49px high with no overlay or overlap with Wins/Coins, thumb controls, secret vote buttons or reveal cards.
+- [ ] Reconfirm the v0.19 forbidden-step glass shatter/respawn fix; v0.21 bench seating, solid trees/lamps and staffed counters; v0.22 low-glare earthy theme. Do not disable walking or jumping.
 
 ## v0.22 — actual-phone glare, earthy theme and small HUD
 
