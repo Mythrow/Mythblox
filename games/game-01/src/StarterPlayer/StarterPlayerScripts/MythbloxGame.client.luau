@@ -1,15 +1,16 @@
--- Mythblox Game 01 · gameplay feedback v0.13
+-- Mythblox Game 01 · cosmetic glass shop v0.14
 -- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
-local BUILD_VERSION = "v0.13"
+local BUILD_VERSION = "v0.14"
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local network = ReplicatedStorage:WaitForChild("MythbloxGame01")
 local command = network:WaitForChild("Command")
 local stateEvent = network:WaitForChild("State")
+local shopEvent = network:WaitForChild("Shop")
 local remoteBuild = network:WaitForChild("BuildVersion", 5)
 if not remoteBuild or remoteBuild.Value ~= BUILD_VERSION then
 	warn("[Mythblox] Client " .. BUILD_VERSION .. " does not match server version; old scripts may still be running.")
@@ -376,6 +377,109 @@ local function drawOutcomes(state)
 	revealList.CanvasSize = UDim2.fromOffset(0, #entries * 33)
 end
 
+-- Shop opens ONLY when interacting with the cosmetics stall. No new
+-- always-visible shop HUD button, and no purchases from the client's prices.
+local shop = panel("CosmeticsShop")
+shop.AnchorPoint = Vector2.new(1, 0.5)
+shop.Position = UDim2.new(1, -18, 0.54, 0)
+shop.Size = UDim2.fromOffset(350, 358)
+shop.Visible = false
+
+local shopTitle = label(shop, "Title", "GLASS COLORS", 15, 10, -68, 31, 19, COLOR.Purple, true)
+local shopCoins = label(shop, "Balance", "0 COINS", 15, 46, -32, 25, 14, COLOR.Muted, true)
+local closeShop = button(shop, "Close", "X", COLOR.Red)
+closeShop.AnchorPoint = Vector2.new(1, 0)
+closeShop.Position = UDim2.new(1, -12, 0, 11)
+closeShop.Size = UDim2.fromOffset(34, 32)
+closeShop.TextSize = 15
+closeShop.MouseButton1Click:Connect(function()
+	shop.Visible = false
+end)
+local shopList = Instance.new("Frame")
+shopList.Name = "Items"
+shopList.BackgroundTransparency = 1
+shopList.Position = UDim2.fromOffset(12, 82)
+shopList.Size = UDim2.new(1, -24, 1, -124)
+shopList.Parent = shop
+local shopLayout = Instance.new("UIListLayout")
+shopLayout.FillDirection = Enum.FillDirection.Vertical
+shopLayout.SortOrder = Enum.SortOrder.LayoutOrder
+shopLayout.Padding = UDim.new(0, 5)
+shopLayout.Parent = shopList
+local shopFeedback = label(shop, "Feedback", "", 12, 0, -24, 30, 12, COLOR.Muted, true)
+shopFeedback.AnchorPoint = Vector2.new(0, 1)
+shopFeedback.Position = UDim2.new(0, 12, 1, -5)
+shopFeedback.TextXAlignment = Enum.TextXAlignment.Center
+
+local function renderShop(info, response)
+	if type(info) ~= "table" or type(info.items) ~= "table" then return end
+	shopCoins.Text = tostring(info.coins or 0) .. " COINS"
+	shopFeedback.Text = response or ""
+	shopFeedback.TextColor3 = COLOR.Muted
+	for _, child in ipairs(shopList:GetChildren()) do
+		if child:IsA("Frame") then child:Destroy() end
+	end
+	for index, item in ipairs(info.items) do
+		if type(item) == "table" and type(item.id) == "string" then
+			local row = Instance.new("Frame")
+			row.Name = "Skin_" .. item.id
+			row.LayoutOrder = index
+			row.Size = UDim2.new(1, 0, 0, 51)
+			row.BackgroundColor3 = COLOR.InkBright
+			row.BorderSizePixel = 0
+			row.Parent = shopList
+			addCorner(row, 9)
+
+			local swatch = Instance.new("Frame")
+			swatch.Name = "Color"
+			swatch.Size = UDim2.fromOffset(30, 30)
+			swatch.Position = UDim2.fromOffset(10, 10)
+			swatch.BackgroundColor3 = typeof(item.color) == "Color3" and item.color or COLOR.Blue
+			swatch.BorderSizePixel = 0
+			swatch.Parent = row
+			addCorner(swatch, 7)
+			addStroke(swatch, COLOR.Border, 1)
+
+			local skinName = label(row, "Name", tostring(item.title or item.id), 49, 8, -161, 36, 14, COLOR.Text, true)
+			skinName.TextWrapped = false
+			skinName.TextTruncate = Enum.TextTruncate.AtEnd
+			local action = button(row, "Action", "", COLOR.Blue)
+			action.AnchorPoint = Vector2.new(1, 0.5)
+			action.Position = UDim2.new(1, -9, 0.5, 0)
+			action.Size = UDim2.fromOffset(102, 33)
+			action.TextSize = 12
+			local owns = item.id == "classic" or (info.owned and info.owned[item.id] == true)
+			local equipped = info.equipped == item.id
+			if not info.ready then
+				action.Text = "UNAVAILABLE"
+				action.Active = false
+				action.AutoButtonColor = false
+				action.BackgroundColor3 = COLOR.Muted
+			elseif equipped then
+				action.Text = "EQUIPPED"
+				action.Active = false
+				action.AutoButtonColor = false
+				action.BackgroundColor3 = COLOR.Green
+			else
+				action.Text = owns and "EQUIP" or (tostring(item.price or 0) .. " COINS")
+				action.BackgroundColor3 = owns and COLOR.Green or COLOR.Blue
+				action.MouseButton1Click:Connect(function()
+					action.Text = "..."
+					action.Active = false
+					command:FireServer("Shop", item.id)
+				end)
+			end
+		end
+	end
+end
+
+shopEvent.OnClientEvent:Connect(function(kind, details, message)
+	if kind == "Open" then shop.Visible = true end
+	if shop.Visible and (kind == "Open" or kind == "Update") then
+		renderShop(details, message)
+	end
+end)
+
 local function layoutForViewport()
 	local cam = workspace.CurrentCamera
 	local view = cam and cam.ViewportSize or Vector2.new(1100, 700)
@@ -416,6 +520,11 @@ local function layoutForViewport()
 	movement.Size = UDim2.fromOffset(math.min(width - 18, 545), 66)
 	movement.Position = UDim2.new(0.5, 0, 1, -26)
 	movementText.TextSize = compact and 14 or 17
+
+	local shopW = math.min(width - 20, 350)
+	shop.Size = UDim2.fromOffset(shopW, 358)
+	shop.AnchorPoint = compact and Vector2.new(0.5, 0.5) or Vector2.new(1, 0.5)
+	shop.Position = compact and UDim2.new(0.5, 0, 0.56, 0) or UDim2.new(1, -18, 0.54, 0)
 
 	local revealW = math.min(compact and width - 16 or 322, 322)
 	local revealH = math.max(165, math.min(compact and 242 or 388, height - (compact and 156 or 171)))
@@ -490,17 +599,18 @@ local function update(state)
 	if phase == "JOIN" or phase == "VOTE" then
 		lastTurnRendered = -1
 	end
-	phaseText.Text = ("v0.13 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
+	phaseText.Text = ("v0.14 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
 	clockText.Text = tostring(state.time or 0) .. "s"
 	clockText.TextColor3 = phase == "VOTE" and (state.time or 0) <= 2 and COLOR.Red or COLOR.Purple
 	description.Text = state.message or ""
 
 	join.Visible = phase == "JOIN" and state.queued ~= true and (state.ready or 0) < (state.capacity or 8)
 	voting.Visible = phase == "VOTE" and mine ~= nil and mine.alive == true
+	if voting.Visible then shop.Visible = false end
 	movement.Visible = phase == "MOVE" and mine ~= nil and mine.alive == true
 
 	if phase == "JOIN" then
-		phaseText.Text = "v0.13 · NEXT MATCH"
+		phaseText.Text = "v0.14 · NEXT MATCH"
 		description.Text = state.queued and "You're queued for the next race."
 			or "Join at the gold pad or use the button below."
 		ownStats.Text = ("%d/%d PLAYERS READY"):format(state.ready or 0, state.capacity or 8)
@@ -519,7 +629,7 @@ local function update(state)
 	if phase == "RESULTS" then
 		-- Server sends winner/draw text in state.message; show it only in
 		-- the small status panel and avoid blocking the camera.
-		phaseText.Text = "v0.13 · ROUND OVER"
+		phaseText.Text = "v0.14 · ROUND OVER"
 		ownStats.Text = "NEXT MATCH STARTS SOON"
 	end
 
@@ -568,6 +678,7 @@ local function update(state)
 end
 
 join.Visible = false
+shop.Visible = false
 feedback.Visible = false
 voting.Visible = false
 movement.Visible = false
