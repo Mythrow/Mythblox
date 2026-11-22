@@ -412,7 +412,7 @@ local sharedDeck = decorative(
 	"SharedReadyAndSpectatorDeck",
 	Vector3.new(90, 1, 24),
 	Vector3.new(0, 24.05, -22),
-	Color3.fromRGB(222, 231, 233), Enum.Material.Marble
+	THEME.Ivory, Enum.Material.Limestone
 )
 -- Thin perimeter binding prevents the spectator stage looking like a slab.
 for _, edge in ipairs({-1, 1}) do
@@ -425,7 +425,7 @@ local deckCenter = decorative(
 	"JoinAndWatchFloorMarking",
 	Vector3.new(19, 0.17, 9),
 	Vector3.new(0, 24.7, -25),
-	Color3.fromRGB(214, 172, 91), Enum.Material.Metal
+	THEME.Brass, Enum.Material.Metal
 )
 deckCenter.CanCollide = false
 local deckPrompt = Instance.new("ProximityPrompt")
@@ -456,7 +456,7 @@ local barrier = decorative(
 	"FrontSpectatorGlassBarrier",
 	Vector3.new(90, 8.5, 0.45),
 	Vector3.new(0, 28.8, -10.25),
-	Color3.fromRGB(195, 221, 230),
+	THEME.Foam,
 	Enum.Material.Glass
 )
 barrier.Transparency = 0.79
@@ -467,19 +467,19 @@ local function makePromenade(side)
 		side < 0 and "LeftSpectatorWalkway" or "RightSpectatorWalkway",
 		Vector3.new(9, 1, 95),
 		Vector3.new(x, 24.05, 22.5),
-		Color3.fromRGB(219, 227, 230), Enum.Material.Marble
+		THEME.Limestone, Enum.Material.Limestone
 	)
 	local connector = decorative(
 		side < 0 and "LeftSpectatorConnector" or "RightSpectatorConnector",
 		Vector3.new(12, 1, 15),
 		Vector3.new(side * 44, 24.05, -17.5),
-		Color3.fromRGB(219, 227, 230), Enum.Material.Marble
+		THEME.Limestone, Enum.Material.Limestone
 	)
 	local inner = decorative(
 		"InnerViewingSafetyGlass",
 		Vector3.new(0.45, 8.5, 79.8),
 		Vector3.new(side * 44.5, 28.8, 30.1),
-		Color3.fromRGB(190, 224, 234),
+		THEME.Foam,
 		Enum.Material.Glass
 	)
 	inner.Transparency = 0.78
@@ -620,7 +620,7 @@ local function scoreLabel(name, message, position, height, size, isBold)
 	text.Size = UDim2.new(0.89, 0, height, 0)
 	text.BackgroundTransparency = 1
 	text.Text = message
-	text.TextColor3 = Color3.fromRGB(41, 91, 147)
+	text.TextColor3 = THEME.DeepTeal
 	text.TextSize = size
 	text.TextScaled = false
 	text.TextWrapped = false
@@ -1027,7 +1027,7 @@ local function buildBridges(count)
 				detail("GlassCornerMetal", Vector3.new(0.58, 0.07, 0.58),
 					Vector3.new(x + corner * 2.84, SETTINGS.BridgeY + 0.47,
 						index * SETTINGS.TileSpacing + 2.83),
-					Color3.fromRGB(153, 177, 188), Enum.Material.Metal, bridgeModel)
+					THEME.Brass, Enum.Material.Metal, bridgeModel)
 			end
 		end
 		-- Pale-blue decorative rails sit below the glass and cannot be stood on.
@@ -1037,7 +1037,7 @@ local function buildBridges(count)
 				("Lane%02d_EdgeGlow"):format(lane),
 				Vector3.new(0.35, 0.35, SETTINGS.TileSpacing * SETTINGS.BridgeLength + 6.7),
 				Vector3.new(x + edge * (3.35 - 0.175), SETTINGS.BridgeY - 0.625, SETTINGS.BridgeLength * SETTINGS.TileSpacing / 2),
-				Color3.fromRGB(139, 178, 200), Enum.Material.Metal, bridgeModel
+				THEME.DeepTeal, Enum.Material.Metal, bridgeModel
 			)
 			rail.CanCollide = false
 			rail.CanTouch = false
@@ -1055,7 +1055,7 @@ local function buildBridges(count)
 		"FinishGateBeam",
 		Vector3.new(occupiedSpan + 6.2, 3.0, 1.5),
 		Vector3.new(0, SETTINGS.BridgeY + 11.6, finishZ),
-		Color3.fromRGB(236, 243, 244), Enum.Material.Metal, bridgeModel
+		THEME.Ivory, Enum.Material.Metal, bridgeModel
 	)
 	beam.CanCollide = false
 	beam.CanTouch = false
@@ -1075,7 +1075,7 @@ local function buildBridges(count)
 	name.BackgroundTransparency = 1
 	name.Font = Enum.Font.GothamBlack
 	name.Text = "FINISH"
-	name.TextColor3 = Color3.fromRGB(37, 116, 193)
+	name.TextColor3 = THEME.DeepTeal
 	name.TextSize = 65
 	name.TextScaled = false
 	name.Parent = gateText
@@ -1085,7 +1085,7 @@ local function buildBridges(count)
 			"FinishGatePillar",
 			Vector3.new(2.0, 11.7, 2.5),
 			Vector3.new(side * postX, SETTINGS.BridgeY + 5.85, finishZ),
-			Color3.fromRGB(94, 146, 170), Enum.Material.Metal, bridgeModel
+			THEME.Teal, Enum.Material.Metal, bridgeModel
 		)
 		column.CanCollide = false
 		column.CanTouch = false
@@ -1109,7 +1109,7 @@ local function buildBridges(count)
 				"FinishTileChecker",
 				Vector3.new(6.7 / 6, 0.055, 1.15),
 				Vector3.new(laneX - 3.35 + (i - 0.5) * (6.7 / 6), SETTINGS.BridgeY + 0.48, finishZ - 2.1),
-				i % 2 == 0 and Color3.fromRGB(43, 75, 113) or WHITE,
+				i % 2 == 0 and THEME.DeepTeal or WHITE,
 				Enum.Material.SmoothPlastic, bridgeModel
 			)
 			mark.CanCollide = false
