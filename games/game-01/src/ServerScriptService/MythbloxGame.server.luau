@@ -33,8 +33,6 @@ local SETTINGS = {
 
 -- Coastal jewel-tone / brushed-metal palette. Colors are cosmetic only;
 -- players' legal moves are NOT advertised by green/red bridge surfaces.
-local GREEN = Color3.fromRGB(51, 220, 105)
-local RED = Color3.fromRGB(255, 87, 87)
 local GLASS = Color3.fromRGB(142, 219, 238)
 -- Existing purchased glass colors remain exactly as saved in the catalog.
 local SKIN_CATALOG = {
@@ -51,8 +49,6 @@ local function glassColorFor(player)
 	return skin and skin.color or GLASS
 end
 local AMBER = Color3.fromRGB(255, 206, 75)
-local VIOLET = Color3.fromRGB(65, 173, 253) -- sky-blue accent, variable kept for compat.
-
 -- Premium sunny-coastal lighting using supported Roblox lighting effects.
 -- No external or guessed PBR asset IDs: built-in 2022 materials already use
 -- high-quality engine texture/roughness detail. Add custom maps later if needed.
@@ -1787,8 +1783,8 @@ local function beginMatch(participants)
 	winnerPlayer = nil
 	turnNumber = 0
 	buildBridges(#participants)
-	-- Each lane keeps its chosen neutral color; unsafe red and permitted green
-	-- are always painted on top so skin choice cannot hide a danger cue.
+	-- Every lane keeps its chosen neutral cosmetic tint; no entire panel
+	-- turns red/green to disclose which exact steps are permitted.
 	for lane, player in ipairs(participants) do
 		for index = 0, SETTINGS.BridgeLength - 1 do
 			lanes[lane].tiles[index].Color = glassColorFor(player)
@@ -1943,10 +1939,11 @@ while true do
 		if winners then break end
 
 		phase = "MOVE"
-		message = "MOVE · GREEN = GO · RED = STAY"
+		message = "MOVE · USE YOUR OWN GO / NO ADVANCE RESULT"
 		for player, info in pairs(active) do
 			if info.alive then
-				-- Players who must STAY may still walk; stepping onto red glass is the joke.
+				-- Walking/jumping are unrestricted; illegal forward panel advances
+				-- remain server-validated even for a blocked pick.
 				keepMovementEnabled(player)
 			end
 		end
