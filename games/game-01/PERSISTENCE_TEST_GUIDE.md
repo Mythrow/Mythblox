@@ -6,7 +6,7 @@
 
 - The authoritative **Wins** and **Coins** values earned from completed matches.
 - Winners earn **1 win and 25 coins**; other participants earn **5 coins**. The existing game rules are unchanged.
-- Rewards are accumulated on the server, autosaved approximately every **150 seconds** (with jitter), and saved again on player exit or server shutdown.
+- **v0.23:** On completion of each match, the server also attempts to save awarded rewards immediately. The ~150-second autosave (with jitter), player exit and shutdown saves remain fallbacks, using the same per-user lock and idempotent reward-batch ID.
 - **v0.14 now additionally saves purchased glass-color cosmetics and the equipped color in this same DataStore record.** There is no Robux shop or paid monetization. Purchase/equipment is server validated and must be tested in Studio before release.
 - **Older v0.12 coin/win totals were session-only**, so they cannot be restored retroactively. A player with no v0.13 stored profile starts at zero.
 
@@ -39,6 +39,7 @@ An orange Studio `GameSettingsPlugin...SecurityController` message read `Failed 
 
 - `[Mythblox DATA] LOAD FAILED` means the data could not be read safely. **The game stays playable, but that session's rewards will not be written**. This deliberately avoids erasing real saves with fallback zeros.
 - `[Mythblox DATA] SAVE FAILED` means the write didn't complete successfully; rewards remain pending on that server and an autosave/exit save may retry. Do not assume data persisted until a successful save and fresh load confirm it.
+- **v0.23 client visibility:** During JOIN/RESULTS the existing HUD line displays `SESSION ONLY · NO PROGRESS SAVED` if loading fails or `SAVE ERROR · REJOIN TO VERIFY` after a save error. These warnings never interrupt votes or player movement. A successful write still needs confirmation by rejoining and reloading the actual saved totals.
 - Select a Player in Explorer and inspect the `MythbloxDataStatus` attribute:
   - `LOADING` — initial DataStore request in progress.
   - `READY` — profile loaded and saving is available; not a guarantee every recent reward was already written.
