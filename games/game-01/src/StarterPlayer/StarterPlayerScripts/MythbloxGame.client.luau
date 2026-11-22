@@ -1,10 +1,10 @@
--- Mythblox Game 01 · safe free-movement validation v0.19
+-- Mythblox Game 01 · Azure Coast Resort UI v0.20
 -- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
-local BUILD_VERSION = "v0.19"
+local BUILD_VERSION = "v0.20"
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local network = ReplicatedStorage:WaitForChild("MythbloxGame01")
@@ -39,19 +39,20 @@ playerGui.ChildAdded:Connect(function(child)
 	end
 end)
 
--- Bright white panels + colorful blue/green buttons, readable against daylight.
+-- AZURE COAST UI: same ivory, deep teal and champagne metal as the lobby.
+-- Green/red are reserved for genuine voting outcomes and warnings.
 local COLOR = {
-	Ink = Color3.fromRGB(255, 255, 255),         -- cards
-	InkBright = Color3.fromRGB(231, 244, 255),   -- alternate rows and tracks
-	Text = Color3.fromRGB(29, 63, 103),          -- dark text on bright cards
-	Muted = Color3.fromRGB(90, 119, 151),
-	Blue = Color3.fromRGB(41, 137, 242),
-	Green = Color3.fromRGB(35, 180, 100),
-	Red = Color3.fromRGB(224, 73, 83),
-	Gold = Color3.fromRGB(255, 198, 63),
-	Purple = Color3.fromRGB(35, 112, 211),       -- blue accent, kept variable name
-	Border = Color3.fromRGB(179, 218, 247),
-	White = Color3.fromRGB(255, 255, 255),
+	Ink = Color3.fromRGB(243, 235, 216),
+	InkBright = Color3.fromRGB(224, 215, 192),
+	Text = Color3.fromRGB(20, 65, 79),
+	Muted = Color3.fromRGB(91, 111, 111),
+	Blue = Color3.fromRGB(33, 116, 125),
+	Green = Color3.fromRGB(39, 158, 100),
+	Red = Color3.fromRGB(199, 67, 81),
+	Gold = Color3.fromRGB(198, 160, 92),
+	Purple = Color3.fromRGB(20, 91, 104),
+	Border = Color3.fromRGB(196, 164, 111),
+	White = Color3.fromRGB(250, 248, 239),
 }
 
 local function addCorner(parent, radius)
@@ -82,10 +83,10 @@ local function panel(name)
 	addStroke(frame, COLOR.Border, 1)
 	-- A soft vertical color grade adds depth without relying on a texture ID.
 	local gradient = Instance.new("UIGradient")
-	gradient.Name = "PearlCardFinish"
+	gradient.Name = "AzureCoastLimestoneCard"
 	gradient.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-		ColorSequenceKeypoint.new(1, Color3.fromRGB(235, 246, 253)),
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 250, 233)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(229, 220, 193)),
 	})
 	gradient.Rotation = 90
 	gradient.Parent = frame
@@ -216,7 +217,7 @@ local function showFeedback(message, isGood)
 end
 
 -- Join prompt: does not cover touch movement controls during a match.
-local join = button(gui, "JoinButton", "JOIN BRIDGE RACE", COLOR.Green)
+local join = button(gui, "JoinButton", "JOIN BRIDGE RACE", COLOR.Blue)
 join.AnchorPoint = Vector2.new(0.5, 1)
 join.TextSize = 21
 join.MouseButton1Click:Connect(function()
@@ -272,10 +273,10 @@ end
 -- Results appear in the compact top status strip instead of a centered
 -- modal. The arena and other players remain visible when a match ends.
 
--- v0.19: Secret selections are never displayed to others while voting.
+-- v0.20: Secret selections are never displayed to others while voting.
 -- ONLY during the five-second REVEAL do five non-clickable results cards
 -- show every numbered choice, picking players' avatars, totals, and safety.
--- The existing blue voting buttons remain PRIVATE selection controls.
+-- The existing teal voting buttons remain PRIVATE selection controls.
 local reveal = panel("RevealPanel")
 reveal.AnchorPoint = Vector2.new(0.5, 0)
 reveal.Position = UDim2.new(0.5, 0, 0, 103)
@@ -639,7 +640,7 @@ local function update(state)
 	if phase == "JOIN" or phase == "VOTE" then
 		lastTurnRendered = -1
 	end
-	phaseText.Text = ("v0.19 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
+	phaseText.Text = ("v0.20 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
 	clockText.Text = tostring(state.time or 0) .. "s"
 	clockText.TextColor3 = phase == "VOTE" and (state.time or 0) <= 2 and COLOR.Red or COLOR.Purple
 	description.Text = state.message or ""
@@ -649,7 +650,7 @@ local function update(state)
 	if voting.Visible then shop.Visible = false end
 
 	if phase == "JOIN" then
-		phaseText.Text = "v0.19 · NEXT MATCH"
+		phaseText.Text = "v0.20 · NEXT MATCH"
 		description.Text = state.queued and "You're queued for the next race."
 			or "Join at the gold pad or use the button below."
 		ownStats.Text = ("%d/%d PLAYERS READY"):format(state.ready or 0, state.capacity or 8)
@@ -668,7 +669,7 @@ local function update(state)
 	if phase == "RESULTS" then
 		-- Server sends winner/draw text in state.message; show it only in
 		-- the small status panel and avoid blocking the camera.
-		phaseText.Text = "v0.19 · ROUND OVER"
+		phaseText.Text = "v0.20 · ROUND OVER"
 		ownStats.Text = "NEXT MATCH STARTS SOON"
 	end
 
