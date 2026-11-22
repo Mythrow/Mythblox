@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-22):** Owner tested the v0.20 Azure Coast environment and reported **trees/lamps were ghost props, benches could not be sat on, and both kiosks lacked real counters and shopkeepers**. **v0.21 fixes those issues in GitHub and the one-paste Studio installer; owner testing with a friend is pending**. Benches now use genuine Roblox Seats and Sit prompts, scenery collides, and the existing cosmetics shop has an enclosed staffed front service desk. The unverified v0.19 illegal-bridge-crossing regression and multiplayer, mobile and DataStore tests remain open. The game is not public-release ready.  
+**Status (2026-11-22):** User reports the lobby floor is **too bright on a real phone** and the top HUD occupies too much screen space. **v0.22 Soft Earth Coast** is implemented in GitHub source and the one-paste installer: cream/oat/sand/sage/rose/wood palette, matte stone floors, softer sunlight and no bloom; compact 49px two-row phone HUD with phase, countdown, short status and Wins/Coins; shorter five-card mobile REVEAL. **Real-phone playtest pending.** v0.21 staffed kiosks, solid props, bench seating and existing voting/race/data logic remain in place. The v0.19 illegal-step shatter/respawn fix still requires explicit owner confirmation. The game is not launch-ready.  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -34,6 +34,20 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 | Reward | Win +25 coins, participation +5 coins |
 
 **Progress storage:** Wins and coins were session-only through v0.12. **v0.13 introduces DataStore persistence**, pending Roblox Studio and published-server verification. v0.14 adds a coin-only cosmetics stall (no Robux or paid items). Do not publicly launch or monetize before testing data recovery and purchases.
+
+## v0.22 — Soft Earth Coast mobile readability and matte materials (phone test pending)
+
+The owner approved a warmer **cute earthy soft** visual direction after the v0.21 lobby appeared glaring and the large top HUD obscured the phone screen. **Soft Earth Coast is a look, not the game's final public name.** This visual direction supersedes Azure Coast's vivid teal/champagne emphasis; the [theme specification](AZURE_COAST_THEME.md) retains the historical filename to preserve links.
+
+- **Palette locked:** warm cream `#EFE6D6`, oat beige `#D9C8AE`, sand `#C9B394`, muted sage `#A8B39D`, terracotta `#B98973`, dusty rose `#C79F9A`, light wood `#B58E6C` and brown text `#6E5A4B`. Architecture, shops, signage, foliage, UI and ocean hues follow this family. No neon-blue/teal facade, shiny gold, saturated pink or white-marble floors.
+- **Matte environment:** the central plaza now uses the darker oat color with Roblox's built-in textured Sandstone; main and connecting paths use sandy Pavement/Sandstone. Floor/roof/metal/ocean reflectance is greatly reduced, bloom is disabled, sun/ambient brightness softened, harsh high contrast desaturated and all decorative lamps dimmed. The ocean is a muted coastal gray-green.
+- **Phone HUD:** portrait **and landscape** phones display a **49px, two-row rounded status strip** instead of the 83px three-row panel. It shows phase and countdown on the first line, concise JOIN/GO/WAIT/progress guidance on the second, plus a small replicated Wins/Coins chip. Long descriptive text and the progress bar stay on desktop, not mobile. Roblox top safe-area inset is respected.
+- **Smaller mobile REVEAL and VOTE:** all five existing numbered avatar/count/SAFE-or-BLOCKED result cards still appear **only for five seconds during REVEAL**, but fit a roughly **156–172px** mobile tray. Mobile 1–5 vote buttons remain large enough to tap while their panel wastes less vertical space. Green/red on result cards are muted but distinguishable; no safe-path coloring returns on bridge glass.
+- **Original gameplay and social hub preserved:** no changes to 2–8 racers, secretly voting 1–5, five-second REVEAL, six-second MOVE, glass shatter/cracks, win rewards, saved cosmetics prices, bench Seats, NPC shopkeepers or world boundary code.
+
+**Install:** Stop Play, use the latest [v0.22 one-paste Studio installer](INSTALL_STUDIO_COMMAND_BAR.luau) in Edit mode, and confirm `v0.22 VERIFIED` plus HUD v0.22. To update a Roblox-app friend-test experience, **publish the updated place after installing**, keeping the experience private/restricted. **Test on an actual phone as well as Studio's device emulator**: background brightness, unclipped HUD, vote buttons, all five reveal cards, two-player shop/race flow and gameplay-regression checks. See [TEST_PLAN.md](TEST_PLAN.md).
+
+**Status:** GitHub source and installer updated; real phone and Roblox Studio v0.22 execution has not yet been verified by the assistant.
 
 ## v0.21 — physical lobby, sit-able benches, staffed shop kiosks (friend test pending)
 
@@ -379,6 +393,6 @@ See the [pre-launch roadmap](PRELAUNCH_ROADMAP.md). Cosmetic stall, sound effect
 
 ## Next step
 
-**Test v0.21 with a friend:** check solid trees and lamps, sit side by side on a bench (E Sit), talk to the staffed kiosks visually, open COSMETICS from its front counter, and verify a real two-player match still enforces illegal-step shatter/elimination. Share any Output errors or a screenshot. Full mobile, security and persistence testing remain required before public release.
+**Test v0.22 on a phone first:** verify the oat floor is comfortably matte, the 49px top strip no longer obscures play, all five reveal cards/avatars fit, and 1–5 voting remains tappable. Publish the updated private test experience to play with a friend; test bench seating, cosmetics and most importantly illegal-step glass shatter/elimination. Report a phone screenshot or any Output errors. Major additional features and independent multiplayer/data/security QA remain required before public launch.
 
 See [the Mythblox game-design memo](../../docs/FIRST_GAME_GLASS_BRIDGE_CONCEPT.md) for earlier alternatives, including the spinner idea that was explicitly deferred.
