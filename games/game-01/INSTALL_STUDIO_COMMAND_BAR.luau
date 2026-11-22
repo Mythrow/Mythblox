@@ -5,7 +5,7 @@
 assert(not game:GetService("RunService"):IsRunning(), "Stop the test session before installing.")
 
 local SERVER_SOURCE = [====[
--- Mythblox game-01: Soft Earth Coast v0.23 (server)
+-- Mythblox game-01: Soft Earth Coast v0.24 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -15,7 +15,7 @@ local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
 local DataStoreService = game:GetService("DataStoreService")
 local HttpService = game:GetService("HttpService")
-local BUILD_VERSION = "v0.23"
+local BUILD_VERSION = "v0.24"
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -71,17 +71,21 @@ local function glassColorFor(player)
 	return skin and skin.color or GLASS
 end
 local AMBER = Color3.fromRGB(255, 206, 75)
--- Softer mobile-friendly daylight: minimize blown-out cream floor pixels.
+-- v0.24: neutral, soft coastal daylight. Let the deliberately warm
+-- OAT/WOOD/TERRACOTTA materials carry the earth tones without a yellow
+-- filter across the sky, character, greenery, water, or every surface.
+-- Keep lighting gentle on mobile and preserve the matte material response.
 Lighting.ClockTime = 13.1
-Lighting.Brightness = 1.85
+Lighting.Brightness = 1.75
 Lighting.GlobalShadows = true
 Lighting.ShadowSoftness = 0.68
 Lighting.EnvironmentDiffuseScale = 0.46
 Lighting.EnvironmentSpecularScale = 0.20
-Lighting.Ambient = Color3.fromRGB(166, 159, 145)
-Lighting.OutdoorAmbient = Color3.fromRGB(198, 188, 167)
-Lighting.ColorShift_Top = Color3.fromRGB(240, 222, 199)
-Lighting.FogColor = Color3.fromRGB(212, 208, 188)
+Lighting.Ambient = Color3.fromRGB(158, 161, 163)
+Lighting.OutdoorAmbient = Color3.fromRGB(188, 194, 196)
+Lighting.ColorShift_Top = Color3.fromRGB(0, 0, 0)
+Lighting.ColorShift_Bottom = Color3.fromRGB(0, 0, 0)
+Lighting.FogColor = Color3.fromRGB(204, 214, 220)
 Lighting.FogEnd = 1500
 
 local function getWorldLightingEffect(className, name)
@@ -96,18 +100,20 @@ local function getWorldLightingEffect(className, name)
 end
 
 local atmosphere = getWorldLightingEffect("Atmosphere", "MythbloxCoastalAtmosphere")
-atmosphere.Density = 0.27
+atmosphere.Density = 0.20
 atmosphere.Offset = 0.05
-atmosphere.Color = Color3.fromRGB(228, 219, 199)
-atmosphere.Decay = Color3.fromRGB(172, 170, 149)
+atmosphere.Color = Color3.fromRGB(215, 228, 234)
+atmosphere.Decay = Color3.fromRGB(179, 194, 201)
 atmosphere.Glare = 0
-atmosphere.Haze = 0.65
+atmosphere.Haze = 0.38
 
+-- Keep the existing named instance so reinstallation updates the effect
+-- instead of stacking more ColorCorrectionEffects.
 local grade = getWorldLightingEffect("ColorCorrectionEffect", "MythbloxWarmColorGrade")
-grade.Brightness = -0.025
-grade.Contrast = -0.055
-grade.Saturation = -0.12
-grade.TintColor = Color3.fromRGB(247, 238, 220)
+grade.Brightness = -0.015
+grade.Contrast = 0.015
+grade.Saturation = -0.035
+grade.TintColor = Color3.fromRGB(255, 255, 255)
 grade.Enabled = true
 
 local bloom = getWorldLightingEffect("BloomEffect", "MythbloxSoftBloom")
@@ -132,7 +138,7 @@ end
 clouds.Name = "MythbloxAzureCoastClouds"
 clouds.Cover = 0.39
 clouds.Density = 0.35
-clouds.Color = Color3.fromRGB(235, 225, 210)
+clouds.Color = Color3.fromRGB(238, 242, 242)
 clouds.Enabled = true
 terrain.WaterColor = THEME.Ocean
 terrain.WaterTransparency = 0.36
@@ -2455,7 +2461,7 @@ local function scoreMatch(winners, participants)
 			awardProgress(player, awarded[player] and 1 or 0, awarded[player] and 25 or 5)
 		end
 	end
-	-- v0.23: Save match rewards immediately after a round finishes, while
+	-- v0.24: Save match rewards immediately after a round finishes, while
 	-- retaining autosave, exit and shutdown fallback attempts.
 	-- saveProfile uses stable reward-batch IDs and per-player write locks
 	-- so overlapping attempts do not double-award a completed round.
@@ -2568,13 +2574,13 @@ end
 ]====]
 
 local CLIENT_SOURCE = [====[
--- Mythblox Game 01 · Soft Earth Coast mobile UI v0.23
+-- Mythblox Game 01 · Soft Earth Coast mobile UI v0.24
 -- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
-local BUILD_VERSION = "v0.23"
+local BUILD_VERSION = "v0.24"
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local network = ReplicatedStorage:WaitForChild("MythbloxGame01")
@@ -2848,7 +2854,7 @@ end
 -- Results appear in the compact top status strip instead of a centered
 -- modal. The arena and other players remain visible when a match ends.
 
--- v0.23: Secret selections are never displayed to others while voting.
+-- v0.24: Secret selections are never displayed to others while voting.
 -- ONLY during the five-second REVEAL do five non-clickable results cards
 -- show every numbered choice, picking players' avatars, totals, and safety.
 -- The existing teal voting buttons remain PRIVATE selection controls.
@@ -3253,7 +3259,7 @@ local function update(state)
 	if phase == "JOIN" or phase == "VOTE" then
 		lastTurnRendered = -1
 	end
-	phaseText.Text = ("v0.23 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
+	phaseText.Text = ("v0.24 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
 	clockText.Text = tostring(state.time or 0) .. "s"
 	clockText.TextColor3 = phase == "VOTE" and (state.time or 0) <= 2 and COLOR.Red or COLOR.Purple
 	description.Text = state.message or ""
@@ -3263,7 +3269,7 @@ local function update(state)
 	if voting.Visible then shop.Visible = false end
 
 	if phase == "JOIN" then
-		phaseText.Text = "v0.23 · NEXT MATCH"
+		phaseText.Text = "v0.24 · NEXT MATCH"
 		description.Text = state.queued and "You're queued for the next race."
 			or "Join at the gold pad or use the button below."
 		ownStats.Text = ("%d/%d PLAYERS READY"):format(state.ready or 0, state.capacity or 8)
@@ -3282,7 +3288,7 @@ local function update(state)
 	if phase == "RESULTS" then
 		-- Server sends winner/draw text in state.message; show it only in
 		-- the small status panel and avoid blocking the camera.
-		phaseText.Text = "v0.23 · ROUND OVER"
+		phaseText.Text = "v0.24 · ROUND OVER"
 		ownStats.Text = "NEXT MATCH STARTS SOON"
 	end
 
@@ -3381,7 +3387,7 @@ end)
 command:FireServer("Sync")
 ]====]
 
--- Diagnostic/cleanup installer: v0.23
+-- Diagnostic/cleanup installer: v0.24
 -- Remove known legacy copies from services used by previous Mythblox builds.
 -- This intentionally does NOT remove scripts belonging to other games.
 -- Permanently remove the UNUSED default Roblox Baseplate spawn while in
@@ -3400,7 +3406,7 @@ for _, obj in ipairs(workspace:GetDescendants()) do
 end
 print("[Mythblox INSTALL] Removed " .. defaultSpawnsRemoved .. " unused Baseplate spawn(s).")
 
--- v0.23: the actual stock baseplate (not only its spawn marker) is a giant
+-- v0.24: the actual stock baseplate (not only its spawn marker) is a giant
 -- low-altitude part that remains visible through the decorative ocean.
 -- Remove ONLY a low, large, directly parented part named Baseplate.
 local baseplatesRemoved = 0
@@ -3482,12 +3488,12 @@ for _, child in ipairs(game:GetDescendants()) do
 	end
 end
 
-print("[Mythblox INSTALL] v0.23 VERIFIED: 2 scripts installed and Source checked.")
-print("[Mythblox INSTALL] Server: " .. liveServer:GetFullName() .. " | Build v0.23")
-print("[Mythblox INSTALL] Client: " .. liveClient:GetFullName() .. " | Build v0.23")
+print("[Mythblox INSTALL] v0.24 VERIFIED: 2 scripts installed and Source checked.")
+print("[Mythblox INSTALL] Server: " .. liveServer:GetFullName() .. " | Build v0.24")
+print("[Mythblox INSTALL] Client: " .. liveClient:GetFullName() .. " | Build v0.24")
 print("[Mythblox INSTALL] Cleaned " .. #removed .. " previous Mythblox script/UI objects.")
 print("[Mythblox INSTALL] Disabled " .. #disabledLegacy .. " other old game scripts found by source signature.")
 if #suspicious > 0 then
 	warn("[Mythblox INSTALL] Other Mythblox scripts still exist: " .. table.concat(suspicious, "; "))
 end
-print("[Mythblox INSTALL] NOW START A FRESH PLAY SESSION. Confirm the top HUD visibly says v0.23, and check Output for SERVER RUNNING v0.23 and CLIENT RUNNING v0.23.")
+print("[Mythblox INSTALL] NOW START A FRESH PLAY SESSION. Confirm the top HUD visibly says v0.24, and check Output for SERVER RUNNING v0.24 and CLIENT RUNNING v0.24.")
