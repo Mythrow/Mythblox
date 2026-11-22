@@ -660,9 +660,12 @@ local function makeStall(name, x, z, roofColor, line1, line2)
 		part("FrontShopPost", Vector3.new(1.1, 7.7, 1.1),
 			Vector3.new(x + side * 7.7, 28.5, z - 5.75),
 			THEME.Brown, Enum.Material.Metal, group)
-		detail("GlassSideWindowBrassFrame", Vector3.new(0.1, 0.18, 12.3),
-			Vector3.new(x + side * 8.1, 28.0, z), THEME.Wood,
-			Enum.Material.Metal, group)
+		-- One trim strip along the OUTER face, exactly within the new side
+		-- wall/window span. Old centered strip extended into the back wall
+		-- and sat inside the glass, causing fine texture slivers at corners.
+		detail("GlassSideWindowWoodFrame", Vector3.new(0.13, 0.13, 11.55),
+			Vector3.new(x + side * 8.53, 28.2, z - 0.33), THEME.Wood,
+			Enum.Material.WoodPlanks, group)
 	end
 
 	-- The front is an actual counter with a waist-high solid barrier, not a
