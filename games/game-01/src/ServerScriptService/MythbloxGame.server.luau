@@ -1,4 +1,4 @@
--- Mythblox game-01: glass bridge race v0.14 (server)
+-- Mythblox game-01: glass bridge race v0.15 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -8,7 +8,7 @@ local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
 local DataStoreService = game:GetService("DataStoreService")
 local HttpService = game:GetService("HttpService")
-local BUILD_VERSION = "v0.14"
+local BUILD_VERSION = "v0.15"
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -639,6 +639,11 @@ local voteOutcomes = {}
 local message = "Join the next match!"
 local winnerPlayer = nil
 local initialMatchCount = 0
+-- Reject excessively repeated remote requests without changing normal inputs.
+-- The server still owns every vote, purchase, movement and reward decision.
+local COMMAND_COOLDOWN = { Sync = 1.0, Join = 0.25, Vote = 0.065, Shop = 0.35 }
+local lastRemoteCommand = {}
+local lastShopPrompt = {}
 local publish
 
 local function numberReady()
@@ -1317,9 +1322,11 @@ local function transactSkin(player, skinId)
 end
 
 cosmeticsPrompt.Triggered:Connect(function(player)
-	if player.Parent == Players and nearCosmetics(player) then
-		sendShop(player, "Open", "")
-	end
+	if player.Parent ~= Players or not nearCosmetics(player) then return end
+	local now = os.clock()
+	if now - (lastShopPrompt[player] or -10) < 0.4 then return end
+	lastShopPrompt[player] = now
+	sendShop(player, "Open", "")
 end)
 
 -- Incremental autosaves avoid excessive requests on every vote/round.
@@ -1411,6 +1418,8 @@ for _, player in ipairs(Players:GetPlayers()) do onPlayerAdded(player) end
 Players.PlayerRemoving:Connect(function(player)
 	queue[player] = nil
 	equippedSkins[player] = nil
+	lastRemoteCommand[player] = nil
+	lastShopPrompt[player] = nil
 	if active[player] and active[player].alive then
 		eliminate(player, "left the server", nil)
 	end
@@ -1429,7 +1438,17 @@ Players.PlayerRemoving:Connect(function(player)
 end)
 
 command.OnServerEvent:Connect(function(player, action, payload)
-	if typeof(action) ~= "string" then return end
+	if player.Parent ~= Players or typeof(action) ~= "string" then return end
+	local cooldown = COMMAND_COOLDOWN[action]
+	if not cooldown then return end -- reject unknown remote commands immediately
+	local now = os.clock()
+	local timestamps = lastRemoteCommand[player]
+	if not timestamps then
+		timestamps = {}
+		lastRemoteCommand[player] = timestamps
+	end
+	if now - (timestamps[action] or -10) < cooldown then return end
+	timestamps[action] = now
 	if action == "Sync" then
 		stateEvent:FireClient(player, snapshot(player))
 	elseif action == "Join" then
