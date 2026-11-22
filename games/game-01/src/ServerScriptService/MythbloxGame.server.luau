@@ -532,51 +532,191 @@ lobby.Color = CREAM
 lobby.Transparency = 0.4
 lobby.Parent = hub
 
--- Decorative low-poly store fronts: deliberately no paid products yet.
+-- Azure Coast staffed service kiosks. The original stalls only had a
+-- back wall and a ghost counter; players could walk straight through them.
+-- Both shops now have genuine walls, a solid FRONT desk, and a visible clerk.
+-- Right COSMETICS is the existing functional coin shop; left stays Coming Soon.
+local function makeShopkeeper(group, x, z, isCosmetics)
+	local staff = Instance.new("Model")
+	staff.Name = isCosmetics and "CosmeticsShopkeeper" or "ResortShopkeeper"
+	staff.Parent = group
+	local uniform = isCosmetics and THEME.Coral or THEME.Teal
+	local skin = Color3.fromRGB(232, 183, 140)
+	local pants = THEME.DeepTeal
+
+	-- Familiar blocky Roblox character styling. No unlicensed character IDs,
+	-- uploaded textures or marketplace assets are needed for these NPCs.
+	local function limb(name, size, center, color, material)
+		local piece = part(name, size, center, color,
+			material or Enum.Material.SmoothPlastic, staff)
+		piece.CanCollide = false
+		piece.CanTouch = false
+		piece.CanQuery = false
+		return piece
+	end
+	local root = limb("HumanoidRootPart", Vector3.new(2, 2, 1),
+		Vector3.new(x, 27.7, z), skin)
+	root.Transparency = 1
+	staff.PrimaryPart = root
+	limb("Torso", Vector3.new(2.1, 2.2, 1.25),
+		Vector3.new(x, 28.0, z), uniform)
+	limb("Left Arm", Vector3.new(0.8, 2.0, 0.95),
+		Vector3.new(x - 1.5, 28.1, z), skin)
+	local wavingArm = limb("Right Arm", Vector3.new(0.8, 2.0, 0.95),
+		Vector3.new(x + 1.5, 28.1, z), skin)
+	limb("Left Leg", Vector3.new(0.85, 2.0, 0.96),
+		Vector3.new(x - 0.6, 25.95, z), pants)
+	limb("Right Leg", Vector3.new(0.85, 2.0, 0.96),
+		Vector3.new(x + 0.6, 25.95, z), pants)
+	local head = limb("Head", Vector3.new(2.0, 2.0, 2.0),
+		Vector3.new(x, 30.0, z), skin)
+	head.Shape = Enum.PartType.Ball
+	local face = Instance.new("Decal")
+	face.Name = "FriendlyFace"
+	face.Face = Enum.NormalId.Front -- faces the service-window/front (-Z)
+	face.Texture = "rbxasset://textures/face.png"
+	face.Parent = head
+	local hair = limb("CoastalHair", Vector3.new(2.05, 0.45, 1.9),
+		Vector3.new(x, 30.9, z), isCosmetics
+			and Color3.fromRGB(99, 65, 55) or Color3.fromRGB(74, 53, 46))
+	hair.Shape = Enum.PartType.Ball
+	local hat = limb("StaffCap", Vector3.new(2.4, 0.32, 2.1),
+		Vector3.new(x, 31.25, z - 0.15), THEME.DeepTeal)
+	local brim = limb("StaffCapBrim", Vector3.new(2.6, 0.16, 1.2),
+		Vector3.new(x, 31.1, z - 0.72), THEME.Brass, Enum.Material.Metal)
+	local badge = limb("UniformBadge", Vector3.new(0.78, 0.45, 0.1),
+		Vector3.new(x + 0.5, 28.6, z - 0.68), THEME.Brass,
+		Enum.Material.Metal)
+
+	-- Humanoid metadata marks this as a real named NPC, not an anonymous part
+	-- collection, while invisible anchored limbs stay safely behind the desk.
+	local humanoid = Instance.new("Humanoid")
+	humanoid.Name = "Humanoid"
+	humanoid.RequiresNeck = false
+	humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+	humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
+	humanoid.AutoRotate = false
+	humanoid.WalkSpeed = 0
+	humanoid.JumpPower = 0
+	humanoid.Parent = staff
+
+	-- A tiny repeated friendly wave while on duty. Only one decorative arm
+	-- animates, with no movement authority, collision or network calls.
+	local wave = TweenService:Create(wavingArm,
+		TweenInfo.new(1.25, Enum.EasingStyle.Sine,
+			Enum.EasingDirection.InOut, -1, true),
+		{CFrame = wavingArm.CFrame * CFrame.Angles(0, 0, math.rad(22))})
+	wave:Play()
+	return staff
+end
+
 local function makeStall(name, x, z, roofColor, line1, line2)
 	local group = Instance.new("Model")
 	group.Name = name
 	group.Parent = hub
-	part("DisplayFloor", Vector3.new(17, 0.6, 14), Vector3.new(x, 24.4, z),
-		THEME.Limestone, Enum.Material.Limestone, group)
-	part("BackWall", Vector3.new(17, 8, 1), Vector3.new(x, 28.4, z + 6),
+	local cosmetics = name == "RightCosmeticsShop"
+	local floor = part("DisplayFloor", Vector3.new(17, 0.6, 14),
+		Vector3.new(x, 24.4, z), THEME.Limestone, Enum.Material.Limestone, group)
+	local back = part("BackWall", Vector3.new(17, 8.0, 1),
+		Vector3.new(x, 28.4, z + 6),
 		THEME.DeepTeal, Enum.Material.Metal, group)
-	detail("StallWallInlay", Vector3.new(13.8, 0.18, 0.11),
-		Vector3.new(x, 29.7, z + 5.43), METAL_TRIM, Enum.Material.Metal, group)
-	detail("StallCounter", Vector3.new(11.6, 0.42, 1.8),
-		Vector3.new(x, 26.7, z + 3.1), CREAM, Enum.Material.Limestone, group)
 	for _, side in ipairs({-1, 1}) do
-		detail("StallCounterSupport", Vector3.new(0.7, 2.1, 1.0),
-			Vector3.new(x + side * 5.1, 25.65, z + 3.1), WOOD, Enum.Material.WoodPlanks, group)
+		-- Solid lower side and window glass enclose the shop without making
+		-- the kiosk opaque. Service remains through the FRONT counter only.
+		part("EnclosedShopSideWall", Vector3.new(0.8, 3.5, 12.4),
+			Vector3.new(x + side * 8.1, 26.4, z),
+			THEME.Limestone, Enum.Material.Limestone, group)
+		local window = part("ShopSideGlassWindow", Vector3.new(0.35, 4.4, 12.2),
+			Vector3.new(x + side * 8.1, 30.1, z),
+			THEME.Foam, Enum.Material.Glass, group)
+		window.Transparency = 0.35
+		part("FrontShopPost", Vector3.new(1.1, 7.7, 1.1),
+			Vector3.new(x + side * 7.7, 28.5, z - 5.75),
+			THEME.DeepTeal, Enum.Material.Metal, group)
+		detail("GlassSideWindowBrassFrame", Vector3.new(0.1, 0.18, 12.3),
+			Vector3.new(x + side * 8.1, 28.0, z), THEME.Brass,
+			Enum.Material.Metal, group)
 	end
-	for _, side in ipairs({-1, 1}) do
-		part("CornerPost", Vector3.new(1.2, 8.5, 1.2), Vector3.new(x + side * 7.2, 28.4, z - 4.5), WOOD, Enum.Material.Wood, group)
+
+	-- The front is an actual counter with a waist-high solid barrier, not a
+	-- decoration at the back of the booth. All shopping happens from outside.
+	local deskBase = part("ServiceCounterBase", Vector3.new(15.9, 2.75, 1.25),
+		Vector3.new(x, 26.0, z - 5.5),
+		THEME.DeepTeal, Enum.Material.Metal, group)
+	local deskTop = part("ServiceCounterTop", Vector3.new(16.3, 0.46, 2.05),
+		Vector3.new(x, 27.55, z - 5.5),
+		THEME.Limestone, Enum.Material.Limestone, group)
+	detail("CounterFrontGoldLip", Vector3.new(16.4, 0.2, 0.21),
+		Vector3.new(x, 27.78, z - 6.48),
+		THEME.Brass, Enum.Material.Metal, group)
+	for _, dx in ipairs({-6.65, 6.65}) do
+		detail("CounterInlaidPanel", Vector3.new(0.24, 1.7, 0.11),
+			Vector3.new(x + dx, 26.0, z - 6.17),
+			THEME.Brass, Enum.Material.Metal, group)
 	end
-	local roof = part("ColorfulRoof", Vector3.new(19, 1.3, 17), Vector3.new(x, 33.2, z),
-		roofColor, Enum.Material.Metal, group)
+	local register = detail("CounterRegister", Vector3.new(1.55, 0.65, 1.25),
+		Vector3.new(x + 4.8, 28.15, z - 5.25), THEME.DeepTeal,
+		Enum.Material.Metal, group)
+	register.Reflectance = 0.08
+
+	local roof = part("ColorfulRoof", Vector3.new(19, 1.3, 17),
+		Vector3.new(x, 33.2, z), roofColor, Enum.Material.Metal, group)
 	roof.Reflectance = 0.13
 	detail("RoofFrontBrassCornice", Vector3.new(19.2, 0.21, 0.55),
-		Vector3.new(x, 32.6, z - 8.45), METAL_TRIM, Enum.Material.Metal, group)
+		Vector3.new(x, 32.6, z - 8.45), THEME.Brass, Enum.Material.Metal, group)
 	for _, side in ipairs({-1, 1}) do
 		detail("RoofSideBrassCornice", Vector3.new(0.24, 0.18, 17),
-			Vector3.new(x + side * 9.5, 32.62, z), METAL_TRIM, Enum.Material.Metal, group)
+			Vector3.new(x + side * 9.5, 32.62, z), THEME.Brass,
+			Enum.Material.Metal, group)
 	end
-	local canopyLight = Instance.new("PointLight")
-	canopyLight.Name = "WarmCanopyLight"
-	canopyLight.Color = Color3.fromRGB(255, 225, 175)
-	canopyLight.Brightness = 0.25
-	canopyLight.Range = 14
-	canopyLight.Shadows = false
-	canopyLight.Parent = roof
-	local header = part("StallSignAnchor", Vector3.new(1, 1, 1), Vector3.new(x, 29, z - 6.5), WHITE, Enum.Material.SmoothPlastic, group)
+	detail("ServiceWindowHeader", Vector3.new(15.4, 0.38, 0.45),
+		Vector3.new(x, 32.25, z - 5.9), THEME.Brass, Enum.Material.Metal, group)
+	local light = Instance.new("PointLight")
+	light.Name = "WarmCanopyLight"
+	light.Color = Color3.fromRGB(255, 225, 175)
+	light.Brightness = 0.25
+	light.Range = 14
+	light.Shadows = false
+	light.Parent = roof
+
+	-- Put signage ABOVE the vendor's face instead of hiding the attendant
+	-- behind the previous front-facing signboard.
+	local header = detail("StallSignAnchor", Vector3.new(1, 1, 1),
+		Vector3.new(x, 31.82, z - 6.65), THEME.Ivory,
+		Enum.Material.SmoothPlastic, group)
 	header.Transparency = 1
-	header.CanCollide = false
-	textSign(header, line1 .. " | " .. line2, 2, 210)
+	textSign(header, line1 .. " | " .. line2, 2.2, 210)
+
+	-- Merchandise is visible behind the window, but no extra goods or coins
+	-- are for sale: only the existing saved coin cosmetics shop is functional.
+	local shelf = detail("RearDisplayShelf", Vector3.new(13.3, 0.35, 2.2),
+		Vector3.new(x, 27.7, z + 4.7), THEME.Brass, Enum.Material.Metal, group)
+	for i = 1, 4 do
+		local swatch = detail(cosmetics and "GlassColorSample" or "ComingSoonDisplay",
+			Vector3.new(1.2, 1.65, 1.05),
+			Vector3.new(x - 4.75 + (i - 1) * 3.15, 28.7, z + 4.7),
+			cosmetics and SKIN_CATALOG[i].color or
+				(i % 2 == 0 and THEME.Ivory or THEME.Foam),
+			cosmetics and Enum.Material.Glass or Enum.Material.Metal, group)
+		swatch.Reflectance = 0.12
+	end
+
+	makeShopkeeper(group, x - 1.15, z - 1.65, cosmetics)
 	return group
 end
+
+-- Existing positions and gameplay remain unchanged. Customers approach the
+-- front counter from the spawn side via the additional store access paths.
+for _, side in ipairs({-1, 1}) do
+	decorative("ShopFrontAccessWalk", Vector3.new(28.8, 0.22, 5.8),
+		Vector3.new(side * 21, 24.14, -59.7),
+		THEME.Limestone, Enum.Material.Limestone)
+end
 makeStall("LeftShopComingSoon", -25, -49, ROOF_BLUE, "SHOP", "COMING SOON")
-local cosmeticsStall = makeStall("RightCosmeticsShop", 25, -49, ROOF_PINK, "COSMETICS", "GLASS COLORS")
-local cosmeticsFloor = cosmeticsStall:FindFirstChild("DisplayFloor")
+local cosmeticsStall = makeStall("RightCosmeticsShop", 25, -49,
+	ROOF_PINK, "COSMETICS", "GLASS COLORS")
+local cosmeticsDesk = assert(cosmeticsStall:FindFirstChild("ServiceCounterTop"),
+	"Cosmetics kiosk is missing its front service counter")
 local cosmeticsPrompt = Instance.new("ProximityPrompt")
 cosmeticsPrompt.Name = "BrowseGlassSkins"
 cosmeticsPrompt.ActionText = "Browse colors"
@@ -585,7 +725,7 @@ cosmeticsPrompt.KeyboardKeyCode = Enum.KeyCode.E
 cosmeticsPrompt.HoldDuration = 0
 cosmeticsPrompt.RequiresLineOfSight = false
 cosmeticsPrompt.MaxActivationDistance = 12
-cosmeticsPrompt.Parent = cosmeticsFloor
+cosmeticsPrompt.Parent = cosmeticsDesk
 
 -- Compact single-face leaderboard. Its front for arriving lobby visitors
 -- points toward +Z (Back face in Roblox part-local coordinates).
@@ -1627,7 +1767,7 @@ end
 local function nearCosmetics(player)
 	local character = player.Character
 	local root = character and character:FindFirstChild("HumanoidRootPart")
-	return root ~= nil and (root.Position - cosmeticsFloor.Position).Magnitude <= 18
+	return root ~= nil and (root.Position - cosmeticsDesk.Position).Magnitude <= 18
 end
 
 local function updateProfileView(player, profile)
