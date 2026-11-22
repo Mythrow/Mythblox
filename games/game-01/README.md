@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-22):** Owner confirmed **v0.12 gameplay works in Studio**, and requested to continue with saving wins/coins. **v0.13 persistent player progress is implemented and packaged, but requires Studio DataStore setup and verification.** The game remains unnamed and not publicly released.  
+**Status (2026-11-22):** Owner confirmed **v0.12 gameplay works in Studio**, and requested to continue with saving wins/coins. **v0.13 coins have now been confirmed to persist across Studio Play restarts by the owner.** Win persistence and private published-server behavior still need separate verification. The game remains unnamed and not publicly released.  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
