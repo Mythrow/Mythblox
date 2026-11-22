@@ -5,7 +5,7 @@
 assert(not game:GetService("RunService"):IsRunning(), "Stop the test session before installing.")
 
 local SERVER_SOURCE = [====[
--- Mythblox game-01: Soft Earth Coast v0.26 (server)
+-- Mythblox game-01: Soft Earth Coast v0.27 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -15,7 +15,7 @@ local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
 local DataStoreService = game:GetService("DataStoreService")
 local HttpService = game:GetService("HttpService")
-local BUILD_VERSION = "v0.26"
+local BUILD_VERSION = "v0.27"
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -32,6 +32,9 @@ local SETTINGS = {
 	BridgeY = 24,
 	WalkSpeed = 19,
 	StudioSoloPractice = true,
+	-- Live servers also allow a single player to PRACTICE the bridge.
+	-- Solo practice is never eligible for competitive wins or coins.
+	LiveSoloPractice = true,
 	-- Change either ID to a different animation the experience may use.
 	-- R15 and R6 animations are different assets/rig types.
 	VictoryDanceR15 = "rbxassetid://507771019",
@@ -45,7 +48,7 @@ local THEME = {
 	Ivory = Color3.fromRGB(239, 230, 214),       -- #EFE6D6 warm cream
 	Limestone = Color3.fromRGB(217, 200, 174),   -- #D9C8AE oat beige, small accents
 	Sandstone = Color3.fromRGB(201, 179, 148),   -- #C9B394 soft sand
-	-- v0.26: richer matte colors specifically for large, light-catching
+	-- v0.27: richer matte colors specifically for large, light-catching
 	-- floors, platforms and planters; not a dark filter over the game.
 	PlazaStone = Color3.fromRGB(184, 173, 154),   -- weathered oat
 	DeckStone = Color3.fromRGB(176, 167, 150),    -- shaded stone
@@ -77,7 +80,7 @@ local function glassColorFor(player)
 	return skin and skin.color or GLASS
 end
 local AMBER = Color3.fromRGB(255, 206, 75)
--- v0.26: neutral, soft coastal daylight. Let the deliberately warm
+-- v0.27: neutral, soft coastal daylight. Let the deliberately warm
 -- OAT/WOOD/TERRACOTTA materials carry the earth tones without a yellow
 -- filter across the sky, character, greenery, water, or every surface.
 -- Keep lighting gentle on mobile and preserve the matte material response.
@@ -142,7 +145,7 @@ if not clouds then
 	clouds.Parent = terrain
 end
 clouds.Name = "MythbloxAzureCoastClouds"
--- v0.26: visibly fuller soft coastal cloud cover, not a solid white sky.
+-- v0.27: visibly fuller soft coastal cloud cover, not a solid white sky.
 clouds.Cover = 0.72
 clouds.Density = 0.54
 clouds.Color = Color3.fromRGB(238, 242, 242)
@@ -475,6 +478,12 @@ deckPrompt.MaxActivationDistance = 15
 deckPrompt.RequiresLineOfSight = false
 deckPrompt.Parent = deckCenter
 
+-- Anchor the overhead join sign to the deck. The old floating panel
+-- had no visible attachment; these slim posts do not block player movement.
+for _, side in ipairs({-1, 1}) do
+	detail("JoinSignSupport", Vector3.new(0.55, 7.4, 0.55),
+		Vector3.new(side * 6.25, 28.2, -25), THEME.Wood, Enum.Material.WoodPlanks)
+end
 local sharedDeckSignAnchor = decorative(
 	"SharedPlatformSign",
 	Vector3.new(1, 1, 1),
@@ -645,7 +654,7 @@ local function makeStall(name, x, z, roofColor, line1, line2)
 	group.Parent = hub
 	local cosmetics = name == "RightCosmeticsShop"
 	local floor = part("DisplayFloor", Vector3.new(17, 0.6, 14),
-		Vector3.new(x, 24.4, z), THEME.PlazaStone, Enum.Material.Concrete, group)
+		Vector3.new(x, 24.325, z), THEME.PlazaStone, Enum.Material.Concrete, group)
 	local back = part("BackWall", Vector3.new(17, 8.0, 1),
 		Vector3.new(x, 28.4, z + 6),
 		THEME.Brown, Enum.Material.Metal, group)
@@ -759,7 +768,7 @@ cosmeticsPrompt.RequiresLineOfSight = false
 cosmeticsPrompt.MaxActivationDistance = 12
 cosmeticsPrompt.Parent = cosmeticsDesk
 
--- v0.26: The giant blank BACK of the leaderboard and a nearby lamp
+-- v0.27: The giant blank BACK of the leaderboard and a nearby lamp
 -- previously overlapped at the plaza edge. Keep the board completely
 -- outside the main plaza and make BOTH faces readable at normal scale.
 local boardPost = decorative(
@@ -878,6 +887,11 @@ local function refreshSessionLeaderboard()
 end
 local rewardsBase = decorative("FutureRewardsPodium", Vector3.new(12, 1.5, 10),
 	Vector3.new(-33, 24.75, -82), METAL_TRIM, Enum.Material.Metal)
+-- The rewards placard now visibly rests on the podium instead of floating.
+for _, offset in ipairs({-4.3, 4.3}) do
+	detail("RewardSignSupport", Vector3.new(0.48, 3.0, 0.48),
+		Vector3.new(-33 + offset, 26.95, -82), THEME.Wood, Enum.Material.WoodPlanks)
+end
 local rewardSign = decorative("FutureRewardsSignAnchor", Vector3.new(1, 1, 1), Vector3.new(-33, 27, -82), WHITE)
 rewardSign.CanCollide = false
 rewardSign.Transparency = 1
@@ -937,15 +951,15 @@ local function horizontalCylinder(item)
 	return item
 end
 local basin = horizontalCylinder(decorative("CentralResortFountainBasin",
-	Vector3.new(0.95, 16, 16), Vector3.new(0, 24.8, -118),
+	Vector3.new(0.95, 16, 16), Vector3.new(0, 24.5, -118),
 	THEME.PlanterStone, Enum.Material.Concrete))
 local waterMirror = horizontalCylinder(detail("FountainStillWater",
-	Vector3.new(0.13, 13, 13), Vector3.new(0, 25.36, -118),
+	Vector3.new(0.13, 13, 13), Vector3.new(0, 24.90, -118),
 	THEME.Foam, Enum.Material.Glass))
 waterMirror.Transparency = 0.22
 waterMirror.Reflectance = 0.018
 local pedestal = horizontalCylinder(solidDetail("FountainCrystalPedestal",
-	Vector3.new(2.3, 4.5, 4.5), Vector3.new(0, 26.5, -118),
+	Vector3.new(2.3, 4.5, 4.5), Vector3.new(0, 26.0, -118),
 	THEME.Wood, Enum.Material.Metal))
 local crystal = solidDetail("FountainSeaGlassSculpture", Vector3.new(3.5, 5.7, 3.5),
 	Vector3.new(0, 29.3, -118), THEME.Foam, Enum.Material.Glass)
@@ -976,8 +990,8 @@ local function coastBench(x, z)
 		Vector3.new(x, 26.75, z + 1.24),
 		WOOD, Enum.Material.WoodPlanks, bench)
 	for _, side in ipairs({-1, 1}) do
-		solidDetail("ResortBenchLeg", Vector3.new(0.55, 1.48, 2.2),
-			Vector3.new(x + side * 3.6, 24.98, z),
+		solidDetail("ResortBenchLeg", Vector3.new(0.55, 1.72, 2.2),
+			Vector3.new(x + side * 3.6, 24.86, z),
 			THEME.Brown, Enum.Material.Metal, bench)
 		local seat = Instance.new("Seat")
 		seat.Name = side < 0 and "LeftSeat" or "RightSeat"
@@ -1024,7 +1038,7 @@ end
 
 local function planter(x, z)
 	solidDetail("CoastCeramicPlanter", Vector3.new(4.5, 2.7, 4.5),
-		Vector3.new(x, 25.65, z), THEME.PlanterStone, Enum.Material.Concrete)
+		Vector3.new(x, 25.35, z), THEME.PlanterStone, Enum.Material.Concrete)
 	local foliage = solidDetail("CoastShrub", Vector3.new(5.1, 4.2, 5.1),
 		Vector3.new(x, 28.15, z), THEME.Evergreen, Enum.Material.LeafyGrass)
 	foliage.Shape = Enum.PartType.Ball
@@ -1041,8 +1055,8 @@ for _, side in ipairs({-1, 1}) do
 	local z = -71
 	for _, dx in ipairs({-8, 8}) do
 		for _, dz in ipairs({-7, 7}) do
-			solidDetail("CoastPergolaColumn", Vector3.new(0.85, 7.2, 0.85),
-				Vector3.new(x + dx, 28.1, z + dz), THEME.PlanterStone, Enum.Material.Concrete)
+			solidDetail("CoastPergolaColumn", Vector3.new(0.85, 8.1, 0.85),
+				Vector3.new(x + dx, 28.05, z + dz), THEME.PlanterStone, Enum.Material.Concrete)
 		end
 	end
 	solidDetail("CoastPergolaRoof", Vector3.new(18.3, 0.55, 16),
@@ -1052,6 +1066,9 @@ for _, side in ipairs({-1, 1}) do
 			Vector3.new(x + slatX, 32.27, z), THEME.Wood)
 	end
 	coastBench(x, -70)
+	-- A visible short suspension stem connects each lantern to its roof.
+	detail("PergolaLanternStem", Vector3.new(0.2, 0.48, 0.2),
+		Vector3.new(x, 31.53, z - 4), THEME.Wood, Enum.Material.Wood)
 	local lantern = detail("PergolaHangingLantern", Vector3.new(1.4, 1.4, 1.4),
 		Vector3.new(x, 30.7, z - 4), THEME.Foam, Enum.Material.Glass)
 	local light = Instance.new("PointLight")
@@ -1067,9 +1084,9 @@ end
 -- screenspace arrows or intrusive floating titles.
 local function resortLamp(x, z)
 	solidDetail("ResortLampPedestal", Vector3.new(2.0, 0.7, 2.0),
-		Vector3.new(x, 24.65, z), THEME.PlanterStone, Enum.Material.Concrete)
-	solidDetail("ResortLampColumn", Vector3.new(0.75, 7.3, 0.75),
-		Vector3.new(x, 28.4, z), THEME.Brown, Enum.Material.Metal)
+		Vector3.new(x, 24.35, z), THEME.PlanterStone, Enum.Material.Concrete)
+	solidDetail("ResortLampColumn", Vector3.new(0.75, 7.65, 0.75),
+		Vector3.new(x, 28.23, z), THEME.Brown, Enum.Material.Metal)
 	local lamp = detail("ResortLantern", Vector3.new(1.5, 1.6, 1.5),
 		Vector3.new(x, 32.8, z), THEME.Foam, Enum.Material.Glass)
 	detail("LanternChampagneCap", Vector3.new(1.8, 0.2, 1.8),
@@ -1107,7 +1124,7 @@ textSign(photoAnchor, "PHOTO SPOT | SOFT EARTH COAST", 1.0, 210)
 
 local trophyX, trophyZ = -67, -110
 local trophyStand = horizontalCylinder(solidDetail("AzureTrophyPedestal",
-	Vector3.new(1.6, 7, 7), Vector3.new(trophyX, 25.3, trophyZ),
+	Vector3.new(2.0, 7, 7), Vector3.new(trophyX, 25.0, trophyZ),
 	THEME.PlanterStone, Enum.Material.Concrete))
 local trophy = detail("AzureTrophySculpture", Vector3.new(3.4, 6, 3.4),
 	Vector3.new(trophyX, 29.0, trophyZ), THEME.Wood)
@@ -1370,6 +1387,7 @@ local voteOutcomes = {}
 local message = "Join the next match!"
 local winnerPlayer = nil
 local initialMatchCount = 0
+local practiceWithoutRewards = false
 -- Reject excessively repeated remote requests without changing normal inputs.
 -- The server still owns every vote, purchase, movement and reward decision.
 local COMMAND_COOLDOWN = { Sync = 1.0, Join = 0.25, Vote = 0.065, Shop = 0.35 }
@@ -1680,6 +1698,8 @@ local function snapshot(player)
 		ready = numberReady(),
 		capacity = SETTINGS.MaxPlayers,
 		queued = queue[player] == true,
+		liveSoloPractice = SETTINGS.LiveSoloPractice and not RunService:IsStudio(),
+		practiceNoRewards = practiceWithoutRewards,
 		participating = mine ~= nil,
 		mine = mine and {
 			position = mine.index,
@@ -1721,6 +1741,7 @@ local function joinQueue(player)
 		return
 	end
 	queue[player] = true
+	print(("[Mythblox QUEUE] %s joined round (%d ready)"):format(player.Name, numberReady()))
 	publish()
 end
 
@@ -2498,7 +2519,7 @@ local function scoreMatch(winners, participants)
 			awardProgress(player, awarded[player] and 1 or 0, awarded[player] and 25 or 5)
 		end
 	end
-	-- v0.26: Save match rewards immediately after a round finishes, while
+	-- v0.27: Save match rewards immediately after a round finishes, while
 	-- retaining autosave, exit and shutdown fallback attempts.
 	-- saveProfile uses stable reward-batch IDs and per-player write locks
 	-- so overlapping attempts do not double-award a completed round.
@@ -2511,6 +2532,7 @@ end
 
 while true do
 	phase = "JOIN"
+	practiceWithoutRewards = false
 	clearBridges()
 	queue = {}
 	active = {}
@@ -2525,14 +2547,25 @@ while true do
 			table.insert(participants, player)
 		end
 	end
-	local minimum = (RunService:IsStudio() and SETTINGS.StudioSoloPractice) and 1 or 2
-	if #participants < minimum then
+	-- Studio has always supported one-player practice. In published servers
+	-- the same bridge can now be played alone without granting farmable Wins
+	-- or Coins. Two or more ready players continue the original competitive
+	-- mode, vote/tie rules and rewards.
+	local soloAllowed = (RunService:IsStudio() and SETTINGS.StudioSoloPractice)
+		or (not RunService:IsStudio() and SETTINGS.LiveSoloPractice)
+	if #participants < (soloAllowed and 1 or 2) then
 		phase = "RESULTS"
-		message = "Need at least two ready players. Join next countdown!"
+		message = #participants == 0
+			and "No players ready. Tap JOIN before the timer ends!"
+			or "Need two ready players. Join next countdown!"
 		secondsLeft = 2
 		publish()
 		task.wait(2)
 		continue
+	end
+	practiceWithoutRewards = #participants == 1 and not RunService:IsStudio()
+	if practiceWithoutRewards then
+		print("[Mythblox MATCH] Live solo practice starting: no Wins or Coins awarded.")
 	end
 
 	beginMatch(participants)
@@ -2592,14 +2625,20 @@ while true do
 	phase = "RESULTS"
 	unsafe = {}
 	if #winners > 0 then finishConfetti() end
-	if #winners == 0 then
+	if practiceWithoutRewards then
+		message = #winners > 0
+			and "PRACTICE COMPLETE! No Wins or Coins. Join again!"
+			or "PRACTICE OVER — no rewards. Try again!"
+	elseif #winners == 0 then
 		message = "DRAW — every bridge fell! Next race soon."
 	elseif #winners == 1 then
 		message = winners[1].DisplayName .. " WINS! +25 coins"
 	else
 		message = "TIE! " .. #winners .. " players share the win (+25 each)."
 	end
-	scoreMatch(winners, participants)
+	if not practiceWithoutRewards then
+		scoreMatch(winners, participants)
+	end
 	local winnerDances = startWinnerDances(winners)
 	countdown(SETTINGS.ResultsSeconds, false)
 	stopWinnerDances(winnerDances)
@@ -2611,13 +2650,13 @@ end
 ]====]
 
 local CLIENT_SOURCE = [====[
--- Mythblox Game 01 · Soft Earth Coast mobile UI v0.26
+-- Mythblox Game 01 · Soft Earth Coast mobile UI v0.27
 -- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
-local BUILD_VERSION = "v0.26"
+local BUILD_VERSION = "v0.27"
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local network = ReplicatedStorage:WaitForChild("MythbloxGame01")
@@ -2840,7 +2879,8 @@ join.AnchorPoint = Vector2.new(0.5, 1)
 join.TextSize = 21
 join.MouseButton1Click:Connect(function()
 	command:FireServer("Join")
-	join.Visible = false
+	-- Wait for authoritative server queued state before hiding. A late tap
+	-- or rejected remote should never make JOIN vanish without registration.
 end)
 
 -- Selection tray: five consistently sized targets, regardless of player count.
@@ -2891,7 +2931,7 @@ end
 -- Results appear in the compact top status strip instead of a centered
 -- modal. The arena and other players remain visible when a match ends.
 
--- v0.26: Secret selections are never displayed to others while voting.
+-- v0.27: Secret selections are never displayed to others while voting.
 -- ONLY during the five-second REVEAL do five non-clickable results cards
 -- show every numbered choice, picking players' avatars, totals, and safety.
 -- The existing teal voting buttons remain PRIVATE selection controls.
@@ -3131,31 +3171,34 @@ local function layoutForViewport()
 	if compact then feedback.Visible = false end
 	local shortScreen = height < 570
 
-	-- Phones get a 49px two-line HUD, NOT the old 83px three-row billboard.
-	-- ScreenGui respects Roblox's top safe inset; no UI overlaps phone chrome.
-	local topW = math.min(width - (compact and 30 or 20), compact and 344 or 470)
-	top.Size = UDim2.fromOffset(topW, compact and 49 or 83)
-	top.Position = UDim2.new(0.5, 0, 0, compact and 4 or 8)
+	-- v0.27: phone status is smaller, at the TOP RIGHT of the core-UI safe
+	-- area rather than a wide center banner obscuring the avatar/camera.
+	-- Never put it above Roblox's native safe-area inset.
+	local topW = compact and math.min(270, math.max(180, width - 110))
+		or math.min(width - 20, 470)
+	top.AnchorPoint = compact and Vector2.new(1, 0) or Vector2.new(0.5, 0)
+	top.Size = UDim2.fromOffset(topW, compact and 43 or 83)
+	top.Position = compact and UDim2.new(1, -8, 0, 0) or UDim2.new(0.5, 0, 0, 8)
 	top.BackgroundTransparency = compact and 0.10 or 0.07
-	phaseText.Position = UDim2.fromOffset(compact and 10 or 14, compact and 3 or 6)
-	phaseText.Size = UDim2.new(1, compact and -72 or -107, 0, compact and 20 or 23)
-	phaseText.TextSize = compact and 12 or 15
+	phaseText.Position = UDim2.fromOffset(compact and 9 or 14, compact and 2 or 6)
+	phaseText.Size = UDim2.new(1, compact and -70 or -107, 0, compact and 19 or 23)
+	phaseText.TextSize = compact and 11 or 15
 	phaseText.TextWrapped = false
 	phaseText.TextTruncate = Enum.TextTruncate.AtEnd
-	clockText.Position = UDim2.new(1, compact and -56 or -82, 0, compact and 3 or 6)
-	clockText.Size = UDim2.fromOffset(compact and 46 or 68, compact and 20 or 23)
+	clockText.Position = UDim2.new(1, compact and -54 or -82, 0, compact and 2 or 6)
+	clockText.Size = UDim2.fromOffset(compact and 45 or 68, compact and 19 or 23)
 	clockText.TextSize = compact and 15 or 19
 	description.Visible = not compact
 	description.Position = UDim2.fromOffset(14, 30)
 	description.Size = UDim2.new(1, -28, 0, 20)
 	description.TextSize = 13
-	ownStats.Position = UDim2.fromOffset(compact and 10 or 14, compact and 27 or 53)
-	ownStats.Size = UDim2.new(1, compact and -100 or -28, 0, compact and 15 or 18)
+	ownStats.Position = UDim2.fromOffset(compact and 9 or 14, compact and 23 or 53)
+	ownStats.Size = UDim2.new(1, compact and -98 or -28, 0, compact and 15 or 18)
 	ownStats.TextSize = compact and 10 or 12
 	ownStats.TextWrapped = false
 	ownStats.TextTruncate = Enum.TextTruncate.AtEnd
 	currencyChip.Visible = compact
-	currencyChip.Position = UDim2.new(1, -89, 0, 27)
+	currencyChip.Position = UDim2.new(1, -89, 0, 23)
 	currencyChip.Size = UDim2.fromOffset(79, 15)
 	currencyChip.TextSize = 10
 	currencyChip.TextWrapped = false
@@ -3296,7 +3339,7 @@ local function update(state)
 	if phase == "JOIN" or phase == "VOTE" then
 		lastTurnRendered = -1
 	end
-	phaseText.Text = ("v0.26 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
+	phaseText.Text = ("v0.27 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
 	clockText.Text = tostring(state.time or 0) .. "s"
 	clockText.TextColor3 = phase == "VOTE" and (state.time or 0) <= 2 and COLOR.Red or COLOR.Purple
 	description.Text = state.message or ""
@@ -3306,8 +3349,11 @@ local function update(state)
 	if voting.Visible then shop.Visible = false end
 
 	if phase == "JOIN" then
-		phaseText.Text = "v0.26 · NEXT MATCH"
-		description.Text = state.queued and "You're queued for the next race."
+		phaseText.Text = "v0.27 · NEXT MATCH"
+		description.Text = state.queued
+			and ((state.ready or 0) == 1 and state.liveSoloPractice
+				and "Ready! Solo practice starts at 0s (no Wins/Coins)."
+				or "You're queued for the next race.")
 			or "Join at the gold pad or use the button below."
 		ownStats.Text = ("%d/%d PLAYERS READY"):format(state.ready or 0, state.capacity or 8)
 		progressFill.Size = UDim2.fromScale(0, 1)
@@ -3325,8 +3371,9 @@ local function update(state)
 	if phase == "RESULTS" then
 		-- Server sends winner/draw text in state.message; show it only in
 		-- the small status panel and avoid blocking the camera.
-		phaseText.Text = "v0.26 · ROUND OVER"
-		ownStats.Text = "NEXT MATCH STARTS SOON"
+		phaseText.Text = "v0.27 · ROUND OVER"
+		ownStats.Text = state.practiceNoRewards and "PRACTICE · NO WINS / COINS"
+			or "NEXT MATCH STARTS SOON"
 	end
 
 	if voting.Visible and mine then
@@ -3361,12 +3408,16 @@ local function update(state)
 		currencyChip.Text = ("%dW · %dC"):format(
 			wins and wins.Value or 0, coins and coins.Value or 0)
 		phaseText.Text = phase == "JOIN" and "NEXT MATCH"
-			or ("R%d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
+			or (state.practiceNoRewards and "SOLO · " or ("R%d · "):format(state.turn or 0))
+				.. (phaseNames[phase] or phase)
 		if phase == "JOIN" then
-			ownStats.Text = state.queued and "QUEUED FOR NEXT RACE"
+			ownStats.Text = state.queued
+				and ((state.ready or 0) == 1 and state.liveSoloPractice
+					and "SOLO PRACTICE SOON" or "QUEUED FOR MATCH")
 				or ("%d/%d READY"):format(state.ready or 0, state.capacity or 8)
 		elseif phase == "RESULTS" then
-			ownStats.Text = "ROUND OVER · NEXT SOON"
+			ownStats.Text = state.practiceNoRewards and "PRACTICE · NO REWARDS"
+				or "ROUND OVER · NEXT SOON"
 		elseif mine and not mine.alive then
 			ownStats.Text = "ELIMINATED · SPECTATING"
 		elseif phase == "MOVE" and mine and mine.alive then
@@ -3424,7 +3475,7 @@ end)
 command:FireServer("Sync")
 ]====]
 
--- Diagnostic/cleanup installer: v0.26
+-- Diagnostic/cleanup installer: v0.27
 -- Remove known legacy copies from services used by previous Mythblox builds.
 -- This intentionally does NOT remove scripts belonging to other games.
 -- Permanently remove the UNUSED default Roblox Baseplate spawn while in
@@ -3443,7 +3494,7 @@ for _, obj in ipairs(workspace:GetDescendants()) do
 end
 print("[Mythblox INSTALL] Removed " .. defaultSpawnsRemoved .. " unused Baseplate spawn(s).")
 
--- v0.26: the actual stock baseplate (not only its spawn marker) is a giant
+-- v0.27: the actual stock baseplate (not only its spawn marker) is a giant
 -- low-altitude part that remains visible through the decorative ocean.
 -- Remove ONLY a low, large, directly parented part named Baseplate.
 local baseplatesRemoved = 0
@@ -3525,12 +3576,12 @@ for _, child in ipairs(game:GetDescendants()) do
 	end
 end
 
-print("[Mythblox INSTALL] v0.26 VERIFIED: 2 scripts installed and Source checked.")
-print("[Mythblox INSTALL] Server: " .. liveServer:GetFullName() .. " | Build v0.26")
-print("[Mythblox INSTALL] Client: " .. liveClient:GetFullName() .. " | Build v0.26")
+print("[Mythblox INSTALL] v0.27 VERIFIED: 2 scripts installed and Source checked.")
+print("[Mythblox INSTALL] Server: " .. liveServer:GetFullName() .. " | Build v0.27")
+print("[Mythblox INSTALL] Client: " .. liveClient:GetFullName() .. " | Build v0.27")
 print("[Mythblox INSTALL] Cleaned " .. #removed .. " previous Mythblox script/UI objects.")
 print("[Mythblox INSTALL] Disabled " .. #disabledLegacy .. " other old game scripts found by source signature.")
 if #suspicious > 0 then
 	warn("[Mythblox INSTALL] Other Mythblox scripts still exist: " .. table.concat(suspicious, "; "))
 end
-print("[Mythblox INSTALL] NOW START A FRESH PLAY SESSION. Confirm the top HUD visibly says v0.26, and check Output for SERVER RUNNING v0.26 and CLIENT RUNNING v0.26.")
+print("[Mythblox INSTALL] NOW START A FRESH PLAY SESSION. Confirm the top HUD visibly says v0.27, and check Output for SERVER RUNNING v0.27 and CLIENT RUNNING v0.27.")
