@@ -57,6 +57,8 @@ Use this file to separate **confirmed project rules** from **ideas not yet appro
 
 - **2026-11-22:** Owner confirms **v0.13 Coins persist** after restarting Roblox Studio Play, providing a successful in-Studio persistence checkpoint. **Wins persistence and private published-server storage are not yet separately verified.** Studio Output included a `GameSettingsPlugin.SecurityController` 'Failed to parse secrets: Can't parse JSON' warning; the successful coins test suggests it is unrelated to Game 01 DataStore writes. No code change needed based on this warning alone.
 
+- **2026-11-22:** Following owner-confirmed Studio coin persistence in v0.13, implementation proceeded to **v0.14 coin-only cosmetics**. The right-hand Cosmetics stall opens a compact shop with Classic Blue free and three earned-coin glass tints (20/40/60 coins). Ownership and equipped color persist in the existing DataStore, and purchases are validated by the server in one atomic UpdateAsync record. Neutral lane glass reflects skin selection; all safe/unsafe/crack colors and original gameplay rules are unchanged. **Still to test in Studio:** shop UI, purchases, equipment survival after restart; also saved Wins and private published-server persistence remain unverified. No Robux monetization.
+
 ## Open decisions
 
 | Question | Options | Status |
