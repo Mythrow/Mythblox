@@ -1075,6 +1075,7 @@ local function saveProfile(player, reason)
 			profile.baseCoins = safeStat(result.coins)
 			profile.saving = false
 			updateProfileView(player, profile)
+			if player.Parent == Players then player:SetAttribute("MythbloxDataStatus", "READY") end
 			print(("[Mythblox DATA] Saved %s (+%dW +%dC; %s)"):format(
 				player.Name, winsDelta, coinsDelta, reason
 			))
@@ -1085,6 +1086,7 @@ local function saveProfile(player, reason)
 		if attempt < 3 then task.wait(2 ^ (attempt - 1) + math.random() * 0.5) end
 	end
 	profile.saving = false
+	if player.Parent == Players then player:SetAttribute("MythbloxDataStatus", "SAVE_ERROR") end
 	warn("[Mythblox DATA] SAVE FAILED for " .. player.Name ..
 		" (" .. reason .. "): " .. tostring(lastError) ..
 		". Rewards remain pending in this server.")
