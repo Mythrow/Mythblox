@@ -729,9 +729,12 @@ end
 
 -- Existing positions and gameplay remain unchanged. Customers approach the
 -- front counter from the spawn side via the additional store access paths.
+-- Match both adjoining edges exactly: the main path ends at x=+/-6.5
+-- and each kiosk's 14-stud display floor begins at z=-56.
+-- Previously the path was separated from both by thin grass gaps.
 for _, side in ipairs({-1, 1}) do
-	decorative("ShopFrontAccessWalk", Vector3.new(28.8, 0.22, 5.8),
-		Vector3.new(side * 21, 24.14, -59.7),
+	decorative("ShopFrontAccessWalk", Vector3.new(28.9, 0.22, 7),
+		Vector3.new(side * 20.95, 24.14, -59.5),
 		THEME.WalkStone, Enum.Material.Pavement)
 end
 makeStall("LeftShopComingSoon", -25, -49, ROOF_BLUE, "SHOP", "COMING SOON")
