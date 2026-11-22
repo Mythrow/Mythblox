@@ -1,10 +1,10 @@
--- Mythblox Game 01 · Soft Earth Coast mobile UI v0.27
+-- Mythblox Game 01 · Soft Earth Coast mobile UI v0.28
 -- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
-local BUILD_VERSION = "v0.27"
+local BUILD_VERSION = "v0.28"
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local network = ReplicatedStorage:WaitForChild("MythbloxGame01")
@@ -279,7 +279,7 @@ end
 -- Results appear in the compact top status strip instead of a centered
 -- modal. The arena and other players remain visible when a match ends.
 
--- v0.27: Secret selections are never displayed to others while voting.
+-- v0.28: Secret selections are never displayed to others while voting.
 -- ONLY during the five-second REVEAL do five non-clickable results cards
 -- show every numbered choice, picking players' avatars, totals, and safety.
 -- The existing teal voting buttons remain PRIVATE selection controls.
@@ -288,10 +288,10 @@ reveal.AnchorPoint = Vector2.new(0.5, 0)
 reveal.Position = UDim2.new(0.5, 0, 0, 103)
 reveal.Visible = false
 
+-- The five cards already say SAFE or BLOCKED. Do not repeat the obvious
+-- color legend above them or waste mobile vertical space.
 local revealHeader = label(reveal, "Heading", "VOTES REVEALED", 13, 7, -26, 27, 19, COLOR.Purple, true)
 revealHeader.TextXAlignment = Enum.TextXAlignment.Center
-local revealSubtitle = label(reveal, "Legend", "GREEN = SAFE      RED = BLOCKED", 13, 34, -26, 20, 13, COLOR.Muted, true)
-revealSubtitle.TextXAlignment = Enum.TextXAlignment.Center
 
 local resultRow = Instance.new("Frame")
 resultRow.Name = "LockedNumberResults"
@@ -519,7 +519,7 @@ local function layoutForViewport()
 	if compact then feedback.Visible = false end
 	local shortScreen = height < 570
 
-	-- v0.27: phone status is smaller, at the TOP RIGHT of the core-UI safe
+	-- v0.28: phone status is smaller, at the TOP RIGHT of the core-UI safe
 	-- area rather than a wide center banner obscuring the avatar/camera.
 	-- Never put it above Roblox's native safe-area inset.
 	local topW = compact and math.min(270, math.max(180, width - 110))
@@ -578,22 +578,20 @@ local function layoutForViewport()
 	shop.AnchorPoint = compact and Vector2.new(0.5, 0.5) or Vector2.new(1, 0.5)
 	shop.Position = compact and UDim2.new(0.5, 0, 0.56, 0) or UDim2.new(1, -18, 0.54, 0)
 
-	-- The same five reveal cards fit into a shorter 156–172px phone tray.
-	-- They still appear ONLY for the existing five-second reveal phase.
+	-- v0.28: Omit the unnecessary red/green legend and reclaim its 16–18px.
+	-- Avatar grids, vote totals, numbered SAFE/BLOCKED cards and five-second
+	-- server reveal duration are unchanged. The phone tray obscures less play.
 	local revealW = math.min(width - 18, compact and 560 or 780)
-	local revealH = compact and (shortScreen and 156 or 172)
-		or math.max(178, math.min(228, height - 110))
+	local revealH = compact and (shortScreen and 140 or 156)
+		or math.max(160, math.min(210, height - 128))
 	reveal.Size = UDim2.fromOffset(revealW, revealH)
-	reveal.Position = UDim2.new(0.5, 0, 0, compact and 59 or 100)
+	reveal.Position = UDim2.new(0.5, 0, 0, compact and 51 or 100)
 	revealHeader.Position = UDim2.fromOffset(8, compact and 1 or 7)
 	revealHeader.Size = UDim2.new(1, -16, 0, compact and 21 or 27)
 	revealHeader.TextSize = compact and 14 or 19
-	revealSubtitle.Position = UDim2.fromOffset(8, compact and 23 or 34)
-	revealSubtitle.Size = UDim2.new(1, -16, 0, compact and 14 or 20)
-	revealSubtitle.TextSize = compact and 10 or 13
-	resultRow.Position = UDim2.fromOffset(compact and 6 or 10, compact and 40 or 60)
-	resultRow.Size = UDim2.new(1, compact and -12 or -20, 1, compact and -45 or -72)
-	local cardHeight = revealH - (compact and 45 or 72)
+	resultRow.Position = UDim2.fromOffset(compact and 6 or 10, compact and 24 or 42)
+	resultRow.Size = UDim2.new(1, compact and -12 or -20, 1, compact and -29 or -54)
+	local cardHeight = revealH - (compact and 29 or 54)
 	local avatarHeight = compact and (shortScreen and 37 or 43) or 55
 	local cardWidth = (revealW - (compact and 12 or 20)) * 0.19
 	local columns = cardWidth < 80 and 3 or 4
@@ -687,7 +685,7 @@ local function update(state)
 	if phase == "JOIN" or phase == "VOTE" then
 		lastTurnRendered = -1
 	end
-	phaseText.Text = ("v0.27 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
+	phaseText.Text = ("v0.28 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
 	clockText.Text = tostring(state.time or 0) .. "s"
 	clockText.TextColor3 = phase == "VOTE" and (state.time or 0) <= 2 and COLOR.Red or COLOR.Purple
 	description.Text = state.message or ""
@@ -697,7 +695,7 @@ local function update(state)
 	if voting.Visible then shop.Visible = false end
 
 	if phase == "JOIN" then
-		phaseText.Text = "v0.27 · NEXT MATCH"
+		phaseText.Text = "v0.28 · NEXT MATCH"
 		description.Text = state.queued
 			and ((state.ready or 0) == 1 and state.liveSoloPractice
 				and "Ready! Solo practice starts at 0s (no Wins/Coins)."
@@ -719,7 +717,7 @@ local function update(state)
 	if phase == "RESULTS" then
 		-- Server sends winner/draw text in state.message; show it only in
 		-- the small status panel and avoid blocking the camera.
-		phaseText.Text = "v0.27 · ROUND OVER"
+		phaseText.Text = "v0.28 · ROUND OVER"
 		ownStats.Text = state.practiceNoRewards and "PRACTICE · NO WINS / COINS"
 			or "NEXT MATCH STARTS SOON"
 	end
