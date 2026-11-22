@@ -1852,9 +1852,12 @@ local function beginMatch(participants)
 			-- Each lane only tests its assigned racer's body against its
 			-- panels; touching a spectator/other lane cannot award progress.
 			for index = 1, SETTINGS.BridgeLength do
-				local tile = lanes[lane].tiles[index]
+				local tileIndex = index
+				local assignedLane = lane
+				local assignedPlayer = player
+				local tile = lanes[assignedLane].tiles[tileIndex]
 				tile.Touched:Connect(function(hit)
-					validateGlassContact(player, lane, index, hit)
+					validateGlassContact(assignedPlayer, assignedLane, tileIndex, hit)
 				end)
 			end
 		end
