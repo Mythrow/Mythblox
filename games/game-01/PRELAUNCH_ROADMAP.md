@@ -17,6 +17,7 @@
 - **v0.22** — Owner-approved **Soft Earth Coast** instead of bright/glossy Azure Coast visuals: matte oat/sand floors, sage/dusty-rose roofs, warm brown/wood accents, bloom off and softened daylight; **49px two-row mobile HUD** in portrait/landscape with Wins/Coins and short GO/WAIT status, plus a compact five-number REVEAL tray. **Code and installer ready; real-phone confirmation pending.** The updated [art palette](AZURE_COAST_THEME.md) supersedes previous vivid colors.
 - **v0.23** — Reliability-only patch: each completed round triggers a prompt save attempt for participants' earned rewards (with existing autosave/exit/shutdown backups and idempotent transactions unchanged); JOIN/RESULTS now show a compact warning when DataStore reads/writes are unavailable. **Studio, private-server saving and actual-phone QA pending.** No unapproved gameplay features added.
 - **v0.24** — Owner-approved neutral coastal lighting correction after a v0.23 screenshot showed a yellowish full-scene tint: white color grading, neutral ambient/daylight shift, less beige atmospheric haze and neutral clouds. The v0.22 muted-earth material palette, 49px mobile HUD, game rules, shops and v0.23 saving logic stay unchanged. **Source and installer committed; actual Roblox Studio/phone verification pending.**
+- **v0.25** — Owner-approved richer sky/anti-glare materials: single Terrain.Clouds layer increased to Cover 0.72 and Density 0.54; weathered-oat matte Concrete for central plaza/shared spectator deck/side promenades; toned-down shop floors, stone support props, planters and fountain; fully invisible existing lobby spawn marker. **Studio and phone screenshot comparison pending.** v0.24 neutral daylight and gameplay/saving/interaction remain unchanged.
 - No Robux purchases, paid power-ups or public launch are authorized.
 
 ## Ordered future stages — versions and features are not yet approved
@@ -49,8 +50,8 @@ Potential additions to evaluate with the owner: better onboarding/tutorial and l
 - [ ] Final name, icon, thumbnails, description, accessibility/audience settings and moderation/release checks reviewed.
 - [ ] Owner independently approves the public launch.
 
-## Current v0.24 test task
+## Current v0.25 test task
 
-Install v0.24, **publish the updated private test place**, and check on an actual phone in portrait and landscape: natural blue-gray sky, neutral daylight (no global yellow haze), readable green foliage, matte oat floor (no glare), new **49px** top strip, legible Wins/Coins, compact 1–5 vote controls and five-card REVEAL. Run a match with a friend to verify v0.21 bench seating, staffed shop E prompt and especially the **v0.19 illegal-step shatter/elimination fix**, not yet separately confirmed. Capture a phone screenshot/Output errors and use [TEST_PLAN.md](TEST_PLAN.md). Major additional gameplay features and custom art remain launch blockers.
+Install v0.25, **publish the updated private test place**, and check on an actual phone in portrait and landscape: visibly fuller natural clouds, neutral daylight (no global yellow haze), no glaring white spectator platforms/planters/spawn pad, readable green foliage, matte weathered-oat plaza, new **49px** top strip, legible Wins/Coins, compact 1–5 vote controls and five-card REVEAL. Run a match with a friend to verify v0.21 bench seating, staffed shop E prompt and especially the **v0.19 illegal-step shatter/elimination fix**, not yet separately confirmed. Capture a phone screenshot/Output errors and use [TEST_PLAN.md](TEST_PLAN.md). Major additional gameplay features and custom art remain launch blockers.
 
 The GitHub scripts and one-paste installer are authoritative for code. Publishing/saving a Roblox Studio place is a separate owner-controlled step.
