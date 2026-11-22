@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-22):** Following a user-approved environmental/lobby improvement, **v0.20 Azure Coast Resort** adds a coherent teal/ivory/brass theme, a significantly larger social island, native clouds, distant scenery, default Baseplate cleanup, water/fall reset and two redesigned social lounges. GitHub server/client/one-paste installer are updated; **owner Roblox Studio visual and gameplay testing is pending**. The critical v0.19 illegal-crossing/shatter fix must also be verified in this new build. The game is an unnamed **unreleased prototype**, and substantial further content/custom art, mobile/multiplayer and data-persistence QA remain necessary before launch.  
+**Status (2026-11-22):** Owner tested the v0.20 Azure Coast environment and reported **trees/lamps were ghost props, benches could not be sat on, and both kiosks lacked real counters and shopkeepers**. **v0.21 fixes those issues in GitHub and the one-paste Studio installer; owner testing with a friend is pending**. Benches now use genuine Roblox Seats and Sit prompts, scenery collides, and the existing cosmetics shop has an enclosed staffed front service desk. The unverified v0.19 illegal-bridge-crossing regression and multiplayer, mobile and DataStore tests remain open. The game is not public-release ready.  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -34,6 +34,18 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 | Reward | Win +25 coins, participation +5 coins |
 
 **Progress storage:** Wins and coins were session-only through v0.12. **v0.13 introduces DataStore persistence**, pending Roblox Studio and published-server verification. v0.14 adds a coin-only cosmetics stall (no Robux or paid items). Do not publicly launch or monetize before testing data recovery and purchases.
+
+## v0.21 — physical lobby, sit-able benches, staffed shop kiosks (friend test pending)
+
+User-reported v0.20 regression: walk-through trees, lamp posts and garden props, decorative benches that did not seat players, and empty open shops. **v0.21 addresses these directly.**
+
+- **Real world collision:** tree trunks/low canopies, shrubs, planters, pergola pillars/roofs, photo arch supports, lamp bases/poles and selected fountain/trophy pieces are now solid. Tiny gold accents, high lanterns, sky/ocean and bridge's purely decorative rail trim remain noncolliding so they do not block travel.
+- **Real two-player benches:** each resort bench is now **two independent Roblox `Seat` instances** with normal automatic sitting and an E **Sit** proximity prompt. Each side holds one person; two friends can sit beside each other. Jump or stand to leave the seat, and occupied seats disable their prompt until vacated. Benches are in the same lounge spots.
+- **Complete staffed kiosks:** left **SHOP / COMING SOON** and right **COSMETICS / GLASS COLORS** have physical side walls, glass side panels, a solid front desk, champagne-gold counter trim, merchandise displays, proper overhead signage and visible uniformed shopkeepers with subtle waving arms. Shopkeepers are in-world NPC models, not purchasable items or real users.
+- **Shopping from the front:** the cosmetics **E Browse colors** prompt was moved to `ServiceCounterTop`, facing the customer access path. Server distance validation follows the counter's location. Existing catalog/coin pricing, profile ownership and earned-currency transactions are unchanged. The left shop remains a placeholder.
+- **Multiplayer-safe:** two people can sit separately on the same bench, both browse the cosmetics counter, join the existing 2-player race and still see each other's votes only during REVEAL. No new coin items, map race mechanics or monetization systems were added.
+
+**Install:** Stop Play and run the latest [Command Bar installer](INSTALL_STUDIO_COMMAND_BAR.luau) in Studio Edit mode. Verify `v0.21 VERIFIED` and HUD `v0.21`. Test with a friend using the [v0.21 multiplayer checklist](TEST_PLAN.md). **This code has not yet been executed by the assistant in Roblox Studio.**
 
 ## v0.20 — Azure Coast Resort: expanded lobby, world safety, cohesive theme (Studio test pending)
 
@@ -367,6 +379,6 @@ See the [pre-launch roadmap](PRELAUNCH_ROADMAP.md). Cosmetic stall, sound effect
 
 ## Next step
 
-**Test v0.20 in Roblox Studio:** first verify v0.19's illegal-advance glass breaking/respawn fix, then check the removed default Baseplate, no walkable water/under-map access, lobby pathways, working cosmetics/leaderboard and the Azure Coast cloud/stone/teal/brass visual presentation. Provide screenshots and any Output errors. Continue multiplayer, mobile and persistence QA; major feature and custom-art work remains before public release.
+**Test v0.21 with a friend:** check solid trees and lamps, sit side by side on a bench (E Sit), talk to the staffed kiosks visually, open COSMETICS from its front counter, and verify a real two-player match still enforces illegal-step shatter/elimination. Share any Output errors or a screenshot. Full mobile, security and persistence testing remain required before public release.
 
 See [the Mythblox game-design memo](../../docs/FIRST_GAME_GLASS_BRIDGE_CONCEPT.md) for earlier alternatives, including the spinner idea that was explicitly deferred.
