@@ -1,10 +1,10 @@
--- Mythblox Game 01 · Soft Earth Coast mobile UI v0.26
+-- Mythblox Game 01 · Soft Earth Coast mobile UI v0.27
 -- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
-local BUILD_VERSION = "v0.26"
+local BUILD_VERSION = "v0.27"
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local network = ReplicatedStorage:WaitForChild("MythbloxGame01")
@@ -227,7 +227,8 @@ join.AnchorPoint = Vector2.new(0.5, 1)
 join.TextSize = 21
 join.MouseButton1Click:Connect(function()
 	command:FireServer("Join")
-	join.Visible = false
+	-- Wait for authoritative server queued state before hiding. A late tap
+	-- or rejected remote should never make JOIN vanish without registration.
 end)
 
 -- Selection tray: five consistently sized targets, regardless of player count.
@@ -278,7 +279,7 @@ end
 -- Results appear in the compact top status strip instead of a centered
 -- modal. The arena and other players remain visible when a match ends.
 
--- v0.26: Secret selections are never displayed to others while voting.
+-- v0.27: Secret selections are never displayed to others while voting.
 -- ONLY during the five-second REVEAL do five non-clickable results cards
 -- show every numbered choice, picking players' avatars, totals, and safety.
 -- The existing teal voting buttons remain PRIVATE selection controls.
@@ -518,31 +519,34 @@ local function layoutForViewport()
 	if compact then feedback.Visible = false end
 	local shortScreen = height < 570
 
-	-- Phones get a 49px two-line HUD, NOT the old 83px three-row billboard.
-	-- ScreenGui respects Roblox's top safe inset; no UI overlaps phone chrome.
-	local topW = math.min(width - (compact and 30 or 20), compact and 344 or 470)
-	top.Size = UDim2.fromOffset(topW, compact and 49 or 83)
-	top.Position = UDim2.new(0.5, 0, 0, compact and 4 or 8)
+	-- v0.27: phone status is smaller, at the TOP RIGHT of the core-UI safe
+	-- area rather than a wide center banner obscuring the avatar/camera.
+	-- Never put it above Roblox's native safe-area inset.
+	local topW = compact and math.min(270, math.max(180, width - 110))
+		or math.min(width - 20, 470)
+	top.AnchorPoint = compact and Vector2.new(1, 0) or Vector2.new(0.5, 0)
+	top.Size = UDim2.fromOffset(topW, compact and 43 or 83)
+	top.Position = compact and UDim2.new(1, -8, 0, 0) or UDim2.new(0.5, 0, 0, 8)
 	top.BackgroundTransparency = compact and 0.10 or 0.07
-	phaseText.Position = UDim2.fromOffset(compact and 10 or 14, compact and 3 or 6)
-	phaseText.Size = UDim2.new(1, compact and -72 or -107, 0, compact and 20 or 23)
-	phaseText.TextSize = compact and 12 or 15
+	phaseText.Position = UDim2.fromOffset(compact and 9 or 14, compact and 2 or 6)
+	phaseText.Size = UDim2.new(1, compact and -70 or -107, 0, compact and 19 or 23)
+	phaseText.TextSize = compact and 11 or 15
 	phaseText.TextWrapped = false
 	phaseText.TextTruncate = Enum.TextTruncate.AtEnd
-	clockText.Position = UDim2.new(1, compact and -56 or -82, 0, compact and 3 or 6)
-	clockText.Size = UDim2.fromOffset(compact and 46 or 68, compact and 20 or 23)
+	clockText.Position = UDim2.new(1, compact and -54 or -82, 0, compact and 2 or 6)
+	clockText.Size = UDim2.fromOffset(compact and 45 or 68, compact and 19 or 23)
 	clockText.TextSize = compact and 15 or 19
 	description.Visible = not compact
 	description.Position = UDim2.fromOffset(14, 30)
 	description.Size = UDim2.new(1, -28, 0, 20)
 	description.TextSize = 13
-	ownStats.Position = UDim2.fromOffset(compact and 10 or 14, compact and 27 or 53)
-	ownStats.Size = UDim2.new(1, compact and -100 or -28, 0, compact and 15 or 18)
+	ownStats.Position = UDim2.fromOffset(compact and 9 or 14, compact and 23 or 53)
+	ownStats.Size = UDim2.new(1, compact and -98 or -28, 0, compact and 15 or 18)
 	ownStats.TextSize = compact and 10 or 12
 	ownStats.TextWrapped = false
 	ownStats.TextTruncate = Enum.TextTruncate.AtEnd
 	currencyChip.Visible = compact
-	currencyChip.Position = UDim2.new(1, -89, 0, 27)
+	currencyChip.Position = UDim2.new(1, -89, 0, 23)
 	currencyChip.Size = UDim2.fromOffset(79, 15)
 	currencyChip.TextSize = 10
 	currencyChip.TextWrapped = false
@@ -683,7 +687,7 @@ local function update(state)
 	if phase == "JOIN" or phase == "VOTE" then
 		lastTurnRendered = -1
 	end
-	phaseText.Text = ("v0.26 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
+	phaseText.Text = ("v0.27 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
 	clockText.Text = tostring(state.time or 0) .. "s"
 	clockText.TextColor3 = phase == "VOTE" and (state.time or 0) <= 2 and COLOR.Red or COLOR.Purple
 	description.Text = state.message or ""
@@ -693,8 +697,11 @@ local function update(state)
 	if voting.Visible then shop.Visible = false end
 
 	if phase == "JOIN" then
-		phaseText.Text = "v0.26 · NEXT MATCH"
-		description.Text = state.queued and "You're queued for the next race."
+		phaseText.Text = "v0.27 · NEXT MATCH"
+		description.Text = state.queued
+			and ((state.ready or 0) == 1 and state.liveSoloPractice
+				and "Ready! Solo practice starts at 0s (no Wins/Coins)."
+				or "You're queued for the next race.")
 			or "Join at the gold pad or use the button below."
 		ownStats.Text = ("%d/%d PLAYERS READY"):format(state.ready or 0, state.capacity or 8)
 		progressFill.Size = UDim2.fromScale(0, 1)
@@ -712,8 +719,9 @@ local function update(state)
 	if phase == "RESULTS" then
 		-- Server sends winner/draw text in state.message; show it only in
 		-- the small status panel and avoid blocking the camera.
-		phaseText.Text = "v0.26 · ROUND OVER"
-		ownStats.Text = "NEXT MATCH STARTS SOON"
+		phaseText.Text = "v0.27 · ROUND OVER"
+		ownStats.Text = state.practiceNoRewards and "PRACTICE · NO WINS / COINS"
+			or "NEXT MATCH STARTS SOON"
 	end
 
 	if voting.Visible and mine then
@@ -748,12 +756,16 @@ local function update(state)
 		currencyChip.Text = ("%dW · %dC"):format(
 			wins and wins.Value or 0, coins and coins.Value or 0)
 		phaseText.Text = phase == "JOIN" and "NEXT MATCH"
-			or ("R%d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
+			or (state.practiceNoRewards and "SOLO · " or ("R%d · "):format(state.turn or 0))
+				.. (phaseNames[phase] or phase)
 		if phase == "JOIN" then
-			ownStats.Text = state.queued and "QUEUED FOR NEXT RACE"
+			ownStats.Text = state.queued
+				and ((state.ready or 0) == 1 and state.liveSoloPractice
+					and "SOLO PRACTICE SOON" or "QUEUED FOR MATCH")
 				or ("%d/%d READY"):format(state.ready or 0, state.capacity or 8)
 		elseif phase == "RESULTS" then
-			ownStats.Text = "ROUND OVER · NEXT SOON"
+			ownStats.Text = state.practiceNoRewards and "PRACTICE · NO REWARDS"
+				or "ROUND OVER · NEXT SOON"
 		elseif mine and not mine.alive then
 			ownStats.Text = "ELIMINATED · SPECTATING"
 		elseif phase == "MOVE" and mine and mine.alive then
