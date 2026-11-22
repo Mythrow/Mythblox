@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-22):** Owner confirms v0.12 works in Studio. **v0.13 coin persistence is owner-confirmed across restarting Studio Play.** Win persistence and a private published-server test remain unverified; release/mobile QA remains pending.
+**Status (2026-11-22):** v0.13 coins survived Studio Play restarts in an owner-confirmed test. **v0.14 adds persistent, coin-only cosmetic glass colors**, committed in source/installer but **not yet tested in Studio**. Saving Wins and private published-server persistence remain unverified.
 
 ## Playtest log
 
@@ -34,6 +34,25 @@
 6. Repeat with 3–4 clients if the two-player flow works.
 
 
+
+## v0.14 — cosmetics purchases, equipment and data regression
+
+- [ ] Stop Play and install the latest [Command Bar installer](INSTALL_STUDIO_COMMAND_BAR.luau) in Edit mode; confirm `v0.14 VERIFIED`, then check HUD shows v0.14.
+- [ ] Approach the **COSMETICS / GLASS COLORS** stall on the right-hand path. The E / touch prompt should appear. Press it and confirm a compact shop opens and closes without adding an always-visible button.
+- [ ] Shop options should show **Classic Blue (free), Candy Pink (20), Mint Pop (40), Soft Violet (60)**. Only four colors; no misleading Robux offer.
+- [ ] With a saved balance of at least 20 coins, buy Candy Pink. Check exactly 20 coins are deducted and the owned/equipped state updates; repeat requests must not charge again.
+- [ ] Start a match after equipping: neutral glass in **your lane** should be pink; allowed green tiles, unsafe red tiles, cracks, and gold finish still use gameplay colors.
+- [ ] Equip Classic Blue and return to Candy Pink. Both should be free after Pink is unlocked; do not buy it a second time.
+- [ ] Stop Play, start again and return to the stall. Confirm equipped/owned cosmetics and the lower coin balance persist in the same Studio test DataStore.
+- [ ] Earn more coins in a match **after** buying a cosmetic. Restart Play and verify the new rewards are saved without erasing ownership.
+- [ ] With too few coins to buy a color, the server should refuse the purchase without reducing balance or unlocking the color.
+- [ ] With Studio API Services off or DataStore loads failing, opening the stall should show **UNAVAILABLE** actions; no purchase should succeed and saved progress should not be overwritten.
+- [ ] Trigger the E prompt while walking away; remote purchases should be rejected when not near the cosmetics stall.
+- [ ] Test 2–3 clients: separate account balances and separate purchased skins, no duplicate or stale UI; spectator and voting HUD remain unobstructed.
+- [ ] Test a narrow/mobile viewport: item list scrolls and shop close button remains usable.
+- [ ] Separately confirm **saved Wins** (still unchecked) and test private published-server persistence. Studio uses a different DataStore than published gameplay.
+
+**Status:** GitHub scripts and installer committed. **Studio visual, purchase and data-retention tests pending.** Do not overwrite existing saved balances by changing the store name.
 
 ## v0.13 — persistent progress and safe failure handling
 
