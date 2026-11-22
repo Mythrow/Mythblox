@@ -5,7 +5,7 @@
 assert(not game:GetService("RunService"):IsRunning(), "Stop the test session before installing.")
 
 local SERVER_SOURCE = [====[
--- Mythblox game-01: Soft Earth Coast v0.30 (server)
+-- Mythblox game-01: Soft Earth Coast v0.31 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -15,7 +15,7 @@ local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
 local DataStoreService = game:GetService("DataStoreService")
 local HttpService = game:GetService("HttpService")
-local BUILD_VERSION = "v0.30"
+local BUILD_VERSION = "v0.31"
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -48,7 +48,7 @@ local THEME = {
 	Ivory = Color3.fromRGB(239, 230, 214),       -- #EFE6D6 warm cream
 	Limestone = Color3.fromRGB(217, 200, 174),   -- #D9C8AE oat beige, small accents
 	Sandstone = Color3.fromRGB(201, 179, 148),   -- #C9B394 soft sand
-	-- v0.30: richer matte colors specifically for large, light-catching
+	-- v0.31: richer matte colors specifically for large, light-catching
 	-- floors, platforms and planters; not a dark filter over the game.
 	PlazaStone = Color3.fromRGB(184, 173, 154),   -- weathered oat
 	DeckStone = Color3.fromRGB(176, 167, 150),    -- shaded stone
@@ -75,7 +75,7 @@ local SKIN_CATALOG = {
 local SKIN_BY_ID = {}
 for _, item in ipairs(SKIN_CATALOG) do SKIN_BY_ID[item.id] = item end
 
--- v0.30: Persist lightweight tutorial and accessibility/audio preferences in
+-- v0.31: Persist lightweight tutorial and accessibility/audio preferences in
 -- the EXISTING player record; do not create separate stores or grant currency.
 local UI_DEFAULTS = {
 	tutorialSeen = false,
@@ -102,7 +102,7 @@ local function glassColorFor(player)
 	return skin and skin.color or GLASS
 end
 local AMBER = Color3.fromRGB(255, 206, 75)
--- v0.30: neutral, soft coastal daylight. Let the deliberately warm
+-- v0.31: neutral, soft coastal daylight. Let the deliberately warm
 -- OAT/WOOD/TERRACOTTA materials carry the earth tones without a yellow
 -- filter across the sky, character, greenery, water, or every surface.
 -- Keep lighting gentle on mobile and preserve the matte material response.
@@ -167,7 +167,7 @@ if not clouds then
 	clouds.Parent = terrain
 end
 clouds.Name = "MythbloxAzureCoastClouds"
--- v0.30: visibly fuller soft coastal cloud cover, not a solid white sky.
+-- v0.31: visibly fuller soft coastal cloud cover, not a solid white sky.
 clouds.Cover = 0.72
 clouds.Density = 0.54
 clouds.Color = Color3.fromRGB(238, 242, 242)
@@ -411,30 +411,21 @@ for _, side in ipairs({-1, 1}) do
 	decorative("LoungeReturnPath", Vector3.new(7, 0.20, 22.5),
 		Vector3.new(side * 67, 24.1, -73.75), THEME.WalkStone, Enum.Material.Pavement)
 end
--- Pale ocean-stone inlays divide the oversized plaza into smaller elegant bays.
-for _, x in ipairs({-27, 27}) do
-	detail("PlazaEdgeChampagne", Vector3.new(0.17, 0.045, 38),
-		Vector3.new(x, 24.42, -83), METAL_TRIM)
-end
-for _, z in ipairs({-101, -66}) do
-	detail("PlazaBorderChampagne", Vector3.new(54, 0.045, 0.17),
-		Vector3.new(0, 24.42, z), METAL_TRIM)
-end
-
--- Inlaid gold guide strips are thin, noncolliding and stop at the join deck.
-for _, x in ipairs({-6.0, 6.0}) do
-	detail("PromenadeInlay", Vector3.new(0.13, 0.04, 38),
-		Vector3.new(x, 24.3, -51.5), METAL_TRIM)
-end
-for _, z in ipairs({-97, -75}) do
-	detail("SpawnPlazaInlay", Vector3.new(48, 0.035, 0.14),
-		Vector3.new(0, 24.43, z), THEME.Sandstone, Enum.Material.Limestone)
+-- v0.31: Simplified embedded paving joints. The prior two sets of
+-- champagne/gold strips sat at slightly different elevations, and the
+-- central-path inlays continued under the raised plaza. Those generated
+-- bright slivers, doubled corners and clipped lines in close-up views.
+-- Use only one narrow, inset line on each plaza side, never floating over
+-- a walkway junction. The rest of the matte paving stays unadorned.
+for _, x in ipairs({-27.65, 27.65}) do
+	detail("PlazaEdgeInlay", Vector3.new(0.12, 0.025, 38),
+		Vector3.new(x, 24.407, -83), THEME.Terracotta, Enum.Material.Wood)
 end
 
--- v0.30: Fence the ENTIRE lobby perimeter. The previous opening for
--- long spectator paths is closed; the central deck remains the waiting area.
--- These tall safety limits remain behind VISIBLE, collidable fence panels.
--- They stop map escapes, but never change humanoid walking or jumping.
+-- v0.31: OPEN timber-and-stone fencing, rather than sheets of glass
+-- around the outer edge. Keep one see-through glass pane at the CENTRAL
+-- spectator deck only. Tall invisible collision blockers immediately beyond
+-- the fence prevent jumping out; walking/jumping inside remains untouched.
 local function invisibleBoundary(name, size, position)
 	local wall = part(name, size, position, DEEP_NAVY, Enum.Material.SmoothPlastic, hub)
 	wall.Transparency = 1
@@ -443,46 +434,56 @@ local function invisibleBoundary(name, size, position)
 	wall.CastShadow = false
 	return wall
 end
-invisibleBoundary("HubWestSafetyLimit", Vector3.new(1.5, 19, 124), Vector3.new(-93.2, 33, -71))
-invisibleBoundary("HubEastSafetyLimit", Vector3.new(1.5, 19, 124), Vector3.new(93.2, 33, -71))
-invisibleBoundary("HubBackSafetyLimit", Vector3.new(186, 19, 1.5), Vector3.new(0, 33, -133.2))
-for _, side in ipairs({-1, 1}) do
-	-- Close the old +/-49 spectator promenade entrances at the front.
-	invisibleBoundary("HubFrontSafetyLimit", Vector3.new(48, 19, 1.5),
-		Vector3.new(side * 69, 33, -9.1))
-end
+-- The same four invisible limits meet at their corners: no open slit left
+-- behind a post. Bottom=23, top=45, taller than a Roblox character's jump.
+invisibleBoundary("HubWestSafetyLimit", Vector3.new(1.4, 22, 122),
+	Vector3.new(-91.3, 34, -71))
+invisibleBoundary("HubEastSafetyLimit", Vector3.new(1.4, 22, 122),
+	Vector3.new(91.3, 34, -71))
+invisibleBoundary("HubBackSafetyLimit", Vector3.new(184, 22, 1.4),
+	Vector3.new(0, 34, -131.1))
+invisibleBoundary("HubFrontSafetyLimit", Vector3.new(184, 22, 1.4),
+	Vector3.new(0, 34, -9.65))
 
 local function fenceGlass(name, size, position)
+	-- Central glass is the spectator window facing the bridge, not a
+	-- perimeter material for the island ends.
 	local pane = solidDetail(name, size, position, THEME.Foam, Enum.Material.Glass)
 	pane.Transparency = 0.47
 	pane.Reflectance = 0
 	pane.CanTouch = false
 	return pane
 end
--- Side and rear panes visually explain where collision begins.
--- They overlap at the corners, with no ghost gap or walk-through fence.
+local function fencePost(name, x, z)
+	local post = solidDetail(name, Vector3.new(0.95, 4.85, 0.95),
+		Vector3.new(x, 26.425, z), THEME.PlanterStone, Enum.Material.Concrete)
+	-- Restrained timber caps, embedded in the post rather than floating.
+	detail("FencePostCap", Vector3.new(1.17, 0.16, 1.17),
+		Vector3.new(x, 28.87, z), THEME.Wood, Enum.Material.WoodPlanks)
+	return post
+end
+local function fenceRail(name, size, position)
+	return solidDetail(name, size, position, THEME.Brown, Enum.Material.WoodPlanks)
+end
+-- Sides: a single row of posts reaches both front and rear corners.
+-- Rails are aligned at two shared heights, so the corner joints are clean.
 for _, side in ipairs({-1, 1}) do
-	fenceGlass("HubSideFenceGlass", Vector3.new(0.6, 8.5, 123),
-		Vector3.new(side * 91.5, 28.4, -71))
-	for _, z in ipairs({-122, -103, -84, -65, -46, -27, -11}) do
-		solidDetail("CoastPerimeterPier", Vector3.new(1.15, 4.6, 1.15),
-			Vector3.new(side * 90, 26.3, z), THEME.PlanterStone, Enum.Material.Concrete)
-		detail("PerimeterPostCap", Vector3.new(1.5, 0.18, 1.5),
-			Vector3.new(side * 90, 28.72, z), METAL_TRIM)
+	for _, z in ipairs({-129.8, -109.8, -89.8, -69.8, -49.8, -29.8, -10.25}) do
+		fencePost("SideFencePost", side * 90, z)
 	end
-	solidDetail("CoastPerimeterTealRail", Vector3.new(0.28, 0.25, 120),
-		Vector3.new(side * 90, 27.6, -71), DEEP_NAVY)
+	for _, y in ipairs({26.35, 28.5}) do
+		fenceRail("HubSideFenceRail", Vector3.new(0.27, 0.25, 119.55),
+			Vector3.new(side * 90, y, -70.025))
+	end
 end
-fenceGlass("HubBackFenceGlass", Vector3.new(184, 8.5, 0.6),
-	Vector3.new(0, 28.4, -131.5))
-for x = -81, 81, 18 do
-	solidDetail("BackPromenadePier", Vector3.new(1.15, 4.6, 1.15),
-		Vector3.new(x, 26.3, -129.8), THEME.PlanterStone, Enum.Material.Concrete)
-	detail("BackPierCap", Vector3.new(1.4, 0.18, 1.4),
-		Vector3.new(x, 28.72, -129.8), METAL_TRIM)
+-- Rear, between the existing corner posts. No large reflective sheet.
+for x = -72, 72, 18 do
+	fencePost("RearFencePost", x, -129.8)
 end
-solidDetail("BackPromenadeBrassRail", Vector3.new(180, 0.25, 0.28),
-	Vector3.new(0, 27.6, -129.8), DEEP_NAVY)
+for _, y in ipairs({26.35, 28.5}) do
+	fenceRail("HubRearFenceRail", Vector3.new(180, 0.25, 0.27),
+		Vector3.new(0, y, -129.8))
+end
 
 -- The ENTIRE 90 x 24 stud front deck is the auto-join waiting zone,
 -- not a single button/gold pad. It also serves as the spectator deck.
@@ -493,20 +494,14 @@ local sharedDeck = decorative(
 	Vector3.new(0, 24.05, -22),
 	THEME.DeckStone, Enum.Material.Concrete
 )
--- Thin perimeter binding prevents the spectator stage looking like a slab.
-for _, edge in ipairs({-1, 1}) do
-	detail("DeckSideBrassTrim", Vector3.new(0.16, 0.14, 24),
-		Vector3.new(edge * 44.85, 24.65, -22), METAL_TRIM)
-end
-detail("DeckFrontBrassTrim", Vector3.new(89.8, 0.14, 0.16),
-	Vector3.new(0, 24.65, -9.97), METAL_TRIM)
--- Thin, low-profile trim outlines the full waiting row. No central gold
--- pad, ProximityPrompt, or client JOIN click is needed.
-detail("JoinZoneBackEdge", Vector3.new(89.2, 0.055, 0.18),
-	Vector3.new(0, 24.58, -33.9), THEME.Terracotta, Enum.Material.Wood)
+-- Only one set of inset markings defines the full auto-join row.
+-- The previous brass and terracotta layers overlapped at the corners and
+-- some were suspended above the slab. The front fence is the fourth edge.
+detail("JoinZoneBackEdge", Vector3.new(89.4, 0.04, 0.16),
+	Vector3.new(0, 24.565, -33.82), THEME.Terracotta, Enum.Material.Wood)
 for _, side in ipairs({-1, 1}) do
-	detail("JoinZoneSideEdge", Vector3.new(0.18, 0.055, 23.6),
-		Vector3.new(side * 44.9, 24.58, -22), THEME.Terracotta, Enum.Material.Wood)
+	detail("JoinZoneSideEdge", Vector3.new(0.16, 0.04, 23.45),
+		Vector3.new(side * 44.81, 24.565, -22.01), THEME.Terracotta, Enum.Material.Wood)
 end
 
 -- Anchor the overhead join sign to the deck. The old floating panel
@@ -526,19 +521,24 @@ sharedDeckSignAnchor.CanCollide = false
 local deckSignGui = textSign(sharedDeckSignAnchor, "JOIN NEXT ROUND", 3, 310)
 local deckSignText = deckSignGui:FindFirstChildOfClass("TextLabel")
 
--- The entire front edge now has a continuous, *visible* physical fence.
--- The short spectator platform ends at z=-10; there are no 95-stud side
--- runways out toward the bridge finish. Center and side panes meet at x=45.
+-- The bridge-facing center keeps its transparent spectator window;
+-- the left/right END sections use only the same open two-rail fence as the
+-- rest of the island, backed by HubFrontSafetyLimit (22 studs high).
 local barrier = fenceGlass("FrontSpectatorGlassBarrier",
 	Vector3.new(90, 8.5, 0.45), Vector3.new(0, 28.8, -10.25))
 for _, side in ipairs({-1, 1}) do
-	fenceGlass("FrontSideFenceGlass", Vector3.new(48.2, 8.5, 0.45),
-		Vector3.new(side * 69.05, 28.8, -10.25))
-	solidDetail("FrontFenceCornerPost", Vector3.new(1.0, 7.9, 1.0),
-		Vector3.new(side * 45, 28.45, -10.25), THEME.Brown, Enum.Material.Wood)
-	detail("FrontFenceCap", Vector3.new(48, 0.18, 0.65),
-		Vector3.new(side * 69, 33.14, -10.25), METAL_TRIM, Enum.Material.Wood)
+	-- The side-corner post already exists at +/-90. Do not duplicate it.
+	for _, x in ipairs({45, 60, 75}) do
+		fencePost("FrontFencePost", side * x, -10.25)
+	end
+	for _, y in ipairs({26.35, 28.5}) do
+		fenceRail("FrontSideFenceRail", Vector3.new(45, 0.25, 0.27),
+			Vector3.new(side * 67.5, y, -10.25))
+	end
 end
+-- There are no front SIDE glass sheets, and the invisible continuous wall
+-- stops high jumps across both open fence ends and the center window.
+
 -- Only the physical fence separates the lobby and race. Keep jumps and
 -- navigation unrestricted *inside* the deck and lobby.
 
@@ -646,17 +646,22 @@ local function makeStall(name, x, z, roofColor, line1, line2)
 	local cosmetics = name == "RightCosmeticsShop"
 	local floor = part("DisplayFloor", Vector3.new(17, 0.6, 14),
 		Vector3.new(x, 24.325, z), THEME.PlazaStone, Enum.Material.Concrete, group)
-	local back = part("BackWall", Vector3.new(17, 8.0, 1),
+	-- Matte timber rear wall fully meets floor and roof, unlike the prior
+-- free-standing-looking smooth metal slab with a top gap.
+	local back = part("BackWall", Vector3.new(17, 8.3, 1),
 		Vector3.new(x, 28.4, z + 6),
-		THEME.Brown, Enum.Material.Metal, group)
+		THEME.Brown, Enum.Material.WoodPlanks, group)
 	for _, side in ipairs({-1, 1}) do
 		-- Solid lower side and window glass enclose the shop without making
 		-- the kiosk opaque. Service remains through the FRONT counter only.
-		part("EnclosedShopSideWall", Vector3.new(0.8, 3.5, 12.4),
-			Vector3.new(x + side * 8.1, 26.4, z),
+		-- Side masonry ends where the back wall starts (z+5.5), and the
+		-- window begins precisely at the masonry top (y=28.2): no
+		-- overlapping glass/concrete bands or flickering corner slivers.
+		part("EnclosedShopSideWall", Vector3.new(0.8, 3.9, 11.66),
+			Vector3.new(x + side * 8.1, 26.25, z - 0.33),
 			THEME.PlanterStone, Enum.Material.Concrete, group)
-		local window = part("ShopSideGlassWindow", Vector3.new(0.35, 4.4, 12.2),
-			Vector3.new(x + side * 8.1, 30.1, z),
+		local window = part("ShopSideGlassWindow", Vector3.new(0.35, 4.35, 11.66),
+			Vector3.new(x + side * 8.1, 30.375, z - 0.33),
 			THEME.Foam, Enum.Material.Glass, group)
 		window.Transparency = 0.35
 		part("FrontShopPost", Vector3.new(1.1, 7.7, 1.1),
@@ -691,13 +696,10 @@ local function makeStall(name, x, z, roofColor, line1, line2)
 	local roof = part("ColorfulRoof", Vector3.new(19, 1.3, 17),
 		Vector3.new(x, 33.2, z), roofColor, Enum.Material.SmoothPlastic, group)
 	roof.Reflectance = 0
-	detail("RoofFrontBrassCornice", Vector3.new(19.2, 0.21, 0.55),
-		Vector3.new(x, 32.6, z - 8.45), THEME.Wood, Enum.Material.Metal, group)
-	for _, side in ipairs({-1, 1}) do
-		detail("RoofSideBrassCornice", Vector3.new(0.24, 0.18, 17),
-			Vector3.new(x + side * 9.5, 32.62, z), THEME.Wood,
-			Enum.Material.Metal, group)
-	end
+	-- One continuous front cornice instead of three overlapping edge strips
+	-- that fought at each roof corner. Side edges are clean roof material.
+	detail("RoofFrontWoodCornice", Vector3.new(18.85, 0.14, 0.33),
+		Vector3.new(x, 32.55, z - 8.43), THEME.Wood, Enum.Material.WoodPlanks, group)
 	detail("ServiceWindowHeader", Vector3.new(15.4, 0.38, 0.45),
 		Vector3.new(x, 32.25, z - 5.9), THEME.Wood, Enum.Material.Metal, group)
 	local light = Instance.new("PointLight")
@@ -759,7 +761,7 @@ cosmeticsPrompt.RequiresLineOfSight = false
 cosmeticsPrompt.MaxActivationDistance = 12
 cosmeticsPrompt.Parent = cosmeticsDesk
 
--- v0.30: The giant blank BACK of the leaderboard and a nearby lamp
+-- v0.31: The giant blank BACK of the leaderboard and a nearby lamp
 -- previously overlapped at the plaza edge. Keep the board completely
 -- outside the main plaza and make BOTH faces readable at normal scale.
 local boardPost = decorative(
@@ -876,12 +878,13 @@ local function refreshSessionLeaderboard()
 		otherBoardRows[i].Text = rows[i]
 	end
 end
-local rewardsBase = decorative("FutureRewardsPodium", Vector3.new(12, 1.5, 10),
-	Vector3.new(-33, 24.75, -82), METAL_TRIM, Enum.Material.Metal)
--- The rewards placard now visibly rests on the podium instead of floating.
+-- The sign is mounted directly on two real ground-to-board timber posts.
+-- Removing the old 12x10 metal pedestal clears the path and the screenshots'
+-- unwanted block. The board underside is y=28.325 and grass top is y=24.
 for _, offset in ipairs({-4.3, 4.3}) do
-	solidDetail("RewardSignSupport", Vector3.new(0.48, 3.0, 0.48),
-		Vector3.new(-33 + offset, 26.95, -82), THEME.Wood, Enum.Material.WoodPlanks)
+	solidDetail("RewardSignSupport", Vector3.new(0.62, 4.36, 0.62),
+		Vector3.new(-33 + offset, 26.18, -82),
+		THEME.Wood, Enum.Material.WoodPlanks)
 end
 local rewardSign = decorative("FutureRewardsSignAnchor", Vector3.new(1, 1, 1), Vector3.new(-33, 27, -82), WHITE)
 rewardSign.CanCollide = false
@@ -1094,8 +1097,10 @@ end
 -- Earlier x=+/-34 at z=-83 interpenetrated both display structures.
 for _, pair in ipairs({
 	{-47, -79}, {47, -79},
-	{-12, -64}, {12, -64},
-	{-12, -34}, {12, -34},
+	-- Former +/-12, -64 lamps sat across the stone/grass transition.
+	-- Former +/-12, -34 lamps were half inside the JOIN deck.
+	{-38, -63}, {38, -63},
+	{-16, -39}, {16, -39},
 	{-79, -91}, {79, -91},
 }) do resortLamp(pair[1], pair[2]) end
 
@@ -2676,7 +2681,7 @@ local function scoreMatch(winners, participants)
 			awardProgress(player, awarded[player] and 1 or 0, awarded[player] and 25 or 5)
 		end
 	end
-	-- v0.30: Save match rewards immediately after a round finishes, while
+	-- v0.31: Save match rewards immediately after a round finishes, while
 	-- retaining autosave, exit and shutdown fallback attempts.
 	-- saveProfile uses stable reward-batch IDs and per-player write locks
 	-- so overlapping attempts do not double-award a completed round.
@@ -2813,13 +2818,13 @@ end
 ]====]
 
 local CLIENT_SOURCE = [====[
--- Mythblox Game 01 · Soft Earth Coast mobile UI v0.30
+-- Mythblox Game 01 · Soft Earth Coast mobile UI v0.31
 -- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
-local BUILD_VERSION = "v0.30"
+local BUILD_VERSION = "v0.31"
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local network = ReplicatedStorage:WaitForChild("MythbloxGame01")
@@ -3117,7 +3122,7 @@ end
 -- Results appear in the compact top status strip instead of a centered
 -- modal. The arena and other players remain visible when a match ends.
 
--- v0.30: Secret selections are never displayed to others while voting.
+-- v0.31: Secret selections are never displayed to others while voting.
 -- ONLY during the five-second REVEAL do five non-clickable results cards
 -- show every numbered choice, picking players' avatars, totals, and safety.
 -- The existing teal voting buttons remain PRIVATE selection controls.
@@ -3362,7 +3367,7 @@ shopEvent.OnClientEvent:Connect(function(kind, details, message)
 	end
 end)
 
--- v0.30: Seven lightweight UI capabilities, each with independent
+-- v0.31: Seven lightweight UI capabilities, each with independent
 -- visibility and no changes to humanoid movement or bridge rules.
 local lobbyMenu = Instance.new("Frame")
 lobbyMenu.Name = "LobbyMenu"
@@ -3737,7 +3742,7 @@ layoutForViewport = function()
 	if compact then feedback.Visible = false end
 	local shortScreen = height < 570
 
-	-- v0.30: phone status is smaller, at the TOP RIGHT of the core-UI safe
+	-- v0.31: phone status is smaller, at the TOP RIGHT of the core-UI safe
 	-- area rather than a wide center banner obscuring the avatar/camera.
 	-- Never put it above Roblox's native safe-area inset.
 	local topW = compact and math.min(270, math.max(180, width - 110))
@@ -3793,7 +3798,7 @@ layoutForViewport = function()
 	shop.AnchorPoint = compact and Vector2.new(0.5, 0.5) or Vector2.new(1, 0.5)
 	shop.Position = compact and UDim2.new(0.5, 0, 0.56, 0) or UDim2.new(1, -18, 0.54, 0)
 
-	-- v0.30: Omit the unnecessary red/green legend and reclaim its 16–18px.
+	-- v0.31: Omit the unnecessary red/green legend and reclaim its 16–18px.
 	-- Avatar grids, vote totals, numbered SAFE/BLOCKED cards and five-second
 	-- server reveal duration are unchanged. The phone tray obscures less play.
 	local revealW = math.min(width - 18, compact and 560 or 780)
@@ -3948,7 +3953,7 @@ local function update(state)
 	if phase == "JOIN" or phase == "VOTE" then
 		lastTurnRendered = -1
 	end
-	phaseText.Text = ("v0.30 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
+	phaseText.Text = ("v0.31 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
 	clockText.Text = tostring(state.time or 0) .. "s"
 	clockText.TextColor3 = phase == "VOTE" and (state.time or 0) <= 2 and COLOR.Red or COLOR.Purple
 	description.Text = state.message or ""
@@ -3958,7 +3963,7 @@ local function update(state)
 	if voting.Visible then shop.Visible = false end
 
 	if phase == "JOIN" then
-		phaseText.Text = "v0.30 · JOIN ZONE"
+		phaseText.Text = "v0.31 · JOIN ZONE"
 		description.Text = state.queued
 			and ((state.ready or 0) == 1 and state.liveSoloPractice
 				and "In zone · stay for solo practice (no rewards)."
@@ -3980,7 +3985,7 @@ local function update(state)
 	if phase == "RESULTS" then
 		-- Server sends winner/draw text in state.message; show it only in
 		-- the small status panel and avoid blocking the camera.
-		phaseText.Text = "v0.30 · ROUND OVER"
+		phaseText.Text = "v0.31 · ROUND OVER"
 		ownStats.Text = state.practiceNoRewards and "PRACTICE · NO WINS / COINS"
 			or "NEXT MATCH STARTS SOON"
 	end
@@ -4185,7 +4190,7 @@ command:FireServer("Sync")
 command:FireServer("Inventory")
 ]====]
 
--- Diagnostic/cleanup installer: v0.30
+-- Diagnostic/cleanup installer: v0.31
 -- Remove known legacy copies from services used by previous Mythblox builds.
 -- This intentionally does NOT remove scripts belonging to other games.
 -- Permanently remove the UNUSED default Roblox Baseplate spawn while in
@@ -4204,7 +4209,7 @@ for _, obj in ipairs(workspace:GetDescendants()) do
 end
 print("[Mythblox INSTALL] Removed " .. defaultSpawnsRemoved .. " unused Baseplate spawn(s).")
 
--- v0.30: the actual stock baseplate (not only its spawn marker) is a giant
+-- v0.31: the actual stock baseplate (not only its spawn marker) is a giant
 -- low-altitude part that remains visible through the decorative ocean.
 -- Remove ONLY a low, large, directly parented part named Baseplate.
 local baseplatesRemoved = 0
@@ -4286,12 +4291,12 @@ for _, child in ipairs(game:GetDescendants()) do
 	end
 end
 
-print("[Mythblox INSTALL] v0.30 VERIFIED: 2 scripts installed and Source checked.")
-print("[Mythblox INSTALL] Server: " .. liveServer:GetFullName() .. " | Build v0.30")
-print("[Mythblox INSTALL] Client: " .. liveClient:GetFullName() .. " | Build v0.30")
+print("[Mythblox INSTALL] v0.31 VERIFIED: 2 scripts installed and Source checked.")
+print("[Mythblox INSTALL] Server: " .. liveServer:GetFullName() .. " | Build v0.31")
+print("[Mythblox INSTALL] Client: " .. liveClient:GetFullName() .. " | Build v0.31")
 print("[Mythblox INSTALL] Cleaned " .. #removed .. " previous Mythblox script/UI objects.")
 print("[Mythblox INSTALL] Disabled " .. #disabledLegacy .. " other old game scripts found by source signature.")
 if #suspicious > 0 then
 	warn("[Mythblox INSTALL] Other Mythblox scripts still exist: " .. table.concat(suspicious, "; "))
 end
-print("[Mythblox INSTALL] NOW START A FRESH PLAY SESSION. Confirm the top HUD visibly says v0.30, and check Output for SERVER RUNNING v0.30 and CLIENT RUNNING v0.30.")
+print("[Mythblox INSTALL] NOW START A FRESH PLAY SESSION. Confirm the top HUD visibly says v0.31, and check Output for SERVER RUNNING v0.31 and CLIENT RUNNING v0.31.")
