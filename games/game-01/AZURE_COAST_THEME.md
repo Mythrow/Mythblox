@@ -1,6 +1,6 @@
 # Soft Earth Coast — Game 01 art direction (palette v0.22; daylight v0.24; matte sky/world v0.25)
 
-**Status:** **v0.29** keeps the soft-earth materials, neutral daylight and cloud density while converting the **entire short front deck** into a stand-to-join zone. Removed long parallel-to-bridge spectator catwalks, installed a continuous translucent physical front/side/rear fence, strengthened major collision props and added a small separate Coins/Wins wallet. Future styling changes must preserve the clear central viewing corridor and prevent edge bypass. Studio and phone QA pending.
+**Status:** **v0.30** retains the muted soft-earth world and v0.29 whole-row auto-join/lobby fencing, while adding the owner-approved tutorial, race HUD, compact results, spectator camera controls, owned-color inventory, accessibility/audio preferences and reward toasts. The 43px mobile phase strip and separate Coins/Wins wallet remain. Avoid stacking permanent overlays over voting or the five-number reveal; all modal/help cards should be skippable/closable and touch movement must stay usable. Roblox device QA pending.
 
 ## Creative direction
 
