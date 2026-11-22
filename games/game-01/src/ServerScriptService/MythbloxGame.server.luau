@@ -1,4 +1,4 @@
--- Mythblox game-01: glass bridge race v0.18 (server)
+-- Mythblox game-01: glass bridge race v0.19 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -8,7 +8,7 @@ local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
 local DataStoreService = game:GetService("DataStoreService")
 local HttpService = game:GetService("HttpService")
-local BUILD_VERSION = "v0.18"
+local BUILD_VERSION = "v0.19"
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -1047,13 +1047,31 @@ local function eliminate(player, reason, tileToBreak)
 	info.alive = false
 	info.elimination = reason
 	info.allowed = 0
-	keepMovementEnabled(player)
+	-- The attempted step and the last supporting glass must actually break.
+	-- Do not recolor intact glass or reveal which other panels are safe.
 	if tileToBreak then shatter(tileToBreak, true) end
-	-- Remove their supporting panel too, so an invalid step always causes a visible fall.
-	local standingTile = lanes[info.lane].tiles[info.index]
-	if standingTile ~= tileToBreak then shatter(standingTile, true) end
+	local lane = lanes[info.lane]
+	local standingTile = lane and lane.tiles[info.index]
+	if standingTile and standingTile ~= tileToBreak then
+		shatter(standingTile, true)
+	end
 	message = player.DisplayName .. " fell! (" .. reason .. ")"
+	print(("[Mythblox RACE] ELIMINATED %s: %s"):format(player.Name, reason))
 	if publish then publish() end
+
+	-- v0.18 regression fix: simply setting alive=false was not enough once
+	-- free walking/jumping was allowed. The character could keep running on
+	-- untouched panels because only alive racers are validated. Let the
+	-- shatter play briefly, then trigger the ordinary lobby respawn.
+	local character = player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if humanoid and humanoid.Health > 0 then
+		task.delay(0.2, function()
+			if player.Character == character and humanoid.Parent and humanoid.Health > 0 then
+				humanoid.Health = 0
+			end
+		end)
+	end
 end
 
 local function crack(player)
