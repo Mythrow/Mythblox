@@ -5,7 +5,7 @@
 assert(not game:GetService("RunService"):IsRunning(), "Stop the test session before installing.")
 
 local SERVER_SOURCE = [====[
--- Mythblox game-01: Soft Earth Coast v0.24 (server)
+-- Mythblox game-01: Soft Earth Coast v0.25 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -15,7 +15,7 @@ local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
 local DataStoreService = game:GetService("DataStoreService")
 local HttpService = game:GetService("HttpService")
-local BUILD_VERSION = "v0.24"
+local BUILD_VERSION = "v0.25"
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -43,8 +43,14 @@ local SETTINGS = {
 -- are functional exceptions that must keep their existing behavior.
 local THEME = {
 	Ivory = Color3.fromRGB(239, 230, 214),       -- #EFE6D6 warm cream
-	Limestone = Color3.fromRGB(217, 200, 174),   -- #D9C8AE oat beige
+	Limestone = Color3.fromRGB(217, 200, 174),   -- #D9C8AE oat beige, small accents
 	Sandstone = Color3.fromRGB(201, 179, 148),   -- #C9B394 soft sand
+	-- v0.25: richer matte colors specifically for large, light-catching
+	-- floors, platforms and planters; not a dark filter over the game.
+	PlazaStone = Color3.fromRGB(184, 173, 154),   -- weathered oat
+	DeckStone = Color3.fromRGB(176, 167, 150),    -- shaded stone
+	WalkStone = Color3.fromRGB(191, 178, 158),    -- sandy stone
+	PlanterStone = Color3.fromRGB(175, 171, 157), -- muted stone gray
 	Sage = Color3.fromRGB(168, 179, 157),        -- #A8B39D muted sage
 	Terracotta = Color3.fromRGB(185, 137, 115), -- #B98973 soft clay
 	Rose = Color3.fromRGB(199, 159, 154),        -- #C79F9A dusty rose
@@ -71,7 +77,7 @@ local function glassColorFor(player)
 	return skin and skin.color or GLASS
 end
 local AMBER = Color3.fromRGB(255, 206, 75)
--- v0.24: neutral, soft coastal daylight. Let the deliberately warm
+-- v0.25: neutral, soft coastal daylight. Let the deliberately warm
 -- OAT/WOOD/TERRACOTTA materials carry the earth tones without a yellow
 -- filter across the sky, character, greenery, water, or every surface.
 -- Keep lighting gentle on mobile and preserve the matte material response.
@@ -136,8 +142,9 @@ if not clouds then
 	clouds.Parent = terrain
 end
 clouds.Name = "MythbloxAzureCoastClouds"
-clouds.Cover = 0.39
-clouds.Density = 0.35
+-- v0.25: visibly fuller soft coastal cloud cover, not a solid white sky.
+clouds.Cover = 0.72
+clouds.Density = 0.54
 clouds.Color = Color3.fromRGB(238, 242, 242)
 clouds.Enabled = true
 terrain.WaterColor = THEME.Ocean
@@ -360,16 +367,18 @@ local islandStone = decorative(
 	Vector3.new(0, 8, -71), THEME.Stone, Enum.Material.Rock
 )
 local ground = decorative("HubGrassIsland", Vector3.new(186, 4, 124), Vector3.new(0, 22, -71), GRASS, Enum.Material.Grass)
-local plaza = decorative("SpawnPlaza", Vector3.new(56, 0.4, 39), Vector3.new(0, 24.2, -83), THEME.Limestone, Enum.Material.Sandstone)
-local path = decorative("MainWalkPath", Vector3.new(13, 0.25, 39), Vector3.new(0, 24.14, -51.5), THEME.Sandstone, Enum.Material.Pavement)
-local spurLeft = decorative("LeftShopPath", Vector3.new(27, 0.22, 7), Vector3.new(-19, 24.13, -48), THEME.Sandstone, Enum.Material.Pavement)
-local spurRight = decorative("RightShopPath", Vector3.new(27, 0.22, 7), Vector3.new(19, 24.13, -48), THEME.Sandstone, Enum.Material.Pavement)
+-- Matte concrete absorbs visual glare better than pale limestone/sandstone
+-- on broad, sun-facing surfaces. Narrow paths keep quiet paving texture.
+local plaza = decorative("SpawnPlaza", Vector3.new(56, 0.4, 39), Vector3.new(0, 24.2, -83), THEME.PlazaStone, Enum.Material.Concrete)
+local path = decorative("MainWalkPath", Vector3.new(13, 0.25, 39), Vector3.new(0, 24.14, -51.5), THEME.WalkStone, Enum.Material.Pavement)
+local spurLeft = decorative("LeftShopPath", Vector3.new(27, 0.22, 7), Vector3.new(-19, 24.13, -48), THEME.WalkStone, Enum.Material.Pavement)
+local spurRight = decorative("RightShopPath", Vector3.new(27, 0.22, 7), Vector3.new(19, 24.13, -48), THEME.WalkStone, Enum.Material.Pavement)
 -- Additional social/gallery paths stay behind the original game-facing deck.
 for _, side in ipairs({-1, 1}) do
 	decorative("WestEastLoungePath", Vector3.new(57, 0.20, 6),
-		Vector3.new(side * 56, 24.1, -88), THEME.Limestone, Enum.Material.Sandstone)
+		Vector3.new(side * 56, 24.1, -88), THEME.WalkStone, Enum.Material.Pavement)
 	decorative("LoungeReturnPath", Vector3.new(7, 0.20, 25),
-		Vector3.new(side * 67, 24.1, -75), THEME.Limestone, Enum.Material.Sandstone)
+		Vector3.new(side * 67, 24.1, -75), THEME.WalkStone, Enum.Material.Pavement)
 end
 -- Pale ocean-stone inlays divide the oversized plaza into smaller elegant bays.
 for _, x in ipairs({-27, 27}) do
@@ -413,7 +422,7 @@ end
 for _, side in ipairs({-1, 1}) do
 	for _, z in ipairs({-122, -103, -84, -65, -46, -27}) do
 		detail("CoastPerimeterPier", Vector3.new(1.15, 4.6, 1.15),
-			Vector3.new(side * 90, 26.3, z), THEME.Limestone, Enum.Material.Limestone)
+			Vector3.new(side * 90, 26.3, z), THEME.PlanterStone, Enum.Material.Concrete)
 		detail("PerimeterPostCap", Vector3.new(1.5, 0.18, 1.5),
 			Vector3.new(side * 90, 28.72, z), METAL_TRIM)
 	end
@@ -422,7 +431,7 @@ for _, side in ipairs({-1, 1}) do
 end
 for x = -81, 81, 18 do
 	detail("BackPromenadePier", Vector3.new(1.15, 4.6, 1.15),
-		Vector3.new(x, 26.3, -129.8), THEME.Limestone, Enum.Material.Limestone)
+		Vector3.new(x, 26.3, -129.8), THEME.PlanterStone, Enum.Material.Concrete)
 	detail("BackPierCap", Vector3.new(1.4, 0.18, 1.4),
 		Vector3.new(x, 28.72, -129.8), METAL_TRIM)
 end
@@ -435,7 +444,7 @@ local sharedDeck = decorative(
 	"SharedReadyAndSpectatorDeck",
 	Vector3.new(90, 1, 24),
 	Vector3.new(0, 24.05, -22),
-	THEME.Ivory, Enum.Material.Limestone
+	THEME.DeckStone, Enum.Material.Concrete
 )
 -- Thin perimeter binding prevents the spectator stage looking like a slab.
 for _, edge in ipairs({-1, 1}) do
@@ -490,13 +499,13 @@ local function makePromenade(side)
 		side < 0 and "LeftSpectatorWalkway" or "RightSpectatorWalkway",
 		Vector3.new(9, 1, 95),
 		Vector3.new(x, 24.05, 22.5),
-		THEME.Limestone, Enum.Material.Limestone
+		THEME.DeckStone, Enum.Material.Concrete
 	)
 	local connector = decorative(
 		side < 0 and "LeftSpectatorConnector" or "RightSpectatorConnector",
 		Vector3.new(12, 1, 15),
 		Vector3.new(side * 44, 24.05, -17.5),
-		THEME.Limestone, Enum.Material.Limestone
+		THEME.DeckStone, Enum.Material.Concrete
 	)
 	local inner = decorative(
 		"InnerViewingSafetyGlass",
@@ -540,8 +549,11 @@ lobby.Anchored = true
 lobby.Size = Vector3.new(18, 0.4, 13)
 lobby.Position = Vector3.new(0, 24.5, -76)
 lobby.Material = Enum.Material.SmoothPlastic
-lobby.Color = CREAM
-lobby.Transparency = 0.4
+lobby.Color = THEME.DeckStone
+-- The stock-looking bright rectangular spawn pad was visually visible
+-- above the plaza; preserve spawning/collision but hide only its rendering.
+lobby.Transparency = 1
+lobby.CastShadow = false
 lobby.Parent = hub
 
 -- Azure Coast staffed service kiosks. The original stalls only had a
@@ -628,7 +640,7 @@ local function makeStall(name, x, z, roofColor, line1, line2)
 	group.Parent = hub
 	local cosmetics = name == "RightCosmeticsShop"
 	local floor = part("DisplayFloor", Vector3.new(17, 0.6, 14),
-		Vector3.new(x, 24.4, z), THEME.Limestone, Enum.Material.Sandstone, group)
+		Vector3.new(x, 24.4, z), THEME.PlazaStone, Enum.Material.Concrete, group)
 	local back = part("BackWall", Vector3.new(17, 8.0, 1),
 		Vector3.new(x, 28.4, z + 6),
 		THEME.Brown, Enum.Material.Metal, group)
@@ -637,7 +649,7 @@ local function makeStall(name, x, z, roofColor, line1, line2)
 		-- the kiosk opaque. Service remains through the FRONT counter only.
 		part("EnclosedShopSideWall", Vector3.new(0.8, 3.5, 12.4),
 			Vector3.new(x + side * 8.1, 26.4, z),
-			THEME.Limestone, Enum.Material.Limestone, group)
+			THEME.PlanterStone, Enum.Material.Concrete, group)
 		local window = part("ShopSideGlassWindow", Vector3.new(0.35, 4.4, 12.2),
 			Vector3.new(x + side * 8.1, 30.1, z),
 			THEME.Foam, Enum.Material.Glass, group)
@@ -657,7 +669,7 @@ local function makeStall(name, x, z, roofColor, line1, line2)
 		THEME.Brown, Enum.Material.Metal, group)
 	local deskTop = part("ServiceCounterTop", Vector3.new(16.3, 0.46, 2.05),
 		Vector3.new(x, 27.55, z - 5.5),
-		THEME.Limestone, Enum.Material.Limestone, group)
+		THEME.PlanterStone, Enum.Material.Concrete, group)
 	detail("CounterFrontGoldLip", Vector3.new(16.4, 0.2, 0.21),
 		Vector3.new(x, 27.78, z - 6.48),
 		THEME.Wood, Enum.Material.Metal, group)
@@ -722,7 +734,7 @@ end
 for _, side in ipairs({-1, 1}) do
 	decorative("ShopFrontAccessWalk", Vector3.new(28.8, 0.22, 5.8),
 		Vector3.new(side * 21, 24.14, -59.7),
-		THEME.Sandstone, Enum.Material.Sandstone)
+		THEME.WalkStone, Enum.Material.Pavement)
 end
 makeStall("LeftShopComingSoon", -25, -49, ROOF_BLUE, "SHOP", "COMING SOON")
 local cosmeticsStall = makeStall("RightCosmeticsShop", 25, -49,
@@ -895,7 +907,7 @@ end
 -- A landscaped central arrival courtyard, behind the original spawn. Its
 -- focal point is decorative and cannot obstruct the actual race path.
 decorative("FountainApproach", Vector3.new(10, 0.17, 19),
-	Vector3.new(0, 24.11, -109), CREAM, Enum.Material.Limestone)
+	Vector3.new(0, 24.11, -109), THEME.WalkStone, Enum.Material.Concrete)
 local function horizontalCylinder(item)
 	item.Shape = Enum.PartType.Cylinder
 	item.CFrame = CFrame.new(item.Position) * CFrame.Angles(0, 0, math.pi / 2)
@@ -903,7 +915,7 @@ local function horizontalCylinder(item)
 end
 local basin = horizontalCylinder(decorative("CentralResortFountainBasin",
 	Vector3.new(0.95, 16, 16), Vector3.new(0, 24.8, -118),
-	THEME.Limestone, Enum.Material.Limestone))
+	THEME.PlanterStone, Enum.Material.Concrete))
 local waterMirror = horizontalCylinder(detail("FountainStillWater",
 	Vector3.new(0.13, 13, 13), Vector3.new(0, 25.36, -118),
 	THEME.Foam, Enum.Material.Glass))
@@ -926,7 +938,7 @@ sparkle.Shadows = false
 sparkle.Parent = crystal
 for _, side in ipairs({-1, 1}) do
 	detail("FountainStoneSideSeat", Vector3.new(5, 0.55, 2.2),
-		Vector3.new(side * 13, 25.0, -118), THEME.Limestone, Enum.Material.Limestone)
+		Vector3.new(side * 13, 25.0, -118), THEME.PlanterStone, Enum.Material.Concrete)
 end
 
 -- Proper multiplayer-friendly Seats, rather than decorative slabs. Each
@@ -989,7 +1001,7 @@ end
 
 local function planter(x, z)
 	solidDetail("CoastCeramicPlanter", Vector3.new(4.5, 2.7, 4.5),
-		Vector3.new(x, 25.65, z), THEME.Ivory, Enum.Material.Limestone)
+		Vector3.new(x, 25.65, z), THEME.PlanterStone, Enum.Material.Concrete)
 	local foliage = solidDetail("CoastShrub", Vector3.new(5.1, 4.2, 5.1),
 		Vector3.new(x, 28.15, z), THEME.Evergreen, Enum.Material.LeafyGrass)
 	foliage.Shape = Enum.PartType.Ball
@@ -1007,7 +1019,7 @@ for _, side in ipairs({-1, 1}) do
 	for _, dx in ipairs({-8, 8}) do
 		for _, dz in ipairs({-7, 7}) do
 			solidDetail("CoastPergolaColumn", Vector3.new(0.85, 7.2, 0.85),
-				Vector3.new(x + dx, 28.1, z + dz), THEME.Limestone, Enum.Material.Limestone)
+				Vector3.new(x + dx, 28.1, z + dz), THEME.PlanterStone, Enum.Material.Concrete)
 		end
 	end
 	solidDetail("CoastPergolaRoof", Vector3.new(18.3, 0.55, 16),
@@ -1032,7 +1044,7 @@ end
 -- screenspace arrows or intrusive floating titles.
 local function resortLamp(x, z)
 	solidDetail("ResortLampPedestal", Vector3.new(2.0, 0.7, 2.0),
-		Vector3.new(x, 24.65, z), THEME.Limestone, Enum.Material.Limestone)
+		Vector3.new(x, 24.65, z), THEME.PlanterStone, Enum.Material.Concrete)
 	solidDetail("ResortLampColumn", Vector3.new(0.75, 7.3, 0.75),
 		Vector3.new(x, 28.4, z), THEME.Brown, Enum.Material.Metal)
 	local lamp = detail("ResortLantern", Vector3.new(1.5, 1.6, 1.5),
@@ -1071,7 +1083,7 @@ textSign(photoAnchor, "PHOTO SPOT | SOFT EARTH COAST", 1.0, 210)
 local trophyX, trophyZ = -67, -110
 local trophyStand = horizontalCylinder(solidDetail("AzureTrophyPedestal",
 	Vector3.new(1.6, 7, 7), Vector3.new(trophyX, 25.3, trophyZ),
-	THEME.Limestone, Enum.Material.Limestone))
+	THEME.PlanterStone, Enum.Material.Concrete))
 local trophy = detail("AzureTrophySculpture", Vector3.new(3.4, 6, 3.4),
 	Vector3.new(trophyX, 29.0, trophyZ), THEME.Wood)
 trophy.Shape = Enum.PartType.Ball
@@ -2461,7 +2473,7 @@ local function scoreMatch(winners, participants)
 			awardProgress(player, awarded[player] and 1 or 0, awarded[player] and 25 or 5)
 		end
 	end
-	-- v0.24: Save match rewards immediately after a round finishes, while
+	-- v0.25: Save match rewards immediately after a round finishes, while
 	-- retaining autosave, exit and shutdown fallback attempts.
 	-- saveProfile uses stable reward-batch IDs and per-player write locks
 	-- so overlapping attempts do not double-award a completed round.
@@ -2574,13 +2586,13 @@ end
 ]====]
 
 local CLIENT_SOURCE = [====[
--- Mythblox Game 01 · Soft Earth Coast mobile UI v0.24
+-- Mythblox Game 01 · Soft Earth Coast mobile UI v0.25
 -- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
-local BUILD_VERSION = "v0.24"
+local BUILD_VERSION = "v0.25"
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local network = ReplicatedStorage:WaitForChild("MythbloxGame01")
@@ -2854,7 +2866,7 @@ end
 -- Results appear in the compact top status strip instead of a centered
 -- modal. The arena and other players remain visible when a match ends.
 
--- v0.24: Secret selections are never displayed to others while voting.
+-- v0.25: Secret selections are never displayed to others while voting.
 -- ONLY during the five-second REVEAL do five non-clickable results cards
 -- show every numbered choice, picking players' avatars, totals, and safety.
 -- The existing teal voting buttons remain PRIVATE selection controls.
@@ -3259,7 +3271,7 @@ local function update(state)
 	if phase == "JOIN" or phase == "VOTE" then
 		lastTurnRendered = -1
 	end
-	phaseText.Text = ("v0.24 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
+	phaseText.Text = ("v0.25 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
 	clockText.Text = tostring(state.time or 0) .. "s"
 	clockText.TextColor3 = phase == "VOTE" and (state.time or 0) <= 2 and COLOR.Red or COLOR.Purple
 	description.Text = state.message or ""
@@ -3269,7 +3281,7 @@ local function update(state)
 	if voting.Visible then shop.Visible = false end
 
 	if phase == "JOIN" then
-		phaseText.Text = "v0.24 · NEXT MATCH"
+		phaseText.Text = "v0.25 · NEXT MATCH"
 		description.Text = state.queued and "You're queued for the next race."
 			or "Join at the gold pad or use the button below."
 		ownStats.Text = ("%d/%d PLAYERS READY"):format(state.ready or 0, state.capacity or 8)
@@ -3288,7 +3300,7 @@ local function update(state)
 	if phase == "RESULTS" then
 		-- Server sends winner/draw text in state.message; show it only in
 		-- the small status panel and avoid blocking the camera.
-		phaseText.Text = "v0.24 · ROUND OVER"
+		phaseText.Text = "v0.25 · ROUND OVER"
 		ownStats.Text = "NEXT MATCH STARTS SOON"
 	end
 
@@ -3387,7 +3399,7 @@ end)
 command:FireServer("Sync")
 ]====]
 
--- Diagnostic/cleanup installer: v0.24
+-- Diagnostic/cleanup installer: v0.25
 -- Remove known legacy copies from services used by previous Mythblox builds.
 -- This intentionally does NOT remove scripts belonging to other games.
 -- Permanently remove the UNUSED default Roblox Baseplate spawn while in
@@ -3406,7 +3418,7 @@ for _, obj in ipairs(workspace:GetDescendants()) do
 end
 print("[Mythblox INSTALL] Removed " .. defaultSpawnsRemoved .. " unused Baseplate spawn(s).")
 
--- v0.24: the actual stock baseplate (not only its spawn marker) is a giant
+-- v0.25: the actual stock baseplate (not only its spawn marker) is a giant
 -- low-altitude part that remains visible through the decorative ocean.
 -- Remove ONLY a low, large, directly parented part named Baseplate.
 local baseplatesRemoved = 0
@@ -3488,12 +3500,12 @@ for _, child in ipairs(game:GetDescendants()) do
 	end
 end
 
-print("[Mythblox INSTALL] v0.24 VERIFIED: 2 scripts installed and Source checked.")
-print("[Mythblox INSTALL] Server: " .. liveServer:GetFullName() .. " | Build v0.24")
-print("[Mythblox INSTALL] Client: " .. liveClient:GetFullName() .. " | Build v0.24")
+print("[Mythblox INSTALL] v0.25 VERIFIED: 2 scripts installed and Source checked.")
+print("[Mythblox INSTALL] Server: " .. liveServer:GetFullName() .. " | Build v0.25")
+print("[Mythblox INSTALL] Client: " .. liveClient:GetFullName() .. " | Build v0.25")
 print("[Mythblox INSTALL] Cleaned " .. #removed .. " previous Mythblox script/UI objects.")
 print("[Mythblox INSTALL] Disabled " .. #disabledLegacy .. " other old game scripts found by source signature.")
 if #suspicious > 0 then
 	warn("[Mythblox INSTALL] Other Mythblox scripts still exist: " .. table.concat(suspicious, "; "))
 end
-print("[Mythblox INSTALL] NOW START A FRESH PLAY SESSION. Confirm the top HUD visibly says v0.24, and check Output for SERVER RUNNING v0.24 and CLIENT RUNNING v0.24.")
+print("[Mythblox INSTALL] NOW START A FRESH PLAY SESSION. Confirm the top HUD visibly says v0.25, and check Output for SERVER RUNNING v0.25 and CLIENT RUNNING v0.25.")
