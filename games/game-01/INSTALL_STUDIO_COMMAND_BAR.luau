@@ -1,11 +1,11 @@
 -- Mythblox Game 01 — one-paste installation into Roblox Studio's Command Bar.
 -- IMPORTANT: Run in EDIT mode, not during Play/Test. This REPLACES the two MythbloxGame scripts.
--- This prototype intentionally has no permanent player-data storage or paid products.
+-- Saves wins/coins and earned-coin cosmetics; no Robux products or public launch.
 
 assert(not game:GetService("RunService"):IsRunning(), "Stop the test session before installing.")
 
 local SERVER_SOURCE = [====[
--- Mythblox game-01: glass bridge race v0.14 (server)
+-- Mythblox game-01: glass bridge race v0.15 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -15,7 +15,7 @@ local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
 local DataStoreService = game:GetService("DataStoreService")
 local HttpService = game:GetService("HttpService")
-local BUILD_VERSION = "v0.14"
+local BUILD_VERSION = "v0.15"
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -646,6 +646,11 @@ local voteOutcomes = {}
 local message = "Join the next match!"
 local winnerPlayer = nil
 local initialMatchCount = 0
+-- Reject excessively repeated remote requests without changing normal inputs.
+-- The server still owns every vote, purchase, movement and reward decision.
+local COMMAND_COOLDOWN = { Sync = 1.0, Join = 0.25, Vote = 0.065, Shop = 0.35 }
+local lastRemoteCommand = {}
+local lastShopPrompt = {}
 local publish
 
 local function numberReady()
@@ -1324,9 +1329,11 @@ local function transactSkin(player, skinId)
 end
 
 cosmeticsPrompt.Triggered:Connect(function(player)
-	if player.Parent == Players and nearCosmetics(player) then
-		sendShop(player, "Open", "")
-	end
+	if player.Parent ~= Players or not nearCosmetics(player) then return end
+	local now = os.clock()
+	if now - (lastShopPrompt[player] or -10) < 0.4 then return end
+	lastShopPrompt[player] = now
+	sendShop(player, "Open", "")
 end)
 
 -- Incremental autosaves avoid excessive requests on every vote/round.
@@ -1418,6 +1425,8 @@ for _, player in ipairs(Players:GetPlayers()) do onPlayerAdded(player) end
 Players.PlayerRemoving:Connect(function(player)
 	queue[player] = nil
 	equippedSkins[player] = nil
+	lastRemoteCommand[player] = nil
+	lastShopPrompt[player] = nil
 	if active[player] and active[player].alive then
 		eliminate(player, "left the server", nil)
 	end
@@ -1436,7 +1445,17 @@ Players.PlayerRemoving:Connect(function(player)
 end)
 
 command.OnServerEvent:Connect(function(player, action, payload)
-	if typeof(action) ~= "string" then return end
+	if player.Parent ~= Players or typeof(action) ~= "string" then return end
+	local cooldown = COMMAND_COOLDOWN[action]
+	if not cooldown then return end -- reject unknown remote commands immediately
+	local now = os.clock()
+	local timestamps = lastRemoteCommand[player]
+	if not timestamps then
+		timestamps = {}
+		lastRemoteCommand[player] = timestamps
+	end
+	if now - (timestamps[action] or -10) < cooldown then return end
+	timestamps[action] = now
 	if action == "Sync" then
 		stateEvent:FireClient(player, snapshot(player))
 	elseif action == "Join" then
@@ -1775,13 +1794,13 @@ end
 ]====]
 
 local CLIENT_SOURCE = [====[
--- Mythblox Game 01 · cosmetic glass shop v0.14
+-- Mythblox Game 01 · reliability review v0.15
 -- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
-local BUILD_VERSION = "v0.14"
+local BUILD_VERSION = "v0.15"
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local network = ReplicatedStorage:WaitForChild("MythbloxGame01")
@@ -2381,7 +2400,7 @@ local function update(state)
 	if phase == "JOIN" or phase == "VOTE" then
 		lastTurnRendered = -1
 	end
-	phaseText.Text = ("v0.14 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
+	phaseText.Text = ("v0.15 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
 	clockText.Text = tostring(state.time or 0) .. "s"
 	clockText.TextColor3 = phase == "VOTE" and (state.time or 0) <= 2 and COLOR.Red or COLOR.Purple
 	description.Text = state.message or ""
@@ -2392,7 +2411,7 @@ local function update(state)
 	movement.Visible = phase == "MOVE" and mine ~= nil and mine.alive == true
 
 	if phase == "JOIN" then
-		phaseText.Text = "v0.14 · NEXT MATCH"
+		phaseText.Text = "v0.15 · NEXT MATCH"
 		description.Text = state.queued and "You're queued for the next race."
 			or "Join at the gold pad or use the button below."
 		ownStats.Text = ("%d/%d PLAYERS READY"):format(state.ready or 0, state.capacity or 8)
@@ -2411,7 +2430,7 @@ local function update(state)
 	if phase == "RESULTS" then
 		-- Server sends winner/draw text in state.message; show it only in
 		-- the small status panel and avoid blocking the camera.
-		phaseText.Text = "v0.14 · ROUND OVER"
+		phaseText.Text = "v0.15 · ROUND OVER"
 		ownStats.Text = "NEXT MATCH STARTS SOON"
 	end
 
@@ -2469,7 +2488,7 @@ stateEvent.OnClientEvent:Connect(update)
 command:FireServer("Sync")
 ]====]
 
--- Diagnostic/cleanup installer: v0.14
+-- Diagnostic/cleanup installer: v0.15
 -- Remove known legacy copies from services used by previous Mythblox builds.
 -- This intentionally does NOT remove scripts belonging to other games.
 -- Permanently remove the UNUSED default Roblox Baseplate spawn while in
@@ -2555,12 +2574,12 @@ for _, child in ipairs(game:GetDescendants()) do
 	end
 end
 
-print("[Mythblox INSTALL] v0.14 VERIFIED: 2 scripts installed and Source checked.")
-print("[Mythblox INSTALL] Server: " .. liveServer:GetFullName() .. " | Build v0.14")
-print("[Mythblox INSTALL] Client: " .. liveClient:GetFullName() .. " | Build v0.14")
+print("[Mythblox INSTALL] v0.15 VERIFIED: 2 scripts installed and Source checked.")
+print("[Mythblox INSTALL] Server: " .. liveServer:GetFullName() .. " | Build v0.15")
+print("[Mythblox INSTALL] Client: " .. liveClient:GetFullName() .. " | Build v0.15")
 print("[Mythblox INSTALL] Cleaned " .. #removed .. " previous Mythblox script/UI objects.")
 print("[Mythblox INSTALL] Disabled " .. #disabledLegacy .. " other old game scripts found by source signature.")
 if #suspicious > 0 then
 	warn("[Mythblox INSTALL] Other Mythblox scripts still exist: " .. table.concat(suspicious, "; "))
 end
-print("[Mythblox INSTALL] NOW START A FRESH PLAY SESSION. Confirm the top HUD visibly says v0.14, and check Output for SERVER RUNNING v0.14 and CLIENT RUNNING v0.14.")
+print("[Mythblox INSTALL] NOW START A FRESH PLAY SESSION. Confirm the top HUD visibly says v0.15, and check Output for SERVER RUNNING v0.15 and CLIENT RUNNING v0.15.")
