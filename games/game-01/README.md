@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-22):** Owner confirms **v0.12 works in Roblox Studio**. This is an owner-reported functional pass, not exhaustive mobile, performance, or release QA. **Development paused at v0.12** until the next session; the game remains unnamed and unpublished.  
+**Status (2026-11-22):** Owner confirmed **v0.12 gameplay works in Studio**, and requested to continue with saving wins/coins. **v0.13 persistent player progress is implemented and packaged, but requires Studio DataStore setup and verification.** The game remains unnamed and not publicly released.  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -33,9 +33,23 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 | Server round safety cap | 22 votes |
 | Reward | Win +25 coins, participation +5 coins |
 
-**Rewards are session-only in v0.1.** There is no DataStore persistence, no purchasable items, and no paid power-ups. Do not publish this as a monetized finished game without playtests and a reviewed commerce implementation.
+**Progress storage:** Wins and coins were session-only through v0.12. **v0.13 introduces DataStore persistence**, pending Roblox Studio and published-server verification. Shops and paid power-ups remain unimplemented. Do not publicly launch or monetize before testing data recovery and purchases.
 
-## v0.12 — gameplay feedback and sound cues (awaiting Studio test)
+## v0.13 — persistent wins and coins (Studio test pending)
+
+Wins and coins now have a dedicated server-side DataStore persistence layer, **without changing the gameplay or adding an unnecessary HUD indicator**.
+
+- On join, the server loads the player's saved Wins and Coins. Missing profiles start at zero. Historical session-only v0.12 stats cannot be recovered.
+- Every earned reward is tracked as a server-side **increment**, not as a replacement for the saved balance. `UpdateAsync` merges it with the latest stored totals to handle rapid reconnects and overlapping servers; recently applied save IDs prevent retry double-counting.
+- A player's stats autosave about every 150 seconds (jittered), on exit, and at server shutdown. Requests have bounded retries. If loading fails, **nothing is written for that session**, avoiding destructive zero-value overwrites.
+- Studio and published servers intentionally use **different stores**; testing won't modify live saved totals. The client never chooses reward amounts or accesses DataStore APIs.
+- No coins can be spent yet; adding the cosmetic shop will require server-validated **atomic deductions**.
+- **Studio setup required:** Privately publish the Roblox experience (if not already) and enable **File → Experience Settings → Security → Enable Studio Access to API Services**. A local `.rbxl` backup alone does not activate online data saving.
+- **Installation:** Run [the latest Command Bar installer](INSTALL_STUDIO_COMMAND_BAR.luau) in Edit mode and check Output for `v0.13 VERIFIED`; Play should show `v0.13`. **Saving has not yet been verified in Studio.**
+
+See the [step-by-step persistence test guide](PERSISTENCE_TEST_GUIDE.md) before judging whether stats actually survive restarting a test server.
+
+## v0.12 — gameplay feedback and sound cues (owner-confirmed working)
 
 Approved after v0.11 was confirmed working. Focus: make the existing game rules feel responsive and entertaining, **without a new mechanic or redesigned world**.
 
@@ -261,6 +275,6 @@ For repeat development, clone `Mythrow/Mythblox`, install [Rojo](https://rojo.sp
 
 ## Next step
 
-Functional prototype v0.2 was confirmed by the owner. **Next: test v0.12 gameplay cues and effects in Roblox Studio**, then continue spectator/mobile regression testing and plan saving data/cosmetics in [TEST_PLAN.md](TEST_PLAN.md). Review mobile controls and map sightlines before considering persistence and cosmetics. Validate whether **5-second selection / 6-second walking / 20 tiles / 3 cracks** is enjoyable before adding features.
+Install and verify **v0.13 DataStore persistence** using the [test guide](PERSISTENCE_TEST_GUIDE.md). Confirm a match reward survives stopping/restarting Studio Play (with API Services enabled), and recheck in a private published server before public release. After saving is reliable, the next candidate milestone is cosmetics/shop design with safe currency deductions. The approved game rules and v0.11 environment remain unchanged.
 
 See [the Mythblox game-design memo](../../docs/FIRST_GAME_GLASS_BRIDGE_CONCEPT.md) for earlier alternatives, including the spinner idea that was explicitly deferred.
