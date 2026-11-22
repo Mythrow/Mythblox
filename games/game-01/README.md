@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-22):** Owner reports that joining, movement and cosmetics work in earlier Studio builds and coins persist across Play restarts. **v0.18 is implemented in source and installer, pending Studio verification:** walking and jumping remain enabled throughout matches, glass no longer reveals safe/blocked steps through full-tile colors, the environment has a major built-in-material/lighting polish pass, and victory-dance IDs are configurable. The five-second avatar reveal remains. Further feature development, true custom art, multiplayer/mobile QA and private-server persistence checks are still needed before public release.  
+**Status (2026-11-22):** Owner reports a **critical v0.18 regression:** after an illegal advance, players can continue walking to the finish and glass may appear not to break. **v0.19 server and installer fix are committed; Studio verification is pending.** Illegal steps now shatter the offending/supporting panels and cause the eliminated character to die and respawn; glass-contact checks supplement server position checks. Walking and jumping remain enabled for living racers, with no red/green tile hints. The larger feature/art roadmap and multiplayer, mobile and persistence testing remain open before any public launch.  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -35,7 +35,21 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 
 **Progress storage:** Wins and coins were session-only through v0.12. **v0.13 introduces DataStore persistence**, pending Roblox Studio and published-server verification. v0.14 adds a coin-only cosmetics stall (no Robux or paid items). Do not publicly launch or monetize before testing data recovery and purchases.
 
-## v0.18 — free movement, neutral glass and premium coastal materials (Studio test pending)
+## v0.19 — fix illegal bridge crossing / no-fall regression (Studio test pending)
+
+**Owner-reported v0.18 bug:** A racer could continue along unbroken future glass after an illegal step. The root cause: elimination previously only changed the `alive` flag and removed one or two supports; with free walking/jumping enabled, a marked-out character could still run on remaining solid tiles.
+
+**Fix:**
+- The server immediately marks an illegal attempt eliminated, **shatters both the attempted and last supporting panels**, logs `[Mythblox RACE] ELIMINATED`, then causes the character to **die and respawn at the lobby** after a brief 0.2-second fall/shatter window. A player cannot keep sprinting to the finish after being eliminated.
+- Each participant's bridge also has **per-tile `Touched` contact checks** for early, skipped and forbidden forward steps. The existing per-frame server root-position checks remain, including jumps that miss touch events.
+- **Walking and jumping remain enabled** for alive contestants in all phases. Walking/jumping on the current panel is fine; **advancing** early or beyond allowed N is not. Full-tile red/green path painting remains disabled.
+- Existing majority/tie rule, 3-crack elimination, 5s vote / 5s reveal / 6s MOVE, reward/coin store, cosmetics, premium materials and dance remain unchanged.
+
+**To test:** Stop Play, paste the latest [one-paste v0.19 installer](INSTALL_STUDIO_COMMAND_BAR.luau) into Studio **Command Bar in Edit mode**, then Play. Confirm the top HUD says `v0.19` and the installer prints `v0.19 VERIFIED`. Test stepping ahead during VOTE and crossing beyond a safe vote during MOVE; the panel should disappear and your character return to the lobby. Test legal moves and ordinary in-place jumping separately. See [TEST_PLAN.md](TEST_PLAN.md).
+
+**Status:** Source and installer static consistency checked; **not yet tested in Roblox Studio**.
+
+## v0.18 — free movement, neutral glass and premium coastal materials (historical build: eliminated players could keep running)
 
 **Latest owner-requested change**. All source code and the one-paste installer are committed, **not tested in Roblox Studio yet**.
 
@@ -337,6 +351,6 @@ See the [pre-launch roadmap](PRELAUNCH_ROADMAP.md). Cosmetic stall, sound effect
 
 ## Next step
 
-**Test v0.18**: confirm free walking/jumping during VOTE and REVEAL, no red/green spoilers on the bridge, the premium lighting/material changes, and the winner dance. Validate that illegal forward movement still fails, and test graphics/performance in 2–8-player and mobile scenarios. Then continue the substantial new-feature and custom-art roadmap before public launch.
+**Test the v0.19 regression fix first**: when a player advances illegally, the attempted and supporting glass must shatter and the eliminated character must return to the lobby, not keep running to the finish. Verify that legal walking/jumping still work. Then resume the v0.18 visual checks and 2–8-player/mobile/persistence testing; significant features and custom art are still required before launch.
 
 See [the Mythblox game-design memo](../../docs/FIRST_GAME_GLASS_BRIDGE_CONCEPT.md) for earlier alternatives, including the spinner idea that was explicitly deferred.
