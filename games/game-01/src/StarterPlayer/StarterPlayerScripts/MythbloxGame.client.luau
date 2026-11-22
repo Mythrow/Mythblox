@@ -1,10 +1,10 @@
--- Mythblox Game 01 · Soft Earth Coast mobile UI v0.29
+-- Mythblox Game 01 · Soft Earth Coast mobile UI v0.30
 -- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
-local BUILD_VERSION = "v0.29"
+local BUILD_VERSION = "v0.30"
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local network = ReplicatedStorage:WaitForChild("MythbloxGame01")
@@ -302,7 +302,7 @@ end
 -- Results appear in the compact top status strip instead of a centered
 -- modal. The arena and other players remain visible when a match ends.
 
--- v0.29: Secret selections are never displayed to others while voting.
+-- v0.30: Secret selections are never displayed to others while voting.
 -- ONLY during the five-second REVEAL do five non-clickable results cards
 -- show every numbered choice, picking players' avatars, totals, and safety.
 -- The existing teal voting buttons remain PRIVATE selection controls.
@@ -527,7 +527,12 @@ local function renderShop(info, response)
 end
 
 shopEvent.OnClientEvent:Connect(function(kind, details, message)
-	if kind == "Open" then shop.Visible = true end
+	if kind == "Open" then
+		shop.Visible = true
+		inventory.Visible = false
+		settings.Visible = false
+		tutorial.Visible = false
+	end
 	if type(details) == "table" then
 		shopCache=details
 		if details.ui then acceptUIState(details) end
@@ -895,7 +900,7 @@ layoutForViewport = function()
 	if compact then feedback.Visible = false end
 	local shortScreen = height < 570
 
-	-- v0.29: phone status is smaller, at the TOP RIGHT of the core-UI safe
+	-- v0.30: phone status is smaller, at the TOP RIGHT of the core-UI safe
 	-- area rather than a wide center banner obscuring the avatar/camera.
 	-- Never put it above Roblox's native safe-area inset.
 	local topW = compact and math.min(270, math.max(180, width - 110))
@@ -951,7 +956,7 @@ layoutForViewport = function()
 	shop.AnchorPoint = compact and Vector2.new(0.5, 0.5) or Vector2.new(1, 0.5)
 	shop.Position = compact and UDim2.new(0.5, 0, 0.56, 0) or UDim2.new(1, -18, 0.54, 0)
 
-	-- v0.29: Omit the unnecessary red/green legend and reclaim its 16–18px.
+	-- v0.30: Omit the unnecessary red/green legend and reclaim its 16–18px.
 	-- Avatar grids, vote totals, numbered SAFE/BLOCKED cards and five-second
 	-- server reveal duration are unchanged. The phone tray obscures less play.
 	local revealW = math.min(width - 18, compact and 560 or 780)
@@ -987,7 +992,51 @@ layoutForViewport = function()
 		card.votes.TextSize = compact and 9 or 13
 		card.status.Position = UDim2.new(0, 0, 1, compact and -18 or -23)
 		card.status.Size = UDim2.new(1, 0, 0, compact and 14 or 20)
-		card.status.TextSize = compact and 9 or 12
+		card.status.TextSize = compact and (prefs.largeText and 11 or 9)
+			or (prefs.largeText and 14 or 12)
+	end
+
+	-- The lobby menu remains unobtrusive; all its panels close during
+	-- racing. Use scrolling panels on short landscape mobile viewports.
+	lobbyMenu.AnchorPoint=Vector2.new(1,0)
+	lobbyMenu.Position=UDim2.new(1,-8,0,compact and 83 or 47)
+	local sheetW=math.min(width-20,330)
+	local sheetH=math.min(336,math.max(202,height-112))
+	for _,sheet in ipairs({inventory,settings}) do
+		sheet.Size=UDim2.fromOffset(sheetW,sheetH)
+		sheet.Position=UDim2.new(0.5,0,0.54,0)
+	end
+	tutorial.Size=UDim2.fromOffset(math.min(width-20,324),203)
+	tutorial.Position=UDim2.new(0.5,0,0,compact and 123 or 131)
+	tutBody.TextSize=prefs.largeText and 16 or 14
+	raceHud.Size=UDim2.fromOffset(compact and 199 or 234,44)
+	raceHud.Position=UDim2.new(1,compact and -8 or -16,0,compact and 84 or 45)
+	raceLine.TextSize=prefs.largeText and 13 or 12
+	permissionLine.TextSize=prefs.largeText and 12 or 11
+	recap.Size=UDim2.fromOffset(math.min(width-20,compact and 306 or 350),135)
+	recap.Position=UDim2.new(0.5,0,0,compact and 137 or 109)
+	toast.Size=UDim2.fromOffset(math.min(width-26,320),31)
+	toast.Position=UDim2.new(0.5,0,0,compact and 131 or 153)
+	spectator.Size=UDim2.fromOffset(math.min(width-24,327),43)
+	spectator.Position=UDim2.new(0.5,0,1,compact and -113 or -92)
+	local sw=spectator.Size.X.Offset
+	prev.Position=UDim2.fromOffset(6,6)
+	prev.Size=UDim2.fromOffset(35,31)
+	prev.TextSize=17
+	nextButton.Position=UDim2.fromOffset(sw-85,6)
+	nextButton.Size=UDim2.fromOffset(35,31)
+	nextButton.TextSize=17
+	stop.Position=UDim2.fromOffset(sw-46,6)
+	stop.Size=UDim2.fromOffset(40,31)
+	stop.TextSize=11
+	watchedName.Position=UDim2.fromOffset(44,5)
+	watchedName.Size=UDim2.fromOffset(sw-133,32)
+	watchedName.TextSize=prefs.largeText and 13 or 12
+	phaseText.TextSize=compact and (prefs.largeText and 12 or 11) or 15
+	ownStats.TextSize=compact and (prefs.largeText and 11 or 10) or 12
+	walletText.TextSize=compact and (prefs.largeText and 12 or 11) or 12
+	for _,b in ipairs(choiceButtons) do
+		b.TextSize=compact and (prefs.largeText and 22 or 19) or 23
 	end
 end
 
@@ -1058,7 +1107,7 @@ local function update(state)
 	if phase == "JOIN" or phase == "VOTE" then
 		lastTurnRendered = -1
 	end
-	phaseText.Text = ("v0.29 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
+	phaseText.Text = ("v0.30 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
 	clockText.Text = tostring(state.time or 0) .. "s"
 	clockText.TextColor3 = phase == "VOTE" and (state.time or 0) <= 2 and COLOR.Red or COLOR.Purple
 	description.Text = state.message or ""
@@ -1068,7 +1117,7 @@ local function update(state)
 	if voting.Visible then shop.Visible = false end
 
 	if phase == "JOIN" then
-		phaseText.Text = "v0.29 · JOIN ZONE"
+		phaseText.Text = "v0.30 · JOIN ZONE"
 		description.Text = state.queued
 			and ((state.ready or 0) == 1 and state.liveSoloPractice
 				and "In zone · stay for solo practice (no rewards)."
@@ -1090,7 +1139,7 @@ local function update(state)
 	if phase == "RESULTS" then
 		-- Server sends winner/draw text in state.message; show it only in
 		-- the small status panel and avoid blocking the camera.
-		phaseText.Text = "v0.29 · ROUND OVER"
+		phaseText.Text = "v0.30 · ROUND OVER"
 		ownStats.Text = state.practiceNoRewards and "PRACTICE · NO WINS / COINS"
 			or "NEXT MATCH STARTS SOON"
 	end
@@ -1161,11 +1210,106 @@ local function update(state)
 		ownStats.TextColor3 = COLOR.Muted
 	end
 
-	-- Coins/Wins stay visible in JOIN, VOTE, MOVE and RESULTS. On tiny
-	-- screens, hide the wallet only during the five-second full-width
-	-- reveal so no chip obscures vote cards.
+	-- Seven approved features: lightweight in-lobby controls, a clear
+	-- actionable race progress strip, server-confirmed results, follow
+	-- camera, and a temporary reward toast (not an extra persistent overlay).
 	refreshWallet()
 	wallet.Visible = not (isCompact and phase == "REVEAL")
+	local inRace = phase == "VOTE" or phase == "REVEAL" or phase == "MOVE"
+	lobbyMenu.Visible = phase == "JOIN" or phase == "RESULTS"
+	if inRace then
+		inventory.Visible=false
+		settings.Visible=false
+		tutorial.Visible=false
+		shop.Visible=false
+	end
+	raceHud.Visible = inRace and mine ~= nil and mine.alive == true
+	if raceHud.Visible then
+		raceLine.Text = ("TILE %d/20 · CRACKS %d/3"):format(
+			mine.position or 0,mine.cracks or 0)
+		local remaining = state.time or 0
+		if phase == "MOVE" then
+			local allowed = mine.allowed or 0
+			permissionLine.Text = allowed > 0
+				and ("GO %d STEPS · %ds LEFT"):format(allowed,remaining)
+				or ("WAIT · %ds LEFT"):format(remaining)
+			permissionLine.TextColor3=allowed>0 and COLOR.Green or COLOR.Red
+		elseif phase == "VOTE" then
+			permissionLine.Text=("PICK 1–5 · %ds LEFT"):format(remaining)
+			permissionLine.TextColor3=COLOR.Text
+		else
+			permissionLine.Text=("REVEAL · %ds"):format(remaining)
+			permissionLine.TextColor3=COLOR.Text
+		end
+	end
+	-- In short mobile screens the 5-card reveal stays the only foreground
+	-- gameplay tray; hide the race strip until MOVE.
+	if isCompact and phase == "REVEAL" then raceHud.Visible=false end
+
+	local isSpectator = inRace and (mine == nil or not mine.alive)
+	spectator.Visible = isSpectator
+	if not isSpectator then
+		if isFollowing then ownCamera() end
+		table.clear(spectateIds)
+	else
+		local previous = spectateIds[spectateIndex]
+		table.clear(spectateIds)
+		for _,racer in ipairs(state.roster or {}) do
+			if racer.alive and type(racer.userId)=="number"
+				and racer.userId ~= player.UserId then
+				table.insert(spectateIds,racer.userId)
+			end
+		end
+		if #spectateIds==0 then
+			if isFollowing then ownCamera() end
+			watchedName.Text="NO RACERS LEFT"
+		else
+			local matchIndex=nil
+			for idx,userId in ipairs(spectateIds) do
+				if userId==previous then matchIndex=idx;break end
+			end
+			spectateIndex=matchIndex or 1
+			if isFollowing then
+				if not matchIndex then
+					ownCamera()
+					watchedName.Text="TAP ARROWS TO FOLLOW"
+				else
+					followRacer()
+				end
+			else
+				watchedName.Text="TAP ARROWS TO FOLLOW"
+			end
+		end
+	end
+
+	recap.Visible=phase=="RESULTS" and type(state.results)=="table"
+	if recap.Visible then
+		local results=state.results
+		local names=results.winners or {}
+		local winner= #names==0 and "NO WINNER"
+			or (#names==1 and (names[1].." WINS") or ("TIE · "..table.concat(names,", ")))
+		recapTitle.Text=winner
+		local personal=results.personal
+		recapPlace.Text=personal
+			and ("YOUR PLACE: #%d OF %d · TILE %d/20"):format(
+				personal.place or 1,results.total or 1,personal.distance or 0)
+			or "SPECTATING THIS ROUND"
+		local coins=personal and personal.coins or 0
+		local wins=personal and personal.wins or 0
+		recapReward.Text=state.practiceNoRewards and "PRACTICE · NO REWARDS"
+			or ("+%d COINS · +%d WINS"):format(coins,wins)
+		recapTimer.Text=("NEXT MATCH SOON · %ds"):format(state.time or 0)
+		if type(results.serial)=="number" and results.serial~=lastNotifiedRound then
+			lastNotifiedRound=results.serial
+			if personal and (coins>0 or wins>0) then
+				notify(("+%d COINS · +%d WINS"):format(coins,wins))
+			end
+		end
+	end
+	if prefsReady and not prefs.tutorialSeen and not menuDismissedTutorial
+		and phase=="JOIN" and not tutorial.Visible and previousPhase=="RESULTS" then
+		tutStep=1;drawTutorial();tutorial.Visible=true
+	end
 
 	-- The five non-interactive number cards appear ONLY in the five-second reveal.
 	-- Never show aggregates, avatars or the previous turn's choices in VOTE/MOVE.
@@ -1191,4 +1335,8 @@ stateEvent.OnClientEvent:Connect(update)
 player:GetAttributeChangedSignal("MythbloxDataStatus"):Connect(function()
 	if latestState then update(latestState) end
 end)
+-- The server may finish loading before the shop UI listener exists. An
+-- explicit request ensures the saved tutorial/settings and owned colors
+-- are always hydrated, even when the first UIState event was missed.
 command:FireServer("Sync")
+command:FireServer("Inventory")
