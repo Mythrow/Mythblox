@@ -1,10 +1,10 @@
--- Mythblox Game 01 · Soft Earth Coast mobile UI v0.28
+-- Mythblox Game 01 · Soft Earth Coast mobile UI v0.29
 -- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
-local BUILD_VERSION = "v0.28"
+local BUILD_VERSION = "v0.29"
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local network = ReplicatedStorage:WaitForChild("MythbloxGame01")
@@ -166,11 +166,35 @@ local clockText = label(top, "Clock", "10s", 14, 6, -28, 23, 19, COLOR.Purple, t
 clockText.TextXAlignment = Enum.TextXAlignment.Right
 local description = label(top, "Guidance", "", 14, 29, -28, 21, 13, COLOR.Text, false)
 local ownStats = label(top, "Progress", "", 14, 53, -28, 19, 12, COLOR.Muted, true)
--- Compact phone view keeps wins and coins in one tiny right-hand chip;
--- the actual match instructions stay in the private vote/reveal controls.
-local currencyChip = label(top, "WinsAndCoins", "", 0, 0, 0, 18, 11, COLOR.Text, true)
-currencyChip.TextXAlignment = Enum.TextXAlignment.Right
-currencyChip.Visible = false
+-- Dedicated always-visible wallet instead of tiny, hard-to-find phone text.
+-- Server-owned replicated leaderstats are display-only; the client cannot
+-- change saved Coins or Wins. This stays visible in both lobby and races.
+local wallet = panel("CoinsWallet")
+wallet.AnchorPoint = Vector2.new(1, 0)
+wallet.Size = UDim2.fromOffset(172, 28)
+wallet.Position = UDim2.new(1, -8, 0, 50)
+local walletText = label(wallet, "CoinsAndWins", "COINS 0  ·  WINS 0",
+	9, 3, -18, 22, 12, COLOR.Text, true)
+walletText.TextWrapped = false
+walletText.TextTruncate = Enum.TextTruncate.AtEnd
+walletText.TextXAlignment = Enum.TextXAlignment.Center
+
+local function refreshWallet()
+	local stats = player:FindFirstChild("leaderstats")
+	local coins = stats and stats:FindFirstChild("Coins")
+	local wins = stats and stats:FindFirstChild("Wins")
+	walletText.Text = ("COINS %d  ·  WINS %d"):format(
+		coins and coins.Value or 0, wins and wins.Value or 0)
+end
+task.spawn(function()
+	local stats = player:WaitForChild("leaderstats", 30)
+	if not stats then return end
+	for _, name in ipairs({"Coins", "Wins"}) do
+		local value = stats:WaitForChild(name, 30)
+		if value then value:GetPropertyChangedSignal("Value"):Connect(refreshWallet) end
+	end
+	refreshWallet()
+end)
 local progressBackground = Instance.new("Frame")
 progressBackground.Name = "ProgressTrack"
 progressBackground.Position = UDim2.new(0, 14, 1, -7)
@@ -221,15 +245,8 @@ local function showFeedback(message, isGood)
 	end)
 end
 
--- Join prompt: does not cover touch movement controls during a match.
-local join = button(gui, "JoinButton", "JOIN BRIDGE RACE", COLOR.Blue)
-join.AnchorPoint = Vector2.new(0.5, 1)
-join.TextSize = 21
-join.MouseButton1Click:Connect(function()
-	command:FireServer("Join")
-	-- Wait for authoritative server queued state before hiding. A late tap
-	-- or rejected remote should never make JOIN vanish without registration.
-end)
+-- No on-screen JOIN button. The server detects all players standing
+-- anywhere on the front JOIN deck and removes them if they leave it.
 
 -- Selection tray: five consistently sized targets, regardless of player count.
 local voting = panel("VotePanel")
@@ -279,7 +296,7 @@ end
 -- Results appear in the compact top status strip instead of a centered
 -- modal. The arena and other players remain visible when a match ends.
 
--- v0.28: Secret selections are never displayed to others while voting.
+-- v0.29: Secret selections are never displayed to others while voting.
 -- ONLY during the five-second REVEAL do five non-clickable results cards
 -- show every numbered choice, picking players' avatars, totals, and safety.
 -- The existing teal voting buttons remain PRIVATE selection controls.
@@ -519,7 +536,7 @@ local function layoutForViewport()
 	if compact then feedback.Visible = false end
 	local shortScreen = height < 570
 
-	-- v0.28: phone status is smaller, at the TOP RIGHT of the core-UI safe
+	-- v0.29: phone status is smaller, at the TOP RIGHT of the core-UI safe
 	-- area rather than a wide center banner obscuring the avatar/camera.
 	-- Never put it above Roblox's native safe-area inset.
 	local topW = compact and math.min(270, math.max(180, width - 110))
@@ -541,15 +558,16 @@ local function layoutForViewport()
 	description.Size = UDim2.new(1, -28, 0, 20)
 	description.TextSize = 13
 	ownStats.Position = UDim2.fromOffset(compact and 9 or 14, compact and 23 or 53)
-	ownStats.Size = UDim2.new(1, compact and -98 or -28, 0, compact and 15 or 18)
+	ownStats.Size = UDim2.new(1, compact and -20 or -28, 0, compact and 15 or 18)
 	ownStats.TextSize = compact and 10 or 12
 	ownStats.TextWrapped = false
 	ownStats.TextTruncate = Enum.TextTruncate.AtEnd
-	currencyChip.Visible = compact
-	currencyChip.Position = UDim2.new(1, -89, 0, 23)
-	currencyChip.Size = UDim2.fromOffset(79, 15)
-	currencyChip.TextSize = 10
-	currencyChip.TextWrapped = false
+	-- Keep the currency display near the small phase bar, but separate so
+	-- balance is visible on desktop as well as phone.
+	wallet.AnchorPoint = Vector2.new(1, 0)
+	wallet.Size = UDim2.fromOffset(compact and 158 or 176, 27)
+	wallet.Position = UDim2.new(1, compact and -8 or -16, 0, compact and 47 or 8)
+	walletText.TextSize = compact and 11 or 12
 	progressBackground.Visible = not compact
 
 	local voteW = math.min(width - 18, 535)
@@ -569,16 +587,12 @@ local function layoutForViewport()
 		b.TextSize = compact and 19 or 23
 	end
 
-	join.Size = UDim2.fromOffset(math.min(width - 28, 345), compact and 48 or 58)
-	join.TextSize = compact and 17 or 21
-	join.Position = UDim2.new(0.5, 0, 1, -20)
-
 	local shopW = math.min(width - 20, 350)
 	shop.Size = UDim2.fromOffset(shopW, math.max(218, math.min(358, height - 118)))
 	shop.AnchorPoint = compact and Vector2.new(0.5, 0.5) or Vector2.new(1, 0.5)
 	shop.Position = compact and UDim2.new(0.5, 0, 0.56, 0) or UDim2.new(1, -18, 0.54, 0)
 
-	-- v0.28: Omit the unnecessary red/green legend and reclaim its 16–18px.
+	-- v0.29: Omit the unnecessary red/green legend and reclaim its 16–18px.
 	-- Avatar grids, vote totals, numbered SAFE/BLOCKED cards and five-second
 	-- server reveal duration are unchanged. The phone tray obscures less play.
 	local revealW = math.min(width - 18, compact and 560 or 780)
@@ -685,23 +699,23 @@ local function update(state)
 	if phase == "JOIN" or phase == "VOTE" then
 		lastTurnRendered = -1
 	end
-	phaseText.Text = ("v0.28 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
+	phaseText.Text = ("v0.29 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
 	clockText.Text = tostring(state.time or 0) .. "s"
 	clockText.TextColor3 = phase == "VOTE" and (state.time or 0) <= 2 and COLOR.Red or COLOR.Purple
 	description.Text = state.message or ""
 
-	join.Visible = phase == "JOIN" and state.queued ~= true and (state.ready or 0) < (state.capacity or 8)
+	-- Show zone membership via server snapshots; nobody must tap JOIN.
 	voting.Visible = phase == "VOTE" and mine ~= nil and mine.alive == true
 	if voting.Visible then shop.Visible = false end
 
 	if phase == "JOIN" then
-		phaseText.Text = "v0.28 · NEXT MATCH"
+		phaseText.Text = "v0.29 · JOIN ZONE"
 		description.Text = state.queued
 			and ((state.ready or 0) == 1 and state.liveSoloPractice
-				and "Ready! Solo practice starts at 0s (no Wins/Coins)."
-				or "You're queued for the next race.")
-			or "Join at the gold pad or use the button below."
-		ownStats.Text = ("%d/%d PLAYERS READY"):format(state.ready or 0, state.capacity or 8)
+				and "In zone · stay for solo practice (no rewards)."
+				or "In zone · stay until zero to enter the next race.")
+			or "Walk onto the entire front deck to join automatically."
+		ownStats.Text = ("%d/%d IN ZONE"):format(state.ready or 0, state.capacity or 8)
 		progressFill.Size = UDim2.fromScale(0, 1)
 	elseif mine then
 		local selection = mine.vote and tostring(mine.vote) or "—"
@@ -717,7 +731,7 @@ local function update(state)
 	if phase == "RESULTS" then
 		-- Server sends winner/draw text in state.message; show it only in
 		-- the small status panel and avoid blocking the camera.
-		phaseText.Text = "v0.28 · ROUND OVER"
+		phaseText.Text = "v0.29 · ROUND OVER"
 		ownStats.Text = state.practiceNoRewards and "PRACTICE · NO WINS / COINS"
 			or "NEXT MATCH STARTS SOON"
 	end
@@ -748,19 +762,14 @@ local function update(state)
 	-- Wins/coins are read from server-owned replicated leaderstats; no
 	-- purchases or scores can be changed from this presentation-only UI.
 	if isCompact then
-		local stats = player:FindFirstChild("leaderstats")
-		local wins = stats and stats:FindFirstChild("Wins")
-		local coins = stats and stats:FindFirstChild("Coins")
-		currencyChip.Text = ("%dW · %dC"):format(
-			wins and wins.Value or 0, coins and coins.Value or 0)
-		phaseText.Text = phase == "JOIN" and "NEXT MATCH"
+		phaseText.Text = phase == "JOIN" and "JOIN ZONE"
 			or (state.practiceNoRewards and "SOLO · " or ("R%d · "):format(state.turn or 0))
 				.. (phaseNames[phase] or phase)
 		if phase == "JOIN" then
 			ownStats.Text = state.queued
 				and ((state.ready or 0) == 1 and state.liveSoloPractice
-					and "SOLO PRACTICE SOON" or "QUEUED FOR MATCH")
-				or ("%d/%d READY"):format(state.ready or 0, state.capacity or 8)
+					and "IN ZONE · SOLO PRACTICE" or "IN ZONE · STAY")
+				or "ENTER FRONT DECK TO JOIN"
 		elseif phase == "RESULTS" then
 			ownStats.Text = state.practiceNoRewards and "PRACTICE · NO REWARDS"
 				or "ROUND OVER · NEXT SOON"
@@ -793,6 +802,12 @@ local function update(state)
 		ownStats.TextColor3 = COLOR.Muted
 	end
 
+	-- Coins/Wins stay visible in JOIN, VOTE, MOVE and RESULTS. On tiny
+	-- screens, hide the wallet only during the five-second full-width
+	-- reveal so no chip obscures vote cards.
+	refreshWallet()
+	wallet.Visible = not (isCompact and phase == "REVEAL")
+
 	-- The five non-interactive number cards appear ONLY in the five-second reveal.
 	-- Never show aggregates, avatars or the previous turn's choices in VOTE/MOVE.
 	reveal.Visible = phase == "REVEAL"
@@ -808,7 +823,6 @@ local function update(state)
 
 end
 
-join.Visible = false
 shop.Visible = false
 feedback.Visible = false
 voting.Visible = false
