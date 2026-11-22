@@ -422,12 +422,37 @@ local function makeStall(name, x, z, roofColor, line1, line2)
 	local group = Instance.new("Model")
 	group.Name = name
 	group.Parent = hub
-	part("DisplayFloor", Vector3.new(17, 0.6, 14), Vector3.new(x, 24.4, z), WHITE, Enum.Material.WoodPlanks, group)
-	part("BackWall", Vector3.new(17, 8, 1), Vector3.new(x, 28.4, z + 6), WOOD, Enum.Material.WoodPlanks, group)
+	part("DisplayFloor", Vector3.new(17, 0.6, 14), Vector3.new(x, 24.4, z),
+		Color3.fromRGB(224, 217, 197), Enum.Material.Marble, group)
+	part("BackWall", Vector3.new(17, 8, 1), Vector3.new(x, 28.4, z + 6),
+		WOOD, Enum.Material.WoodPlanks, group)
+	detail("StallWallInlay", Vector3.new(13.8, 0.18, 0.11),
+		Vector3.new(x, 29.7, z + 5.43), METAL_TRIM, Enum.Material.Metal, group)
+	detail("StallCounter", Vector3.new(11.6, 0.42, 1.8),
+		Vector3.new(x, 26.7, z + 3.1), CREAM, Enum.Material.Limestone, group)
+	for _, side in ipairs({-1, 1}) do
+		detail("StallCounterSupport", Vector3.new(0.7, 2.1, 1.0),
+			Vector3.new(x + side * 5.1, 25.65, z + 3.1), WOOD, Enum.Material.WoodPlanks, group)
+	end
 	for _, side in ipairs({-1, 1}) do
 		part("CornerPost", Vector3.new(1.2, 8.5, 1.2), Vector3.new(x + side * 7.2, 28.4, z - 4.5), WOOD, Enum.Material.Wood, group)
 	end
-	local roof = part("ColorfulRoof", Vector3.new(19, 1.3, 17), Vector3.new(x, 33.2, z), roofColor, Enum.Material.SmoothPlastic, group)
+	local roof = part("ColorfulRoof", Vector3.new(19, 1.3, 17), Vector3.new(x, 33.2, z),
+		roofColor, Enum.Material.Metal, group)
+	roof.Reflectance = 0.13
+	detail("RoofFrontBrassCornice", Vector3.new(19.2, 0.21, 0.55),
+		Vector3.new(x, 32.6, z - 8.45), METAL_TRIM, Enum.Material.Metal, group)
+	for _, side in ipairs({-1, 1}) do
+		detail("RoofSideBrassCornice", Vector3.new(0.24, 0.18, 17),
+			Vector3.new(x + side * 9.5, 32.62, z), METAL_TRIM, Enum.Material.Metal, group)
+	end
+	local canopyLight = Instance.new("PointLight")
+	canopyLight.Name = "WarmCanopyLight"
+	canopyLight.Color = Color3.fromRGB(255, 225, 175)
+	canopyLight.Brightness = 0.25
+	canopyLight.Range = 14
+	canopyLight.Shadows = false
+	canopyLight.Parent = roof
 	local header = part("StallSignAnchor", Vector3.new(1, 1, 1), Vector3.new(x, 29, z - 6.5), WHITE, Enum.Material.SmoothPlastic, group)
 	header.Transparency = 1
 	header.CanCollide = false
@@ -459,8 +484,11 @@ local board = decorative(
 	"LeaderboardBoard",
 	Vector3.new(13, 8, 1.1),
 	Vector3.new(33, 32.2, -82),
-	ROOF_BLUE
+	DEEP_NAVY, Enum.Material.Metal
 )
+board.Reflectance = 0.07
+detail("LeaderboardGoldRim", Vector3.new(13.4, 0.24, 1.15),
+	Vector3.new(33, 36.12, -82), METAL_TRIM)
 local boardGui = Instance.new("SurfaceGui")
 boardGui.Name = "ServerLeaderboard"
 boardGui.Face = Enum.NormalId.Back
@@ -546,7 +574,8 @@ local function refreshSessionLeaderboard()
 		textLabel.Text = rows[i]
 	end
 end
-local rewardsBase = decorative("FutureRewardsPodium", Vector3.new(12, 1.5, 10), Vector3.new(-33, 24.75, -82), Color3.fromRGB(255, 195, 91))
+local rewardsBase = decorative("FutureRewardsPodium", Vector3.new(12, 1.5, 10),
+	Vector3.new(-33, 24.75, -82), METAL_TRIM, Enum.Material.Metal)
 local rewardSign = decorative("FutureRewardsSignAnchor", Vector3.new(1, 1, 1), Vector3.new(-33, 27, -82), WHITE)
 rewardSign.CanCollide = false
 rewardSign.Transparency = 1
@@ -554,18 +583,22 @@ textSign(rewardSign, "REWARDS | COMING SOON", 2.5, 226)
 
 -- Small cartoony trees and bushes around the EDGE, leaving sightlines open.
 local function makeTree(x, z, height)
-	local trunk = decorative("BlockyTreeTrunk", Vector3.new(2, height, 2), Vector3.new(x, 24 + height / 2, z), WOOD, Enum.Material.Wood)
+	local trunk = decorative("TreeTrunk", Vector3.new(2, height, 2),
+		Vector3.new(x, 24 + height / 2, z), WOOD, Enum.Material.Wood)
 	for dx = -1, 1 do
 		for dz = -1, 1 do
 			if dx == 0 or dz == 0 then
 				local leaf = decorative(
-					"BlockyTreeLeaves",
-					Vector3.new(5, 3, 5),
-					Vector3.new(x + dx * 3.2, 24 + height + (dx == 0 and 2.5 or 1), z + dz * 3.2),
-					Color3.fromRGB(65 + (dx + 1) * 10, 190 + (dz + 1) * 6, 80),
-					Enum.Material.Grass
+					"TreeCanopy",
+					Vector3.new(5.5, 5.5, 5.5),
+					Vector3.new(x + dx * 3.0, 24 + height + (dx == 0 and 2.0 or 1), z + dz * 3),
+					Color3.fromRGB(67 + (dx + 1) * 8, 143 + (dz + 1) * 8, 102),
+					Enum.Material.LeafyGrass
 				)
+				leaf.Shape = Enum.PartType.Ball
 				leaf.CanCollide = false
+				leaf.CanTouch = false
+				leaf.CanQuery = false
 			end
 		end
 	end
@@ -577,12 +610,19 @@ for _, spot in ipairs({
 	makeTree(spot[1], spot[2], spot[3])
 end
 for _, spot in ipairs({{-49,-92},{-43,-92},{45,-92},{50,-93},{-50,-39},{50,-39}}) do
-	local bush = decorative("HubBush", Vector3.new(5, 3, 5), Vector3.new(spot[1], 25.5, spot[2]), Color3.fromRGB(77, 198, 99), Enum.Material.Grass)
+	local bush = decorative("HubBush", Vector3.new(5, 3, 5),
+		Vector3.new(spot[1], 25.5, spot[2]), Color3.fromRGB(76, 158, 106), Enum.Material.LeafyGrass)
+	bush.Shape = Enum.PartType.Ball
 	bush.CanCollide = false
+	bush.CanTouch = false
+	bush.CanQuery = false
 end
 for _, side in ipairs({-1, 1}) do
 	for _, z in ipairs({-89, -74, -59, -44}) do
-		local post = decorative("IslandEdgeFencePost", Vector3.new(1.5, 5, 1.5), Vector3.new(side * 63, 26.5, z), WOOD, Enum.Material.Wood)
+		local post = decorative("IslandEdgeFencePost", Vector3.new(1.5, 5, 1.5),
+			Vector3.new(side * 63, 26.5, z), DEEP_NAVY, Enum.Material.Metal)
+		detail("IslandPostCap", Vector3.new(2, 0.21, 2),
+			Vector3.new(side * 63, 29.13, z), METAL_TRIM)
 	end
 end
 
