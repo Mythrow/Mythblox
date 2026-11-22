@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-22):** **v0.26** corrects layout clashes visible in the owner's lobby screenshot: an oversized blank leaderboard back overlapped a lamp and blocked the view, nearby display lamps intersected reward/scoreboard structures, and some paving parts overlapped at the same height. The leaderboard is now smaller, double-sided and moved fully off the plaza; lamps and adjacent paths have been realigned. **v0.25 clouds/matte materials, v0.24 neutral lighting, core gameplay and saving remain intact. Roblox Studio and phone verification pending; not launch-ready.**  
+**Status (2026-11-22):** **v0.27** fixes the owner-reported difference between Studio and the published Roblox app: a single published-server player may now run a **reward-free solo practice** round after the JOIN timer, while **2–8-player matches** retain competitive voting and Wins/Coins. The phone round-status card is smaller (43px) and right-aligned within Roblox's safe area; JOIN now waits for server acknowledgement before hiding the button. Floating signboards and small furniture/planter/lamp/fountain/roof gaps were anchored to their supports or the hub ground. **Source/installer committed; live Studio/mobile QA pending. Not launch-ready.**  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -23,7 +23,7 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 |---|---|
 | Ready/join countdown | 10 seconds |
 | Match player cap | 8 |
-| Minimum live players | 2 (single-player practice allowed only in Studio) |
+| Minimum live players | 2 for rewarded competitive matches; 1 for reward-free live practice (Studio solo testing retains its existing behavior) |
 | Vote window | 5 seconds |
 | Reveal | 5 seconds |
 | Walk/stay window | 6 seconds |
@@ -34,6 +34,17 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 | Reward | Win +25 coins, participation +5 coins |
 
 **Progress storage:** Wins and coins were session-only through v0.12. **v0.13 introduces DataStore persistence**, pending Roblox Studio and published-server verification. v0.14 adds a coin-only cosmetics stall (no Robux or paid items). Do not publicly launch or monetize before testing data recovery and purchases.
+
+## v0.27 — published solo practice, less obstructive phone status, grounded props (QA pending)
+
+The owner found three issues: several fixtures appeared to float slightly above their bases, the round-status card still covered too much of a phone view, and tapping JOIN in the published Roblox app never started a solo game even though Studio Play worked. **Root cause of the JOIN difference:** Studio explicitly permitted a single practice participant, while the published server required two ready players.
+
+- **Published mobile/app solo works:** One ready player now enters a regular one-lane glass practice match after the 10-second JOIN countdown, with the same 1–5 vote choices, manual stepping/jumping, glass breakage, and finish behavior. **Published solo practice grants no Wins or Coins**, preventing reward farming. Two or more players ready at countdown end get the original rewarded competitive match; Studio's previous solo behavior is retained. Only joined players count.
+- **JOIN acknowledgement:** The mobile JOIN button no longer hides optimistically when tapped. It disappears only when the server publishes `queued=true`; a rejected/late click remains actionable on the next eligible JOIN window. Output logs successful queue actions with `[Mythblox QUEUE]`.
+- **Smaller mobile HUD:** Phone status shrinks from 49 to **43px**, moves to the **top-right inside the built-in safe-area inset**, and narrows to at most 270px, leaving the center of the play view clear. Full desktop HUD and native Roblox buttons are unchanged; private vote/reveal controls stay in their normal locations.
+- **Props anchored visually:** Two subtle join-sign columns and rewards-sign supports eliminate floating signboards; bench legs now reach the grass, planter bases and lamp pedestals touch the hub surface, pergola columns connect from ground to the roof, lanterns gain suspension stems, and fountain water/basin/pedestal and trophy base are vertically aligned. Kiosk display floors are lowered slightly to meet their walkway/support surfaces. Visual supports remain decorative/noncolliding where required.
+- **Preserved:** v0.26 overlap corrections, v0.25 cloud/stone choices, v0.24 neutral daylight, equipped glass cosmetics, vote majority/ties, three-crack elimination, free movement, permanent Coins/Wins and two-player social interactions.
+- **Install/QA:** Stop Studio Play, run the [latest one-paste installer](INSTALL_STUDIO_COMMAND_BAR.luau) in Edit mode, verify `v0.27 VERIFIED`, then **publish the updated private test experience** before testing the Roblox mobile app. Try JOIN alone and then with a friend: only the two-player match should grant rewards. A source consistency check is not live engine or mobile verification.
 
 ## v0.26 — remove lobby object overlaps and obstructive blank boards (Studio/phone QA pending)
 
@@ -431,6 +442,6 @@ See the [pre-launch roadmap](PRELAUNCH_ROADMAP.md). Cosmetic stall, sound effect
 
 ## Next step
 
-**Test v0.26 on a phone first:** verify the oat floor is comfortably matte, the 49px top strip no longer obscures play, all five reveal cards/avatars fit, and 1–5 voting remains tappable. Publish the updated private test experience to play with a friend; test bench seating, cosmetics and most importantly illegal-step glass shatter/elimination. Report a phone screenshot or any Output errors. Major additional features and independent multiplayer/data/security QA remain required before public launch.
+**Test v0.27 on a phone first:** verify the oat floor is comfortably matte, the 49px top strip no longer obscures play, all five reveal cards/avatars fit, and 1–5 voting remains tappable. Publish the updated private test experience to play with a friend; test bench seating, cosmetics and most importantly illegal-step glass shatter/elimination. Report a phone screenshot or any Output errors. Major additional features and independent multiplayer/data/security QA remain required before public launch.
 
 See [the Mythblox game-design memo](../../docs/FIRST_GAME_GLASS_BRIDGE_CONCEPT.md) for earlier alternatives, including the spinner idea that was explicitly deferred.
