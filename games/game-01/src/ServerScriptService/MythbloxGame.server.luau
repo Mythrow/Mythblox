@@ -1,4 +1,4 @@
--- Mythblox game-01: Soft Earth Coast v0.28 (server)
+-- Mythblox game-01: Soft Earth Coast v0.29 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -8,7 +8,7 @@ local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
 local DataStoreService = game:GetService("DataStoreService")
 local HttpService = game:GetService("HttpService")
-local BUILD_VERSION = "v0.28"
+local BUILD_VERSION = "v0.29"
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -41,7 +41,7 @@ local THEME = {
 	Ivory = Color3.fromRGB(239, 230, 214),       -- #EFE6D6 warm cream
 	Limestone = Color3.fromRGB(217, 200, 174),   -- #D9C8AE oat beige, small accents
 	Sandstone = Color3.fromRGB(201, 179, 148),   -- #C9B394 soft sand
-	-- v0.28: richer matte colors specifically for large, light-catching
+	-- v0.29: richer matte colors specifically for large, light-catching
 	-- floors, platforms and planters; not a dark filter over the game.
 	PlazaStone = Color3.fromRGB(184, 173, 154),   -- weathered oat
 	DeckStone = Color3.fromRGB(176, 167, 150),    -- shaded stone
@@ -73,7 +73,7 @@ local function glassColorFor(player)
 	return skin and skin.color or GLASS
 end
 local AMBER = Color3.fromRGB(255, 206, 75)
--- v0.28: neutral, soft coastal daylight. Let the deliberately warm
+-- v0.29: neutral, soft coastal daylight. Let the deliberately warm
 -- OAT/WOOD/TERRACOTTA materials carry the earth tones without a yellow
 -- filter across the sky, character, greenery, water, or every surface.
 -- Keep lighting gentle on mobile and preserve the matte material response.
@@ -138,7 +138,7 @@ if not clouds then
 	clouds.Parent = terrain
 end
 clouds.Name = "MythbloxAzureCoastClouds"
--- v0.28: visibly fuller soft coastal cloud cover, not a solid white sky.
+-- v0.29: visibly fuller soft coastal cloud cover, not a solid white sky.
 clouds.Cover = 0.72
 clouds.Density = 0.54
 clouds.Color = Color3.fromRGB(238, 242, 242)
@@ -245,7 +245,8 @@ local function textSign(parent, message, yOffset, width)
 	local board = Instance.new("Part")
 	board.Name = "WorldSign_" .. parent.Name
 	board.Anchored = true
-	board.CanCollide = false
+	-- World signboards are physical fixtures; invisible labels/anchors stay noncolliding.
+	board.CanCollide = true
 	board.CanTouch = false
 	board.Size = Vector3.new(math.clamp((width or 220) / 21, 8, 16), 2.35, 0.45)
 	board.Position = parent.Position + Vector3.new(0, yOffset or 3, 0)
@@ -401,9 +402,10 @@ for _, z in ipairs({-97, -75}) do
 		Vector3.new(0, 24.43, z), THEME.Sandstone, Enum.Material.Limestone)
 end
 
--- A tall, invisible safety perimeter prevents walking off the expanded hub.
--- It does NOT change WalkSpeed, jump power, or a player's free movement within
--- the island. It leaves both side-spectator promenade entrances open.
+-- v0.29: Fence the ENTIRE lobby perimeter. The previous opening for
+-- long spectator paths is closed; the central deck remains the waiting area.
+-- These tall safety limits remain behind VISIBLE, collidable fence panels.
+-- They stop map escapes, but never change humanoid walking or jumping.
 local function invisibleBoundary(name, size, position)
 	local wall = part(name, size, position, DEEP_NAVY, Enum.Material.SmoothPlastic, hub)
 	wall.Transparency = 1
@@ -416,31 +418,46 @@ invisibleBoundary("HubWestSafetyLimit", Vector3.new(1.5, 19, 124), Vector3.new(-
 invisibleBoundary("HubEastSafetyLimit", Vector3.new(1.5, 19, 124), Vector3.new(93.2, 33, -71))
 invisibleBoundary("HubBackSafetyLimit", Vector3.new(186, 19, 1.5), Vector3.new(0, 33, -133.2))
 for _, side in ipairs({-1, 1}) do
-	invisibleBoundary("HubFrontSafetyLimit", Vector3.new(35, 19, 1.5),
-		Vector3.new(side * 75.5, 33, -9.1))
+	-- Close the old +/-49 spectator promenade entrances at the front.
+	invisibleBoundary("HubFrontSafetyLimit", Vector3.new(48, 19, 1.5),
+		Vector3.new(side * 69, 33, -9.1))
 end
--- Matching ivory, teal and brass visual rails sit INSIDE the invisible limit.
+
+local function fenceGlass(name, size, position)
+	local pane = solidDetail(name, size, position, THEME.Foam, Enum.Material.Glass)
+	pane.Transparency = 0.47
+	pane.Reflectance = 0
+	pane.CanTouch = false
+	return pane
+end
+-- Side and rear panes visually explain where collision begins.
+-- They overlap at the corners, with no ghost gap or walk-through fence.
 for _, side in ipairs({-1, 1}) do
-	for _, z in ipairs({-122, -103, -84, -65, -46, -27}) do
-		detail("CoastPerimeterPier", Vector3.new(1.15, 4.6, 1.15),
+	fenceGlass("HubSideFenceGlass", Vector3.new(0.6, 8.5, 123),
+		Vector3.new(side * 91.5, 28.4, -71))
+	for _, z in ipairs({-122, -103, -84, -65, -46, -27, -11}) do
+		solidDetail("CoastPerimeterPier", Vector3.new(1.15, 4.6, 1.15),
 			Vector3.new(side * 90, 26.3, z), THEME.PlanterStone, Enum.Material.Concrete)
 		detail("PerimeterPostCap", Vector3.new(1.5, 0.18, 1.5),
 			Vector3.new(side * 90, 28.72, z), METAL_TRIM)
 	end
-	detail("CoastPerimeterTealRail", Vector3.new(0.28, 0.25, 114),
-		Vector3.new(side * 90, 27.6, -75), DEEP_NAVY)
+	solidDetail("CoastPerimeterTealRail", Vector3.new(0.28, 0.25, 120),
+		Vector3.new(side * 90, 27.6, -71), DEEP_NAVY)
 end
+fenceGlass("HubBackFenceGlass", Vector3.new(184, 8.5, 0.6),
+	Vector3.new(0, 28.4, -131.5))
 for x = -81, 81, 18 do
-	detail("BackPromenadePier", Vector3.new(1.15, 4.6, 1.15),
+	solidDetail("BackPromenadePier", Vector3.new(1.15, 4.6, 1.15),
 		Vector3.new(x, 26.3, -129.8), THEME.PlanterStone, Enum.Material.Concrete)
 	detail("BackPierCap", Vector3.new(1.4, 0.18, 1.4),
 		Vector3.new(x, 28.72, -129.8), METAL_TRIM)
 end
-detail("BackPromenadeBrassRail", Vector3.new(180, 0.25, 0.28),
+solidDetail("BackPromenadeBrassRail", Vector3.new(180, 0.25, 0.28),
 	Vector3.new(0, 27.6, -129.8), DEEP_NAVY)
 
--- The platform is BOTH ready and spectator space. It persists for the whole
--- server session; we change its message, never create a second front deck.
+-- The ENTIRE 90 x 24 stud front deck is the auto-join waiting zone,
+-- not a single button/gold pad. It also serves as the spectator deck.
+-- It persists for the whole server session, with no separate side runways.
 local sharedDeck = decorative(
 	"SharedReadyAndSpectatorDeck",
 	Vector3.new(90, 1, 24),
@@ -454,27 +471,19 @@ for _, edge in ipairs({-1, 1}) do
 end
 detail("DeckFrontBrassTrim", Vector3.new(89.8, 0.14, 0.16),
 	Vector3.new(0, 24.65, -9.97), METAL_TRIM)
-local deckCenter = decorative(
-	"JoinAndWatchFloorMarking",
-	Vector3.new(19, 0.17, 9),
-	Vector3.new(0, 24.7, -25),
-	THEME.Wood, Enum.Material.Metal
-)
-deckCenter.CanCollide = false
-local deckPrompt = Instance.new("ProximityPrompt")
-deckPrompt.Name = "JoinRoundPrompt"
-deckPrompt.ActionText = "Join next round"
-deckPrompt.ObjectText = "Glass Bridge Race"
-deckPrompt.KeyboardKeyCode = Enum.KeyCode.E
-deckPrompt.HoldDuration = 0
-deckPrompt.MaxActivationDistance = 15
-deckPrompt.RequiresLineOfSight = false
-deckPrompt.Parent = deckCenter
+-- Thin, low-profile trim outlines the full waiting row. No central gold
+-- pad, ProximityPrompt, or client JOIN click is needed.
+detail("JoinZoneBackEdge", Vector3.new(89.2, 0.055, 0.18),
+	Vector3.new(0, 24.58, -33.9), THEME.Terracotta, Enum.Material.Wood)
+for _, side in ipairs({-1, 1}) do
+	detail("JoinZoneSideEdge", Vector3.new(0.18, 0.055, 23.6),
+		Vector3.new(side * 44.9, 24.58, -22), THEME.Terracotta, Enum.Material.Wood)
+end
 
 -- Anchor the overhead join sign to the deck. The old floating panel
 -- had no visible attachment; these slim posts do not block player movement.
 for _, side in ipairs({-1, 1}) do
-	detail("JoinSignSupport", Vector3.new(0.55, 7.4, 0.55),
+	solidDetail("JoinSignSupport", Vector3.new(0.55, 7.4, 0.55),
 		Vector3.new(side * 6.25, 28.2, -25), THEME.Wood, Enum.Material.WoodPlanks)
 end
 local sharedDeckSignAnchor = decorative(
@@ -488,63 +497,21 @@ sharedDeckSignAnchor.CanCollide = false
 local deckSignGui = textSign(sharedDeckSignAnchor, "JOIN NEXT ROUND", 3, 310)
 local deckSignText = deckSignGui:FindFirstChildOfClass("TextLabel")
 
--- One transparent front barrier lets spectators see the bridges but stops
--- jumping into an active lane. A spectator who bypasses it is also returned
--- to this deck by an additional server-side bounds check.
-local barrier = decorative(
-	"FrontSpectatorGlassBarrier",
-	Vector3.new(90, 8.5, 0.45),
-	Vector3.new(0, 28.8, -10.25),
-	THEME.Foam,
-	Enum.Material.Glass
-)
-barrier.Transparency = 0.79
-
-local function makePromenade(side)
-	local x = side * 49
-	local walkway = decorative(
-		side < 0 and "LeftSpectatorWalkway" or "RightSpectatorWalkway",
-		Vector3.new(9, 1, 95),
-		Vector3.new(x, 24.05, 22.5),
-		THEME.DeckStone, Enum.Material.Concrete
-	)
-	local connector = decorative(
-		side < 0 and "LeftSpectatorConnector" or "RightSpectatorConnector",
-		Vector3.new(12, 1, 15),
-		Vector3.new(side * 44, 24.05, -17.5),
-		THEME.DeckStone, Enum.Material.Concrete
-	)
-	local inner = decorative(
-		"InnerViewingSafetyGlass",
-		Vector3.new(0.45, 8.5, 79.8),
-		Vector3.new(side * 44.5, 28.8, 30.1),
-		THEME.Foam,
-		Enum.Material.Glass
-	)
-	inner.Transparency = 0.78
-	local outer = decorative(
-		"OuterViewingFence",
-		Vector3.new(0.75, 7, 95),
-		Vector3.new(side * 53.5, 28.05, 22.5),
-		DEEP_NAVY,
-		Enum.Material.Metal
-	)
-	outer.Transparency = 0.05
-	detail("ViewingFenceTopTrim", Vector3.new(0.9, 0.16, 95),
-		Vector3.new(side * 53.5, 31.6, 22.5), METAL_TRIM)
-	local endRail = decorative(
-		"ViewingEndFence",
-		Vector3.new(9, 7, 0.7),
-		Vector3.new(x, 28.05, 69.65),
-		DEEP_NAVY,
-		Enum.Material.Metal
-	)
-	detail("ViewingEndRailTrim", Vector3.new(9, 0.15, 0.9),
-		Vector3.new(x, 31.6, 69.65), METAL_TRIM)
-	return walkway
+-- The entire front edge now has a continuous, *visible* physical fence.
+-- The short spectator platform ends at z=-10; there are no 95-stud side
+-- runways out toward the bridge finish. Center and side panes meet at x=45.
+local barrier = fenceGlass("FrontSpectatorGlassBarrier",
+	Vector3.new(90, 8.5, 0.45), Vector3.new(0, 28.8, -10.25))
+for _, side in ipairs({-1, 1}) do
+	fenceGlass("FrontSideFenceGlass", Vector3.new(48.2, 8.5, 0.45),
+		Vector3.new(side * 69.05, 28.8, -10.25))
+	solidDetail("FrontFenceCornerPost", Vector3.new(1.0, 7.9, 1.0),
+		Vector3.new(side * 45, 28.45, -10.25), THEME.Brown, Enum.Material.Wood)
+	detail("FrontFenceCap", Vector3.new(48, 0.18, 0.65),
+		Vector3.new(side * 69, 33.14, -10.25), METAL_TRIM, Enum.Material.Wood)
 end
-makePromenade(-1)
-makePromenade(1)
+-- Only the physical fence separates the lobby and race. Keep jumps and
+-- navigation unrestricted *inside* the deck and lobby.
 
 -- Invisible, noninteractive spawn pad. Its parent location is deliberately
 -- well clear of the lava. Existing respawn code still points here.
@@ -761,7 +728,7 @@ cosmeticsPrompt.RequiresLineOfSight = false
 cosmeticsPrompt.MaxActivationDistance = 12
 cosmeticsPrompt.Parent = cosmeticsDesk
 
--- v0.28: The giant blank BACK of the leaderboard and a nearby lamp
+-- v0.29: The giant blank BACK of the leaderboard and a nearby lamp
 -- previously overlapped at the plaza edge. Keep the board completely
 -- outside the main plaza and make BOTH faces readable at normal scale.
 local boardPost = decorative(
@@ -882,7 +849,7 @@ local rewardsBase = decorative("FutureRewardsPodium", Vector3.new(12, 1.5, 10),
 	Vector3.new(-33, 24.75, -82), METAL_TRIM, Enum.Material.Metal)
 -- The rewards placard now visibly rests on the podium instead of floating.
 for _, offset in ipairs({-4.3, 4.3}) do
-	detail("RewardSignSupport", Vector3.new(0.48, 3.0, 0.48),
+	solidDetail("RewardSignSupport", Vector3.new(0.48, 3.0, 0.48),
 		Vector3.new(-33 + offset, 26.95, -82), THEME.Wood, Enum.Material.WoodPlanks)
 end
 local rewardSign = decorative("FutureRewardsSignAnchor", Vector3.new(1, 1, 1), Vector3.new(-33, 27, -82), WHITE)
@@ -1119,7 +1086,7 @@ local trophyX, trophyZ = -67, -110
 local trophyStand = horizontalCylinder(solidDetail("AzureTrophyPedestal",
 	Vector3.new(2.0, 7, 7), Vector3.new(trophyX, 25.0, trophyZ),
 	THEME.PlanterStone, Enum.Material.Concrete))
-local trophy = detail("AzureTrophySculpture", Vector3.new(3.4, 6, 3.4),
+local trophy = solidDetail("AzureTrophySculpture", Vector3.new(3.4, 6, 3.4),
 	Vector3.new(trophyX, 29.0, trophyZ), THEME.Wood)
 trophy.Shape = Enum.PartType.Ball
 trophy.Reflectance = 0.01
@@ -1383,7 +1350,7 @@ local initialMatchCount = 0
 local practiceWithoutRewards = false
 -- Reject excessively repeated remote requests without changing normal inputs.
 -- The server still owns every vote, purchase, movement and reward decision.
-local COMMAND_COOLDOWN = { Sync = 1.0, Join = 0.25, Vote = 0.065, Shop = 0.35 }
+local COMMAND_COOLDOWN = { Sync = 1.0, Vote = 0.065, Shop = 0.35 }
 local lastRemoteCommand = {}
 local lastShopPrompt = {}
 local publish
@@ -1715,31 +1682,60 @@ publish = function()
 	refreshSessionLeaderboard()
 	-- The single physical platform changes role by phase, without moving.
 	if phase == "JOIN" then
-		deckSignText.Text = ("JOIN ROUND  ·  %ds  ·  %d READY"):format(secondsLeft, numberReady())
-		deckPrompt.Enabled = true
+		deckSignText.Text = ("STAND IN ZONE  ·  %ds  ·  %d READY"):format(secondsLeft, numberReady())
 	elseif phase == "RESULTS" then
 		deckSignText.Text = "ROUND FINISHED  |  NEXT MATCH SOON"
-		deckPrompt.Enabled = false
 	else
 		deckSignText.Text = ("WATCH MATCH  ·  %d LEFT"):format(#survivors())
-		deckPrompt.Enabled = false
 	end
 	for _, player in ipairs(Players:GetPlayers()) do
 		stateEvent:FireClient(player, snapshot(player))
 	end
 end
 
-local function joinQueue(player)
-	if player.Parent ~= Players or phase ~= "JOIN" or queue[player] or numberReady() >= SETTINGS.MaxPlayers then
-		return
-	end
-	queue[player] = true
-	print(("[Mythblox QUEUE] %s joined round (%d ready)"):format(player.Name, numberReady()))
-	publish()
+-- Server-owned continuous zone membership: a player joins by occupying
+-- ANY part of the front deck during JOIN and only stays queued while present.
+-- This uses character positions, not Touch events or a client claim, so
+-- standing still, walking, respawning and jumping all work reliably.
+local function insideJoinZone(player)
+	if player.Parent ~= Players then return false end
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if not root or not humanoid or humanoid.Health <= 0 then return false end
+	local pos = root.Position
+	return math.abs(pos.X - sharedDeck.Position.X) <= sharedDeck.Size.X / 2 - 0.75
+		and math.abs(pos.Z - sharedDeck.Position.Z) <= sharedDeck.Size.Z / 2 - 0.75
+		and pos.Y >= sharedDeck.Position.Y - 0.5
+		and pos.Y <= sharedDeck.Position.Y + 16
 end
 
--- Physical join pad and existing UI button call the SAME validated server path.
-deckPrompt.Triggered:Connect(joinQueue)
+local function refreshJoinZoneQueue()
+	if phase ~= "JOIN" then return end
+	local updated = false
+	local ready = 0
+	for _, player in ipairs(Players:GetPlayers()) do
+		local inZone = insideJoinZone(player)
+		-- Server capacity still limits each race to eight participants.
+		local shouldQueue = inZone and ready < SETTINGS.MaxPlayers
+		if shouldQueue then ready += 1 end
+		if queue[player] ~= (shouldQueue or nil) then
+			queue[player] = shouldQueue or nil
+			updated = true
+			print(("[Mythblox ZONE] %s %s (%d ready)"):format(
+				player.Name, shouldQueue and "entered" or "left", ready))
+		end
+	end
+	if updated then publish() end
+end
+
+local joinZoneElapsed = 0
+RunService.Heartbeat:Connect(function(dt)
+	joinZoneElapsed += dt
+	if joinZoneElapsed < 0.2 then return end
+	joinZoneElapsed = 0
+	refreshJoinZoneQueue()
+end)
 
 -- v0.13: Server-owned progress, saved as one per-user DataStore record.
 -- Studio and published experiences NEVER share a store. Studio requires its
@@ -2241,8 +2237,6 @@ command.OnServerEvent:Connect(function(player, action, payload)
 	timestamps[action] = now
 	if action == "Sync" then
 		stateEvent:FireClient(player, snapshot(player))
-	elseif action == "Join" then
-		joinQueue(player)
 	elseif action == "Shop" then
 		if typeof(payload) ~= "string" or #payload > 24 or not SKIN_BY_ID[payload] then return end
 		if not nearCosmetics(player) then
@@ -2512,7 +2506,7 @@ local function scoreMatch(winners, participants)
 			awardProgress(player, awarded[player] and 1 or 0, awarded[player] and 25 or 5)
 		end
 	end
-	-- v0.28: Save match rewards immediately after a round finishes, while
+	-- v0.29: Save match rewards immediately after a round finishes, while
 	-- retaining autosave, exit and shutdown fallback attempts.
 	-- saveProfile uses stable reward-batch IDs and per-player write locks
 	-- so overlapping attempts do not double-award a completed round.
@@ -2532,8 +2526,11 @@ while true do
 	unsafe = {}
 	voteCounts = {0, 0, 0, 0, 0}
 	voteOutcomes = {}
-	message = "Press JOIN to enter the next bridge race."
+	message = "Stand anywhere on the front JOIN ZONE until the countdown ends."
 	countdown(SETTINGS.JoinSeconds, false)
+	-- Evaluate the server's final positions again at the exact cutoff:
+	-- entering in the last second counts; leaving before zero disqualifies.
+	refreshJoinZoneQueue()
 	local participants = {}
 	for _, player in ipairs(Players:GetPlayers()) do
 		if queue[player] and #participants < SETTINGS.MaxPlayers then
@@ -2549,7 +2546,7 @@ while true do
 	if #participants < (soloAllowed and 1 or 2) then
 		phase = "RESULTS"
 		message = #participants == 0
-			and "No players ready. Tap JOIN before the timer ends!"
+			and "No players in JOIN ZONE at zero. Stand on the front deck!"
 			or "Need two ready players. Join next countdown!"
 		secondsLeft = 2
 		publish()
