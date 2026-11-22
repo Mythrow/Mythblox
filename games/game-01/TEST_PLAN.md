@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-22):** **v0.31** fixes screenshot-reported lobby geometry: ground-mounted REWARDS board with no podium, displaced lamp posts moved clear of paths and join deck, glass-free open fence ends with continuous tall invisible safety limits, simplified surface inlays and kiosk corner joins. v0.30 UI systems remain unchanged. **All edits require Studio and published-phone physics/visual testing; do not mark the change verified from source consistency alone.**
+**Status (2026-11-22):** **v0.32** corrects the reported issue where voting/reveal content remained on an eliminated player's screen after death and lobby respawn. New guards hide vote/reveal instantly, block stale vote taps and withhold eliminated-player reveal payloads; the next match restores normal voting. **Studio/phone acceptance tests remain pending; source consistency alone does not prove live behavior.**
 
 ## Playtest log
 
@@ -38,6 +38,18 @@
 6. Repeat with 3–4 clients if the two-player flow works.
 
 
+
+## v0.32 — death/respawn vote UI regression
+
+- [ ] Reinstall the latest [one-paste installer](INSTALL_STUDIO_COMMAND_BAR.luau) in Studio Edit mode. Confirm `v0.32 VERIFIED` and matching server/client/HUD versions; publish the private test experience to the Roblox mobile app.
+- [ ] **Exact reported path:** Enter JOIN zone, wait until a bridge starts, pick **1** on the first glass tile, deliberately die by stepping onto an illegal panel. After lobby respawn, **neither the five numbered vote buttons nor five SAFE/BLOCKED results cards should be visible**.
+- [ ] **Death during REVEAL:** In a two-player race, die during another player's five-second REVEAL (e.g. take an illegal step). As soon as death is detected, both vote/reveal panels disappear locally. When the server remains in REVEAL, the eliminated player does not receive that vote breakdown.
+- [ ] **Death during VOTE:** Die/respawn while other racers are voting. Choice buttons immediately disappear; tapping a former button location cannot change any recorded selection. Global timer may still run, but the local HUD reads ELIMINATED/SPECTATING rather than displaying the dead player's choice.
+- [ ] **Server-delayed state:** Simulate normal network lag/published Roblox app. After death, no stale State remote should show the panels again before the server's elimination snapshot arrives.
+- [ ] **Spectator views:** A player who never joined or was eliminated can use spectator camera controls when live racers remain; follow controls are separate from voting. Lobby Coins/Wins and other non-race UI remain visible where intended.
+- [ ] **New match reset:** After RESULTS → JOIN, stand in the full deck again until zero. At the next **new match** VOTE, the five private buttons must return and accept a new choice. REVEAL shows the correct five cards again for an alive racer.
+- [ ] **No regressions:** Full five-second REVEAL, 1–5 vote majority/ties, free walking/jumping, glass shatter/respawn, multiplayer rewards and personal saved statistics remain correct.
+- [ ] Capture a phone screenshot after death/respawn and review Output/console for Lua errors. Live testing is required before marking this fix verified.
 
 ## v0.31 — screenshot-directed world geometry/edge QA
 
