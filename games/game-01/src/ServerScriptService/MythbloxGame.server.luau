@@ -547,9 +547,11 @@ local function makeShopkeeper(group, x, z, isCosmetics)
 	local function limb(name, size, center, color, material)
 		local piece = part(name, size, center, color,
 			material or Enum.Material.SmoothPlastic, staff)
-		piece.CanCollide = false
+		-- Only the visible torso is an actual solid NPC body. Keep the
+		-- waving arm, face details and invisible root uncollidable.
+		piece.CanCollide = name == "Torso"
 		piece.CanTouch = false
-		piece.CanQuery = false
+		piece.CanQuery = name == "Torso"
 		return piece
 	end
 	local root = limb("HumanoidRootPart", Vector3.new(2, 2, 1),
@@ -652,7 +654,7 @@ local function makeStall(name, x, z, roofColor, line1, line2)
 			Vector3.new(x + dx, 26.0, z - 6.17),
 			THEME.Wood, Enum.Material.Metal, group)
 	end
-	local register = detail("CounterRegister", Vector3.new(1.55, 0.65, 1.25),
+	local register = solidDetail("CounterRegister", Vector3.new(1.55, 0.65, 1.25),
 		Vector3.new(x + 4.8, 28.15, z - 5.25), THEME.Brown,
 		Enum.Material.Metal, group)
 	register.Reflectance = 0.015
@@ -687,7 +689,7 @@ local function makeStall(name, x, z, roofColor, line1, line2)
 
 	-- Merchandise is visible behind the window, but no extra goods or coins
 	-- are for sale: only the existing saved coin cosmetics shop is functional.
-	local shelf = detail("RearDisplayShelf", Vector3.new(13.3, 0.35, 2.2),
+	local shelf = solidDetail("RearDisplayShelf", Vector3.new(13.3, 0.35, 2.2),
 		Vector3.new(x, 27.7, z + 4.7), THEME.Wood, Enum.Material.Metal, group)
 	for i = 1, 4 do
 		local swatch = detail(cosmetics and "GlassColorSample" or "ComingSoonDisplay",
@@ -934,7 +936,7 @@ sparkle.Brightness = 0.14
 sparkle.Shadows = false
 sparkle.Parent = crystal
 for _, side in ipairs({-1, 1}) do
-	detail("FountainStoneSideSeat", Vector3.new(5, 0.55, 2.2),
+	solidDetail("FountainStoneSideSeat", Vector3.new(5, 0.55, 2.2),
 		Vector3.new(side * 13, 25.0, -118), THEME.PlanterStone, Enum.Material.Concrete)
 end
 
@@ -1029,7 +1031,7 @@ for _, side in ipairs({-1, 1}) do
 	-- A visible short suspension stem connects each lantern to its roof.
 	detail("PergolaLanternStem", Vector3.new(0.2, 0.48, 0.2),
 		Vector3.new(x, 31.53, z - 4), THEME.Wood, Enum.Material.Wood)
-	local lantern = detail("PergolaHangingLantern", Vector3.new(1.4, 1.4, 1.4),
+	local lantern = solidDetail("PergolaHangingLantern", Vector3.new(1.4, 1.4, 1.4),
 		Vector3.new(x, 30.7, z - 4), THEME.Foam, Enum.Material.Glass)
 	local light = Instance.new("PointLight")
 	light.Name = "LoungeAmbientLight"
@@ -1047,7 +1049,7 @@ local function resortLamp(x, z)
 		Vector3.new(x, 24.35, z), THEME.PlanterStone, Enum.Material.Concrete)
 	solidDetail("ResortLampColumn", Vector3.new(0.75, 7.65, 0.75),
 		Vector3.new(x, 28.23, z), THEME.Brown, Enum.Material.Metal)
-	local lamp = detail("ResortLantern", Vector3.new(1.5, 1.6, 1.5),
+	local lamp = solidDetail("ResortLantern", Vector3.new(1.5, 1.6, 1.5),
 		Vector3.new(x, 32.8, z), THEME.Foam, Enum.Material.Glass)
 	detail("LanternChampagneCap", Vector3.new(1.8, 0.2, 1.8),
 		Vector3.new(x, 33.67, z), THEME.Wood)
