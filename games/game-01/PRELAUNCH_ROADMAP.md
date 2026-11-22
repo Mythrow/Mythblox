@@ -13,7 +13,8 @@
 - **v0.18** — Introduced free walking/jumping and visual upgrades but owner **found a severe bridge regression**: eliminated racers could continue across remaining glass.
 - **v0.19** — Corrective source and installer committed to break glass and respawn eliminated illegal crossers. **Owner retest still required; not yet confirmed.**
 - **v0.20** — Azure Coast theme and enlarged lobby; owner found ghost props, benches that cannot seat players, and open unstaffed kiosks.
-- **v0.21** — GitHub source/installer now add solid lobby architecture and vegetation, two-place Roblox Seats with Sit prompts, and enclosed staffed kiosk counters. COSMETICS E is at the front desk; catalog unchanged. **Owner and friend test pending.** See [v0.21 QA](TEST_PLAN.md). The v0.19 illegal-glass-crossing fix still needs verification.
+- **v0.21** — Solid lobby architecture/trees, paired Roblox Seats, and enclosed staffed kiosks; existing COSMETICS E prompt remains at the front desk. Friend QA still pending.
+- **v0.22** — Owner-approved **Soft Earth Coast** instead of bright/glossy Azure Coast visuals: matte oat/sand floors, sage/dusty-rose roofs, warm brown/wood accents, bloom off and softened daylight; **49px two-row mobile HUD** in portrait/landscape with Wins/Coins and short GO/WAIT status, plus a compact five-number REVEAL tray. **Code and installer ready; real-phone confirmation pending.** The updated [art palette](AZURE_COAST_THEME.md) supersedes previous vivid colors.
 - No Robux purchases, paid power-ups or public launch are authorized.
 
 ## Ordered future stages — versions and features are not yet approved
@@ -46,8 +47,8 @@ Potential additions to evaluate with the owner: better onboarding/tutorial and l
 - [ ] Final name, icon, thumbnails, description, accessibility/audience settings and moderation/release checks reviewed.
 - [ ] Owner independently approves the public launch.
 
-## Current v0.21 test task
+## Current v0.22 test task
 
-Install v0.21 and test the new **physical trees/lamps**, **real two-player bench sitting**, **staffed enclosed shop counters**, and unchanged cosmetics E prompt. Then test a full match with a friend or two Studio simulated clients, especially **forbidden-step shatter/elimination** from v0.19, which remains unverified. Check any runtime Output errors and send a screenshot; use the [v0.21 test plan](TEST_PLAN.md). The game still needs significant new features and further art work before any public release.
+Install v0.22, **publish the updated private test place**, and check on an actual phone in portrait and landscape: matte oat floor (no glare), new **49px** top strip, legible Wins/Coins, compact 1–5 vote controls and five-card REVEAL. Run a match with a friend to verify v0.21 bench seating, staffed shop E prompt and especially the **v0.19 illegal-step shatter/elimination fix**, not yet separately confirmed. Capture a phone screenshot/Output errors and use [TEST_PLAN.md](TEST_PLAN.md). Major additional gameplay features and custom art remain launch blockers.
 
 The GitHub scripts and one-paste installer are authoritative for code. Publishing/saving a Roblox Studio place is a separate owner-controlled step.
