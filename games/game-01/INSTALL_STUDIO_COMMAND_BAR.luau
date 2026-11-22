@@ -5,7 +5,7 @@
 assert(not game:GetService("RunService"):IsRunning(), "Stop the test session before installing.")
 
 local SERVER_SOURCE = [====[
--- Mythblox game-01: Soft Earth Coast v0.27 (server)
+-- Mythblox game-01: Soft Earth Coast v0.28 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -15,7 +15,7 @@ local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
 local DataStoreService = game:GetService("DataStoreService")
 local HttpService = game:GetService("HttpService")
-local BUILD_VERSION = "v0.27"
+local BUILD_VERSION = "v0.28"
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -48,7 +48,7 @@ local THEME = {
 	Ivory = Color3.fromRGB(239, 230, 214),       -- #EFE6D6 warm cream
 	Limestone = Color3.fromRGB(217, 200, 174),   -- #D9C8AE oat beige, small accents
 	Sandstone = Color3.fromRGB(201, 179, 148),   -- #C9B394 soft sand
-	-- v0.27: richer matte colors specifically for large, light-catching
+	-- v0.28: richer matte colors specifically for large, light-catching
 	-- floors, platforms and planters; not a dark filter over the game.
 	PlazaStone = Color3.fromRGB(184, 173, 154),   -- weathered oat
 	DeckStone = Color3.fromRGB(176, 167, 150),    -- shaded stone
@@ -80,7 +80,7 @@ local function glassColorFor(player)
 	return skin and skin.color or GLASS
 end
 local AMBER = Color3.fromRGB(255, 206, 75)
--- v0.27: neutral, soft coastal daylight. Let the deliberately warm
+-- v0.28: neutral, soft coastal daylight. Let the deliberately warm
 -- OAT/WOOD/TERRACOTTA materials carry the earth tones without a yellow
 -- filter across the sky, character, greenery, water, or every surface.
 -- Keep lighting gentle on mobile and preserve the matte material response.
@@ -145,7 +145,7 @@ if not clouds then
 	clouds.Parent = terrain
 end
 clouds.Name = "MythbloxAzureCoastClouds"
--- v0.27: visibly fuller soft coastal cloud cover, not a solid white sky.
+-- v0.28: visibly fuller soft coastal cloud cover, not a solid white sky.
 clouds.Cover = 0.72
 clouds.Density = 0.54
 clouds.Color = Color3.fromRGB(238, 242, 242)
@@ -768,7 +768,7 @@ cosmeticsPrompt.RequiresLineOfSight = false
 cosmeticsPrompt.MaxActivationDistance = 12
 cosmeticsPrompt.Parent = cosmeticsDesk
 
--- v0.27: The giant blank BACK of the leaderboard and a nearby lamp
+-- v0.28: The giant blank BACK of the leaderboard and a nearby lamp
 -- previously overlapped at the plaza edge. Keep the board completely
 -- outside the main plaza and make BOTH faces readable at normal scale.
 local boardPost = decorative(
@@ -2519,7 +2519,7 @@ local function scoreMatch(winners, participants)
 			awardProgress(player, awarded[player] and 1 or 0, awarded[player] and 25 or 5)
 		end
 	end
-	-- v0.27: Save match rewards immediately after a round finishes, while
+	-- v0.28: Save match rewards immediately after a round finishes, while
 	-- retaining autosave, exit and shutdown fallback attempts.
 	-- saveProfile uses stable reward-batch IDs and per-player write locks
 	-- so overlapping attempts do not double-award a completed round.
@@ -2650,13 +2650,13 @@ end
 ]====]
 
 local CLIENT_SOURCE = [====[
--- Mythblox Game 01 · Soft Earth Coast mobile UI v0.27
+-- Mythblox Game 01 · Soft Earth Coast mobile UI v0.28
 -- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
-local BUILD_VERSION = "v0.27"
+local BUILD_VERSION = "v0.28"
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local network = ReplicatedStorage:WaitForChild("MythbloxGame01")
@@ -2931,7 +2931,7 @@ end
 -- Results appear in the compact top status strip instead of a centered
 -- modal. The arena and other players remain visible when a match ends.
 
--- v0.27: Secret selections are never displayed to others while voting.
+-- v0.28: Secret selections are never displayed to others while voting.
 -- ONLY during the five-second REVEAL do five non-clickable results cards
 -- show every numbered choice, picking players' avatars, totals, and safety.
 -- The existing teal voting buttons remain PRIVATE selection controls.
@@ -2940,10 +2940,10 @@ reveal.AnchorPoint = Vector2.new(0.5, 0)
 reveal.Position = UDim2.new(0.5, 0, 0, 103)
 reveal.Visible = false
 
+-- The five cards already say SAFE or BLOCKED. Do not repeat the obvious
+-- color legend above them or waste mobile vertical space.
 local revealHeader = label(reveal, "Heading", "VOTES REVEALED", 13, 7, -26, 27, 19, COLOR.Purple, true)
 revealHeader.TextXAlignment = Enum.TextXAlignment.Center
-local revealSubtitle = label(reveal, "Legend", "GREEN = SAFE      RED = BLOCKED", 13, 34, -26, 20, 13, COLOR.Muted, true)
-revealSubtitle.TextXAlignment = Enum.TextXAlignment.Center
 
 local resultRow = Instance.new("Frame")
 resultRow.Name = "LockedNumberResults"
@@ -3171,7 +3171,7 @@ local function layoutForViewport()
 	if compact then feedback.Visible = false end
 	local shortScreen = height < 570
 
-	-- v0.27: phone status is smaller, at the TOP RIGHT of the core-UI safe
+	-- v0.28: phone status is smaller, at the TOP RIGHT of the core-UI safe
 	-- area rather than a wide center banner obscuring the avatar/camera.
 	-- Never put it above Roblox's native safe-area inset.
 	local topW = compact and math.min(270, math.max(180, width - 110))
@@ -3230,22 +3230,20 @@ local function layoutForViewport()
 	shop.AnchorPoint = compact and Vector2.new(0.5, 0.5) or Vector2.new(1, 0.5)
 	shop.Position = compact and UDim2.new(0.5, 0, 0.56, 0) or UDim2.new(1, -18, 0.54, 0)
 
-	-- The same five reveal cards fit into a shorter 156–172px phone tray.
-	-- They still appear ONLY for the existing five-second reveal phase.
+	-- v0.28: Omit the unnecessary red/green legend and reclaim its 16–18px.
+	-- Avatar grids, vote totals, numbered SAFE/BLOCKED cards and five-second
+	-- server reveal duration are unchanged. The phone tray obscures less play.
 	local revealW = math.min(width - 18, compact and 560 or 780)
-	local revealH = compact and (shortScreen and 156 or 172)
-		or math.max(178, math.min(228, height - 110))
+	local revealH = compact and (shortScreen and 140 or 156)
+		or math.max(160, math.min(210, height - 128))
 	reveal.Size = UDim2.fromOffset(revealW, revealH)
-	reveal.Position = UDim2.new(0.5, 0, 0, compact and 59 or 100)
+	reveal.Position = UDim2.new(0.5, 0, 0, compact and 51 or 100)
 	revealHeader.Position = UDim2.fromOffset(8, compact and 1 or 7)
 	revealHeader.Size = UDim2.new(1, -16, 0, compact and 21 or 27)
 	revealHeader.TextSize = compact and 14 or 19
-	revealSubtitle.Position = UDim2.fromOffset(8, compact and 23 or 34)
-	revealSubtitle.Size = UDim2.new(1, -16, 0, compact and 14 or 20)
-	revealSubtitle.TextSize = compact and 10 or 13
-	resultRow.Position = UDim2.fromOffset(compact and 6 or 10, compact and 40 or 60)
-	resultRow.Size = UDim2.new(1, compact and -12 or -20, 1, compact and -45 or -72)
-	local cardHeight = revealH - (compact and 45 or 72)
+	resultRow.Position = UDim2.fromOffset(compact and 6 or 10, compact and 24 or 42)
+	resultRow.Size = UDim2.new(1, compact and -12 or -20, 1, compact and -29 or -54)
+	local cardHeight = revealH - (compact and 29 or 54)
 	local avatarHeight = compact and (shortScreen and 37 or 43) or 55
 	local cardWidth = (revealW - (compact and 12 or 20)) * 0.19
 	local columns = cardWidth < 80 and 3 or 4
@@ -3339,7 +3337,7 @@ local function update(state)
 	if phase == "JOIN" or phase == "VOTE" then
 		lastTurnRendered = -1
 	end
-	phaseText.Text = ("v0.27 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
+	phaseText.Text = ("v0.28 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
 	clockText.Text = tostring(state.time or 0) .. "s"
 	clockText.TextColor3 = phase == "VOTE" and (state.time or 0) <= 2 and COLOR.Red or COLOR.Purple
 	description.Text = state.message or ""
@@ -3349,7 +3347,7 @@ local function update(state)
 	if voting.Visible then shop.Visible = false end
 
 	if phase == "JOIN" then
-		phaseText.Text = "v0.27 · NEXT MATCH"
+		phaseText.Text = "v0.28 · NEXT MATCH"
 		description.Text = state.queued
 			and ((state.ready or 0) == 1 and state.liveSoloPractice
 				and "Ready! Solo practice starts at 0s (no Wins/Coins)."
@@ -3371,7 +3369,7 @@ local function update(state)
 	if phase == "RESULTS" then
 		-- Server sends winner/draw text in state.message; show it only in
 		-- the small status panel and avoid blocking the camera.
-		phaseText.Text = "v0.27 · ROUND OVER"
+		phaseText.Text = "v0.28 · ROUND OVER"
 		ownStats.Text = state.practiceNoRewards and "PRACTICE · NO WINS / COINS"
 			or "NEXT MATCH STARTS SOON"
 	end
@@ -3475,7 +3473,7 @@ end)
 command:FireServer("Sync")
 ]====]
 
--- Diagnostic/cleanup installer: v0.27
+-- Diagnostic/cleanup installer: v0.28
 -- Remove known legacy copies from services used by previous Mythblox builds.
 -- This intentionally does NOT remove scripts belonging to other games.
 -- Permanently remove the UNUSED default Roblox Baseplate spawn while in
@@ -3494,7 +3492,7 @@ for _, obj in ipairs(workspace:GetDescendants()) do
 end
 print("[Mythblox INSTALL] Removed " .. defaultSpawnsRemoved .. " unused Baseplate spawn(s).")
 
--- v0.27: the actual stock baseplate (not only its spawn marker) is a giant
+-- v0.28: the actual stock baseplate (not only its spawn marker) is a giant
 -- low-altitude part that remains visible through the decorative ocean.
 -- Remove ONLY a low, large, directly parented part named Baseplate.
 local baseplatesRemoved = 0
@@ -3576,12 +3574,12 @@ for _, child in ipairs(game:GetDescendants()) do
 	end
 end
 
-print("[Mythblox INSTALL] v0.27 VERIFIED: 2 scripts installed and Source checked.")
-print("[Mythblox INSTALL] Server: " .. liveServer:GetFullName() .. " | Build v0.27")
-print("[Mythblox INSTALL] Client: " .. liveClient:GetFullName() .. " | Build v0.27")
+print("[Mythblox INSTALL] v0.28 VERIFIED: 2 scripts installed and Source checked.")
+print("[Mythblox INSTALL] Server: " .. liveServer:GetFullName() .. " | Build v0.28")
+print("[Mythblox INSTALL] Client: " .. liveClient:GetFullName() .. " | Build v0.28")
 print("[Mythblox INSTALL] Cleaned " .. #removed .. " previous Mythblox script/UI objects.")
 print("[Mythblox INSTALL] Disabled " .. #disabledLegacy .. " other old game scripts found by source signature.")
 if #suspicious > 0 then
 	warn("[Mythblox INSTALL] Other Mythblox scripts still exist: " .. table.concat(suspicious, "; "))
 end
-print("[Mythblox INSTALL] NOW START A FRESH PLAY SESSION. Confirm the top HUD visibly says v0.27, and check Output for SERVER RUNNING v0.27 and CLIENT RUNNING v0.27.")
+print("[Mythblox INSTALL] NOW START A FRESH PLAY SESSION. Confirm the top HUD visibly says v0.28, and check Output for SERVER RUNNING v0.28 and CLIENT RUNNING v0.28.")
