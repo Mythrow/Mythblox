@@ -21,6 +21,7 @@
 - **v0.26** — Fix v0.25 lobby layout overlaps: compact and two-sided leaderboard, separating lamps from the leaderboard/rewards podium, and non-overlapping shop/lounging paving intersections. **Source and installer committed; owner Studio and phone confirmation pending.** No changes to voting, movement, shops or saving.
 - **v0.27** — Fixed published one-player JOIN not starting: live solo sessions now become reward-free one-lane practice after the countdown, while 2–8 ready players still enter rewarded competitive matches. JOIN button waits for server acceptance. The 43px right-aligned phone status strip is less intrusive, and raised signboards, benches, planters, lamps, pergola lanterns, fountain and trophy fixtures were brought into physical/visual alignment. **Studio and published phone QA pending.**
 - **v0.28** — Removed the redundant green/red SAFE/BLOCKED legend from the five-card vote reveal. Reclaimed 16px of mobile tray height without changing avatars, totals, SAFE/BLOCKED card labels or the five-second duration. **Installer/source committed; visual retest pending.**
+- **v0.29** — Entire 90×24 front spectator row becomes automatic server-polled join zone; players who leave before zero are excluded. Removed the old manual Join button/prompt/remote, long side race promenades, and open front-edge fence gaps. Built continuous translucent solid lobby fencing and made major ghost signage/rails solid. Added visible live Coins/Wins wallet to phone/PC. **GitHub scripts and installer updated; live QA pending.**
 - No Robux purchases, paid power-ups or public launch are authorized.
 
 ## Ordered future stages — versions and features are not yet approved
@@ -53,8 +54,8 @@ Potential additions to evaluate with the owner: better onboarding/tutorial and l
 - [ ] Final name, icon, thumbnails, description, accessibility/audience settings and moderation/release checks reviewed.
 - [ ] Owner independently approves the public launch.
 
-## Current v0.28 test task
+## Current v0.29 test task
 
-Install v0.28, **publish the updated private test place**, and inspect the display overlap fixes on desktop and a phone, plus check on an actual phone in portrait and landscape: visibly fuller natural clouds, neutral daylight (no global yellow haze), no glaring white spectator platforms/planters/spawn pad, readable green foliage, matte weathered-oat plaza, new **49px** top strip, legible Wins/Coins, compact 1–5 vote controls and five-card REVEAL. Run a match with a friend to verify v0.21 bench seating, staffed shop E prompt and especially the **v0.19 illegal-step shatter/elimination fix**, not yet separately confirmed. Capture a phone screenshot/Output errors and use [TEST_PLAN.md](TEST_PLAN.md). Major additional gameplay features and custom art remain launch blockers.
+Install v0.29, **publish the updated private test place**, and inspect the display overlap fixes on desktop and a phone, plus check on an actual phone in portrait and landscape: visibly fuller natural clouds, neutral daylight (no global yellow haze), no glaring white spectator platforms/planters/spawn pad, readable green foliage, matte weathered-oat plaza, new **49px** top strip, legible Wins/Coins, compact 1–5 vote controls and five-card REVEAL. Run a match with a friend to verify v0.21 bench seating, staffed shop E prompt and especially the **v0.19 illegal-step shatter/elimination fix**, not yet separately confirmed. Capture a phone screenshot/Output errors and use [TEST_PLAN.md](TEST_PLAN.md). Major additional gameplay features and custom art remain launch blockers.
 
 The GitHub scripts and one-paste installer are authoritative for code. Publishing/saving a Roblox Studio place is a separate owner-controlled step.
