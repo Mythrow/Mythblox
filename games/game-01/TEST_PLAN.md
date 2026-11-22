@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-22):** **v0.28** removes the redundant reveal legend and reclaims 16px of phone screen space. SAFE/BLOCKED labels, five card avatars and counts and the server's five-second reveal are unchanged. Real-phone and Studio verification is still needed.
+**Status (2026-11-22):** **v0.29** removes manual joining in favor of the entire front deck automatically admitting only players who remain until zero. It removes both long side spectator promenades, wraps the island with visible physical fences, makes major sign/rail structures solid and adds a standalone Coins/Wins HUD to phone and PC. **Engine and two-player live tests remain pending; do not mark these tests passed from source-only checks.**
 
 ## Playtest log
 
@@ -38,6 +38,20 @@
 6. Repeat with 3–4 clients if the two-player flow works.
 
 
+
+## v0.29 — auto-join front row, continuous fences and visible wallet
+
+- [ ] **Installer and publish:** Stop Studio Play; paste the current [one-paste installer](INSTALL_STUDIO_COMMAND_BAR.luau) in Edit mode. Verify `v0.29 VERIFIED`, server/client build versions, then publish the updated **private** Roblox experience before testing on a phone.
+- [ ] **No buttons/prompts:** No large `JOIN BRIDGE RACE` bottom button, gold center pad, or `Press E to Join` prompt exists. The front world sign reads `STAND IN ZONE` and the phone status displays `JOIN ZONE`.
+- [ ] **Entire row joins:** In JOIN, stand at **far left, middle and far right** edges of the front deck on separate attempts. Each location should register automatically after ~0.2 seconds; `ready` increments, HUD says `IN ZONE · STAY`.
+- [ ] **Leave before zero:** Step off the row during the countdown: queue count decreases, `IN ZONE` disappears, and a player outside at exactly zero **does not** get teleported to a bridge lane. Test quick exits/re-entries and someone standing still.
+- [ ] **Movement and jumping:** Continue walking or jumping inside the zone with no freeze. A reasonable jump over the deck should not unexpectedly unqueue the player.
+- [ ] **Solo and multiplayer:** One published-server entrant gets a reward-free solo practice lane. With two or more inside at zero, competitive lanes and existing score rewards work. Spectators outside get neither a lane nor rewards.
+- [ ] **Remove side walkways:** Neither long left nor long right elevated platform/connecting walkway should exist alongside the 20-tile race. Spectators remain on the short front deck, with no bypass to the finish.
+- [ ] **Fence closure:** Walk along the entire rear, west/east, and front edge. Glass panels/wood-stone posts and rails should visibly connect at each corner; there should be no open gap at the removed side-walk entrances. The translucent front fence should physically stop crossing into race glass, and the safety limits still prevent falls.
+- [ ] **Real collision props:** Walk into visible perimeter piers/rails, signboard bodies, signposts, trophy, trees, shops, benches and lamp columns. Their physical surfaces should collide. Thin decorative inlays and water visuals intentionally do not behave as walls.
+- [ ] **Wallet on phone/PC:** Look for `COINS 0 · WINS 0` (or your actual stats) near the top-right safe area. Win/participant award changes and cosmetics purchases should update the wallet. The wallet can temporarily hide in short phone REVEAL so the five numbered cards remain unobstructed.
+- [ ] **Core regression:** Private votes, blocked majority, correct glass shatter/elimination, race timer, cosmetics shop access and saved Wins/Coins after rejoining work unchanged. Send actual phone screenshots and report red Output errors.
 
 ## v0.28 — no redundant vote-reveal legend
 
