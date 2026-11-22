@@ -5,7 +5,7 @@
 assert(not game:GetService("RunService"):IsRunning(), "Stop the test session before installing.")
 
 local SERVER_SOURCE = [====[
--- Mythblox game-01: glass bridge race v0.13 (server)
+-- Mythblox game-01: glass bridge race v0.14 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -15,7 +15,7 @@ local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
 local DataStoreService = game:GetService("DataStoreService")
 local HttpService = game:GetService("HttpService")
-local BUILD_VERSION = "v0.13"
+local BUILD_VERSION = "v0.14"
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -38,6 +38,20 @@ local SETTINGS = {
 local GREEN = Color3.fromRGB(51, 220, 105)
 local RED = Color3.fromRGB(255, 87, 87)
 local GLASS = Color3.fromRGB(138, 222, 248)
+-- Purely visual glass tints: these never replace the GREEN/RED hazard signals.
+local SKIN_CATALOG = {
+	{ id = "classic", title = "Classic Blue", price = 0, color = GLASS },
+	{ id = "rose", title = "Candy Pink", price = 20, color = Color3.fromRGB(252, 164, 220) },
+	{ id = "mint", title = "Mint Pop", price = 40, color = Color3.fromRGB(149, 238, 201) },
+	{ id = "violet", title = "Soft Violet", price = 60, color = Color3.fromRGB(193, 172, 250) },
+}
+local SKIN_BY_ID = {}
+for _, item in ipairs(SKIN_CATALOG) do SKIN_BY_ID[item.id] = item end
+local equippedSkins = {}
+local function glassColorFor(player)
+	local skin = SKIN_BY_ID[equippedSkins[player] or "classic"]
+	return skin and skin.color or GLASS
+end
 local AMBER = Color3.fromRGB(255, 206, 75)
 local VIOLET = Color3.fromRGB(65, 173, 253) -- sky-blue accent, variable kept for compat.
 
@@ -87,6 +101,9 @@ command.Parent = network
 local stateEvent = Instance.new("RemoteEvent")
 stateEvent.Name = "State"
 stateEvent.Parent = network
+local shopEvent = Instance.new("RemoteEvent")
+shopEvent.Name = "Shop"
+shopEvent.Parent = network
 local buildTag = Instance.new("StringValue")
 buildTag.Name = "BuildVersion"
 buildTag.Value = BUILD_VERSION
@@ -337,9 +354,20 @@ local function makeStall(name, x, z, roofColor, line1, line2)
 	header.Transparency = 1
 	header.CanCollide = false
 	textSign(header, line1 .. " | " .. line2, 2, 210)
+	return group
 end
 makeStall("LeftShopComingSoon", -25, -49, ROOF_BLUE, "SHOP", "COMING SOON")
-makeStall("RightCosmeticsComingSoon", 25, -49, ROOF_PINK, "COSMETICS", "COMING SOON")
+local cosmeticsStall = makeStall("RightCosmeticsShop", 25, -49, ROOF_PINK, "COSMETICS", "GLASS COLORS")
+local cosmeticsFloor = cosmeticsStall:FindFirstChild("DisplayFloor")
+local cosmeticsPrompt = Instance.new("ProximityPrompt")
+cosmeticsPrompt.Name = "BrowseGlassSkins"
+cosmeticsPrompt.ActionText = "Browse colors"
+cosmeticsPrompt.ObjectText = "Cosmetics"
+cosmeticsPrompt.KeyboardKeyCode = Enum.KeyCode.E
+cosmeticsPrompt.HoldDuration = 0
+cosmeticsPrompt.RequiresLineOfSight = false
+cosmeticsPrompt.MaxActivationDistance = 12
+cosmeticsPrompt.Parent = cosmeticsFloor
 
 -- Compact single-face leaderboard. Its front for arriving lobby visitors
 -- points toward +Z (Back face in Roblox part-local coordinates).
@@ -834,7 +862,7 @@ local function paintAllowedTiles()
 			local lane = lanes[info.lane]
 			local current = lane.tiles[info.index]
 			if current and current.CanCollide then
-				current.Color = info.cracks == 0 and GLASS or (info.cracks == 1 and AMBER or RED)
+				current.Color = info.cracks == 0 and glassColorFor(player) or (info.cracks == 1 and AMBER or RED)
 			end
 			if phase == "MOVE" then
 				local from = info.startIndex + 1
@@ -961,7 +989,60 @@ local function validRecord(value)
 			return false
 		end
 	end
+	if value.ownedSkins ~= nil and type(value.ownedSkins) ~= "table" then return false end
+	if value.equippedSkin ~= nil and type(value.equippedSkin) ~= "string" then return false end
 	return true
+end
+
+local function sanitizedOwned(saved)
+	local owned = {}
+	if type(saved) == "table" then
+		for id, value in pairs(saved) do
+			if id ~= "classic" and SKIN_BY_ID[id] and value == true then
+				owned[id] = true
+			end
+		end
+	end
+	return owned
+end
+
+local function sanitizedEquipped(saved, owned)
+	if saved == "classic" then return "classic" end
+	if type(saved) == "string" and owned[saved] and SKIN_BY_ID[saved] then
+		return saved
+	end
+	return "classic"
+end
+
+local function shopSnapshot(player)
+	local profile = profiles[player]
+	local coins = player:FindFirstChild("leaderstats")
+	coins = coins and coins:FindFirstChild("Coins")
+	local items = {}
+	for _, item in ipairs(SKIN_CATALOG) do
+		table.insert(items, {
+			id = item.id, title = item.title, price = item.price,
+			color = item.color,
+		})
+	end
+	return {
+		items = items,
+		owned = profile and sanitizedOwned(profile.ownedSkins) or {},
+		equipped = profile and profile.equippedSkin or "classic",
+		coins = coins and coins.Value or 0,
+		ready = profile ~= nil and profile.status == "ready",
+	}
+end
+
+local function sendShop(player, kind, message)
+	if player.Parent ~= Players then return end
+	shopEvent:FireClient(player, kind, shopSnapshot(player), message)
+end
+
+local function nearCosmetics(player)
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	return root ~= nil and (root.Position - cosmeticsFloor.Position).Magnitude <= 18
 end
 
 local function updateProfileView(player, profile)
@@ -992,10 +1073,14 @@ local function loadProfile(player)
 		if ok and validRecord(stored) then
 			profile.baseWins = stored and safeStat(stored.wins) or 0
 			profile.baseCoins = stored and safeStat(stored.coins) or 0
+			profile.ownedSkins = sanitizedOwned(stored and stored.ownedSkins)
+			profile.equippedSkin = sanitizedEquipped(stored and stored.equippedSkin, profile.ownedSkins)
+			equippedSkins[player] = profile.equippedSkin
 			profile.status = "ready"
 			if player.Parent == Players then
 				updateProfileView(player, profile)
 				player:SetAttribute("MythbloxDataStatus", "READY")
+				sendShop(player, "Update", "")
 			end
 			print(("[Mythblox DATA] Loaded %s: %d wins, %d coins (%s)"):format(
 				player.Name, profile.baseWins, profile.baseCoins, DATA_STORE_NAME
@@ -1037,13 +1122,22 @@ local function saveProfile(player, reason)
 		return false
 	end
 
-	local winsDelta = profile.pendingWins
-	local coinsDelta = profile.pendingCoins
-	if winsDelta == 0 and coinsDelta == 0 then return true end
+	-- Keep the same reward batch ID after a failed/uncertain cloud response;
+	-- a later autosave must not treat those same rewards as a new transaction.
+	local batch = profile.rewardBatch
+	if not batch then
+		if profile.pendingWins == 0 and profile.pendingCoins == 0 then return true end
+		batch = {
+			id = HttpService:GenerateGUID(false),
+			wins = profile.pendingWins,
+			coins = profile.pendingCoins,
+		}
+		profile.rewardBatch = batch
+	end
+	local winsDelta = batch.wins
+	local coinsDelta = batch.coins
+	local operationId = batch.id
 	profile.saving = true
-	-- If the cloud commits an operation but the response is lost, the same
-	-- operation ID prevents a retry from applying its rewards a second time.
-	local operationId = HttpService:GenerateGUID(false)
 
 	local lastError
 	for attempt = 1, 3 do
@@ -1070,6 +1164,9 @@ local function saveProfile(player, reason)
 					schema = 1,
 					wins = safeStat(oldWins + winsDelta),
 					coins = safeStat(oldCoins + coinsDelta),
+					-- Preserve shop fields written by another live server.
+					ownedSkins = sanitizedOwned(stored and stored.ownedSkins),
+					equippedSkin = stored and stored.equippedSkin or "classic",
 					recentSaves = recent,
 				}
 			end)
@@ -1078,8 +1175,12 @@ local function saveProfile(player, reason)
 			-- Rewards granted while the save was in flight remain pending.
 			profile.pendingWins = math.max(0, profile.pendingWins - winsDelta)
 			profile.pendingCoins = math.max(0, profile.pendingCoins - coinsDelta)
+			profile.rewardBatch = nil
 			profile.baseWins = safeStat(result.wins)
 			profile.baseCoins = safeStat(result.coins)
+			profile.ownedSkins = sanitizedOwned(result.ownedSkins)
+			profile.equippedSkin = sanitizedEquipped(result.equippedSkin, profile.ownedSkins)
+			equippedSkins[player] = profile.equippedSkin
 			profile.saving = false
 			updateProfileView(player, profile)
 			if player.Parent == Players then player:SetAttribute("MythbloxDataStatus", "READY") end
@@ -1099,6 +1200,134 @@ local function saveProfile(player, reason)
 		". Rewards remain pending in this server.")
 	return false
 end
+
+-- A cosmetic purchase/equip transaction uses the SAME stored record as earned
+-- coins. UpdateAsync checks ownership and balance atomically; no client prices.
+-- It also commits any pending match rewards in the same write.
+local function transactSkin(player, skinId)
+	if player.Parent ~= Players then return end
+	if not nearCosmetics(player) then
+		sendShop(player, "Update", "Return to the cosmetics stall.")
+		return
+	end
+	local item = SKIN_BY_ID[skinId]
+	if not item then return end
+	local profile = profiles[player]
+	if not profile or profile.status ~= "ready" or not dataStore then
+		sendShop(player, "Update", "Saving is unavailable. Please try again later.")
+		return
+	end
+	if profile.saving then
+		sendShop(player, "Update", "Saving in progress. Try again.")
+		return
+	end
+	if profile.rewardBatch then
+		sendShop(player, "Update", "Saving recent winnings. Try again shortly.")
+		task.spawn(saveProfile, player, "pre-purchase")
+		return
+	end
+	if os.clock() - (profile.lastShopAction or 0) < 0.65 then
+		sendShop(player, "Update", "Try again in a moment.")
+		return
+	end
+	profile.lastShopAction = os.clock()
+	local alreadyOwned = skinId == "classic" or profile.ownedSkins[skinId] == true
+	if not alreadyOwned and profile.baseCoins + profile.pendingCoins < item.price then
+		sendShop(player, "Update", "Not enough coins.")
+		return
+	end
+	if alreadyOwned and profile.equippedSkin == skinId then
+		sendShop(player, "Update", "Already equipped.")
+		return
+	end
+
+	profile.saving = true -- lock with autosave, leave and shutdown
+	local winsDelta = profile.pendingWins
+	local coinsDelta = profile.pendingCoins
+	local operationId = HttpService:GenerateGUID(false)
+	local lastError
+	local insufficient = false
+
+	for attempt = 1, 3 do
+		insufficient = false
+		local ok, saved = pcall(function()
+			return dataStore:UpdateAsync(profile.key, function(stored)
+				if not validRecord(stored) then return nil end
+				local recent = {}
+				if stored and type(stored.recentSaves) == "table" then
+					for _, token in ipairs(stored.recentSaves) do
+						if type(token) == "string" then
+							if token == operationId then return stored end
+							table.insert(recent, token)
+						end
+					end
+				end
+				while #recent >= 20 do table.remove(recent, 1) end
+				table.insert(recent, operationId)
+
+				local owned = sanitizedOwned(stored and stored.ownedSkins)
+				local hasSkin = skinId == "classic" or owned[skinId] == true
+				local cost = hasSkin and 0 or item.price
+				local wallet = safeStat(stored and stored.coins) + coinsDelta
+				if wallet < cost then
+					insufficient = true
+					return nil -- atomic rejection: no accidental negative balance
+				end
+				if skinId ~= "classic" then owned[skinId] = true end
+				return {
+					schema = 1,
+					wins = safeStat((stored and stored.wins or 0) + winsDelta),
+					coins = safeStat(wallet - cost),
+					ownedSkins = owned,
+					equippedSkin = skinId,
+					recentSaves = recent,
+				}
+			end)
+		end)
+		if ok and type(saved) == "table" then
+			profile.pendingWins = math.max(0, profile.pendingWins - winsDelta)
+			profile.pendingCoins = math.max(0, profile.pendingCoins - coinsDelta)
+			profile.baseWins = safeStat(saved.wins)
+			profile.baseCoins = safeStat(saved.coins)
+			profile.ownedSkins = sanitizedOwned(saved.ownedSkins)
+			profile.equippedSkin = sanitizedEquipped(saved.equippedSkin, profile.ownedSkins)
+			equippedSkins[player] = profile.equippedSkin
+			profile.saving = false
+			updateProfileView(player, profile)
+			if player.Parent == Players then
+				player:SetAttribute("MythbloxDataStatus", "READY")
+				sendShop(player, "Update", item.title .. " equipped.")
+			end
+			print("[Mythblox SHOP] " .. player.Name .. " equipped " .. skinId)
+			return
+		end
+		lastError = ok and (insufficient and "Not enough coins." or "Shop purchase rejected.") or tostring(saved)
+		if ok then break end
+		if attempt < 3 then task.wait(2 ^ (attempt - 1) + math.random() * 0.5) end
+	end
+	profile.saving = false
+	if not insufficient then
+		-- The transaction could have reached Roblox even without a response.
+		-- Do not spend or save another pending batch in this session; a fresh
+		-- login will recover the real stored balance/ownership.
+		profile.status = "unavailable"
+	end
+	if player.Parent == Players then
+		if insufficient then
+			sendShop(player, "Update", "Not enough coins.")
+		else
+			player:SetAttribute("MythbloxDataStatus", "SAVE_ERROR")
+			sendShop(player, "Update", "Shop save unconfirmed. Rejoin to refresh your progress.")
+		end
+	end
+	warn("[Mythblox SHOP] Transaction failed for " .. player.Name .. ": " .. tostring(lastError))
+end
+
+cosmeticsPrompt.Triggered:Connect(function(player)
+	if player.Parent == Players and nearCosmetics(player) then
+		sendShop(player, "Open", "")
+	end
+end)
 
 -- Incremental autosaves avoid excessive requests on every vote/round.
 task.spawn(function()
@@ -1151,6 +1380,8 @@ local function onPlayerAdded(player)
 		baseCoins = 0,
 		pendingWins = 0,
 		pendingCoins = 0,
+		ownedSkins = {},
+		equippedSkin = "classic",
 		status = "loading",
 		saving = false,
 	}
@@ -1186,6 +1417,7 @@ for _, player in ipairs(Players:GetPlayers()) do onPlayerAdded(player) end
 
 Players.PlayerRemoving:Connect(function(player)
 	queue[player] = nil
+	equippedSkins[player] = nil
 	if active[player] and active[player].alive then
 		eliminate(player, "left the server", nil)
 	end
@@ -1209,6 +1441,13 @@ command.OnServerEvent:Connect(function(player, action, payload)
 		stateEvent:FireClient(player, snapshot(player))
 	elseif action == "Join" then
 		joinQueue(player)
+	elseif action == "Shop" then
+		if typeof(payload) ~= "string" or #payload > 24 or not SKIN_BY_ID[payload] then return end
+		if not nearCosmetics(player) then
+			sendShop(player, "Update", "Return to the cosmetics stall.")
+			return
+		end
+		task.spawn(transactSkin, player, payload)
 	elseif action == "Vote" then
 		if phase ~= "VOTE" then return end
 		local info = active[player]
@@ -1334,6 +1573,13 @@ local function beginMatch(participants)
 	winnerPlayer = nil
 	turnNumber = 0
 	buildBridges(#participants)
+	-- Each lane keeps its chosen neutral color; unsafe red and permitted green
+	-- are always painted on top so skin choice cannot hide a danger cue.
+	for lane, player in ipairs(participants) do
+		for index = 0, SETTINGS.BridgeLength - 1 do
+			lanes[lane].tiles[index].Color = glassColorFor(player)
+		end
+	end
 	for lane, player in ipairs(participants) do
 		if player.Parent == Players then
 			local root = teleportToLane(player, lane)
@@ -1529,18 +1775,19 @@ end
 ]====]
 
 local CLIENT_SOURCE = [====[
--- Mythblox Game 01 · gameplay feedback v0.13
+-- Mythblox Game 01 · cosmetic glass shop v0.14
 -- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
-local BUILD_VERSION = "v0.13"
+local BUILD_VERSION = "v0.14"
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local network = ReplicatedStorage:WaitForChild("MythbloxGame01")
 local command = network:WaitForChild("Command")
 local stateEvent = network:WaitForChild("State")
+local shopEvent = network:WaitForChild("Shop")
 local remoteBuild = network:WaitForChild("BuildVersion", 5)
 if not remoteBuild or remoteBuild.Value ~= BUILD_VERSION then
 	warn("[Mythblox] Client " .. BUILD_VERSION .. " does not match server version; old scripts may still be running.")
@@ -1907,6 +2154,114 @@ local function drawOutcomes(state)
 	revealList.CanvasSize = UDim2.fromOffset(0, #entries * 33)
 end
 
+-- Shop opens ONLY when interacting with the cosmetics stall. No new
+-- always-visible shop HUD button, and no purchases from the client's prices.
+local shop = panel("CosmeticsShop")
+shop.AnchorPoint = Vector2.new(1, 0.5)
+shop.Position = UDim2.new(1, -18, 0.54, 0)
+shop.Size = UDim2.fromOffset(350, 358)
+shop.Visible = false
+
+local shopTitle = label(shop, "Title", "GLASS COLORS", 15, 10, -68, 31, 19, COLOR.Purple, true)
+local shopCoins = label(shop, "Balance", "0 COINS", 15, 46, -32, 25, 14, COLOR.Muted, true)
+local closeShop = button(shop, "Close", "X", COLOR.Red)
+closeShop.AnchorPoint = Vector2.new(1, 0)
+closeShop.Position = UDim2.new(1, -12, 0, 11)
+closeShop.Size = UDim2.fromOffset(34, 32)
+closeShop.TextSize = 15
+closeShop.MouseButton1Click:Connect(function()
+	shop.Visible = false
+end)
+local shopList = Instance.new("ScrollingFrame")
+shopList.Name = "Items"
+shopList.BackgroundTransparency = 1
+shopList.BorderSizePixel = 0
+shopList.ScrollingDirection = Enum.ScrollingDirection.Y
+shopList.ScrollBarThickness = 4
+shopList.CanvasSize = UDim2.fromOffset(0, 230)
+shopList.Position = UDim2.fromOffset(12, 82)
+shopList.Size = UDim2.new(1, -24, 1, -124)
+shopList.Parent = shop
+local shopLayout = Instance.new("UIListLayout")
+shopLayout.FillDirection = Enum.FillDirection.Vertical
+shopLayout.SortOrder = Enum.SortOrder.LayoutOrder
+shopLayout.Padding = UDim.new(0, 5)
+shopLayout.Parent = shopList
+local shopFeedback = label(shop, "Feedback", "", 12, 0, -24, 30, 12, COLOR.Muted, true)
+shopFeedback.AnchorPoint = Vector2.new(0, 1)
+shopFeedback.Position = UDim2.new(0, 12, 1, -5)
+shopFeedback.TextXAlignment = Enum.TextXAlignment.Center
+
+local function renderShop(info, response)
+	if type(info) ~= "table" or type(info.items) ~= "table" then return end
+	shopCoins.Text = tostring(info.coins or 0) .. " COINS"
+	shopFeedback.Text = response or ""
+	shopFeedback.TextColor3 = COLOR.Muted
+	for _, child in ipairs(shopList:GetChildren()) do
+		if child:IsA("Frame") then child:Destroy() end
+	end
+	shopList.CanvasSize = UDim2.fromOffset(0, #info.items * 56)
+	for index, item in ipairs(info.items) do
+		if type(item) == "table" and type(item.id) == "string" then
+			local row = Instance.new("Frame")
+			row.Name = "Skin_" .. item.id
+			row.LayoutOrder = index
+			row.Size = UDim2.new(1, 0, 0, 51)
+			row.BackgroundColor3 = COLOR.InkBright
+			row.BorderSizePixel = 0
+			row.Parent = shopList
+			addCorner(row, 9)
+
+			local swatch = Instance.new("Frame")
+			swatch.Name = "Color"
+			swatch.Size = UDim2.fromOffset(30, 30)
+			swatch.Position = UDim2.fromOffset(10, 10)
+			swatch.BackgroundColor3 = typeof(item.color) == "Color3" and item.color or COLOR.Blue
+			swatch.BorderSizePixel = 0
+			swatch.Parent = row
+			addCorner(swatch, 7)
+			addStroke(swatch, COLOR.Border, 1)
+
+			local skinName = label(row, "Name", tostring(item.title or item.id), 49, 8, -161, 36, 14, COLOR.Text, true)
+			skinName.TextWrapped = false
+			skinName.TextTruncate = Enum.TextTruncate.AtEnd
+			local action = button(row, "Action", "", COLOR.Blue)
+			action.AnchorPoint = Vector2.new(1, 0.5)
+			action.Position = UDim2.new(1, -9, 0.5, 0)
+			action.Size = UDim2.fromOffset(102, 33)
+			action.TextSize = 12
+			local owns = item.id == "classic" or (info.owned and info.owned[item.id] == true)
+			local equipped = info.equipped == item.id
+			if not info.ready then
+				action.Text = "UNAVAILABLE"
+				action.Active = false
+				action.AutoButtonColor = false
+				action.BackgroundColor3 = COLOR.Muted
+			elseif equipped then
+				action.Text = "EQUIPPED"
+				action.Active = false
+				action.AutoButtonColor = false
+				action.BackgroundColor3 = COLOR.Green
+			else
+				action.Text = owns and "EQUIP" or (tostring(item.price or 0) .. " COINS")
+				action.BackgroundColor3 = owns and COLOR.Green or COLOR.Blue
+				action.MouseButton1Click:Connect(function()
+					action.Text = "..."
+					action.Active = false
+					command:FireServer("Shop", item.id)
+				end)
+			end
+		end
+	end
+end
+
+shopEvent.OnClientEvent:Connect(function(kind, details, message)
+	if kind == "Open" then shop.Visible = true end
+	if shop.Visible and (kind == "Open" or kind == "Update") then
+		renderShop(details, message)
+	end
+end)
+
 local function layoutForViewport()
 	local cam = workspace.CurrentCamera
 	local view = cam and cam.ViewportSize or Vector2.new(1100, 700)
@@ -1947,6 +2302,11 @@ local function layoutForViewport()
 	movement.Size = UDim2.fromOffset(math.min(width - 18, 545), 66)
 	movement.Position = UDim2.new(0.5, 0, 1, -26)
 	movementText.TextSize = compact and 14 or 17
+
+	local shopW = math.min(width - 20, 350)
+	shop.Size = UDim2.fromOffset(shopW, math.max(218, math.min(358, height - 118)))
+	shop.AnchorPoint = compact and Vector2.new(0.5, 0.5) or Vector2.new(1, 0.5)
+	shop.Position = compact and UDim2.new(0.5, 0, 0.56, 0) or UDim2.new(1, -18, 0.54, 0)
 
 	local revealW = math.min(compact and width - 16 or 322, 322)
 	local revealH = math.max(165, math.min(compact and 242 or 388, height - (compact and 156 or 171)))
@@ -2021,17 +2381,18 @@ local function update(state)
 	if phase == "JOIN" or phase == "VOTE" then
 		lastTurnRendered = -1
 	end
-	phaseText.Text = ("v0.13 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
+	phaseText.Text = ("v0.14 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
 	clockText.Text = tostring(state.time or 0) .. "s"
 	clockText.TextColor3 = phase == "VOTE" and (state.time or 0) <= 2 and COLOR.Red or COLOR.Purple
 	description.Text = state.message or ""
 
 	join.Visible = phase == "JOIN" and state.queued ~= true and (state.ready or 0) < (state.capacity or 8)
 	voting.Visible = phase == "VOTE" and mine ~= nil and mine.alive == true
+	if voting.Visible then shop.Visible = false end
 	movement.Visible = phase == "MOVE" and mine ~= nil and mine.alive == true
 
 	if phase == "JOIN" then
-		phaseText.Text = "v0.13 · NEXT MATCH"
+		phaseText.Text = "v0.14 · NEXT MATCH"
 		description.Text = state.queued and "You're queued for the next race."
 			or "Join at the gold pad or use the button below."
 		ownStats.Text = ("%d/%d PLAYERS READY"):format(state.ready or 0, state.capacity or 8)
@@ -2050,7 +2411,7 @@ local function update(state)
 	if phase == "RESULTS" then
 		-- Server sends winner/draw text in state.message; show it only in
 		-- the small status panel and avoid blocking the camera.
-		phaseText.Text = "v0.13 · ROUND OVER"
+		phaseText.Text = "v0.14 · ROUND OVER"
 		ownStats.Text = "NEXT MATCH STARTS SOON"
 	end
 
@@ -2099,6 +2460,7 @@ local function update(state)
 end
 
 join.Visible = false
+shop.Visible = false
 feedback.Visible = false
 voting.Visible = false
 movement.Visible = false
@@ -2107,7 +2469,7 @@ stateEvent.OnClientEvent:Connect(update)
 command:FireServer("Sync")
 ]====]
 
--- Diagnostic/cleanup installer: v0.13
+-- Diagnostic/cleanup installer: v0.14
 -- Remove known legacy copies from services used by previous Mythblox builds.
 -- This intentionally does NOT remove scripts belonging to other games.
 -- Permanently remove the UNUSED default Roblox Baseplate spawn while in
@@ -2193,12 +2555,12 @@ for _, child in ipairs(game:GetDescendants()) do
 	end
 end
 
-print("[Mythblox INSTALL] v0.13 VERIFIED: 2 scripts installed and Source checked.")
-print("[Mythblox INSTALL] Server: " .. liveServer:GetFullName() .. " | Build v0.13")
-print("[Mythblox INSTALL] Client: " .. liveClient:GetFullName() .. " | Build v0.13")
+print("[Mythblox INSTALL] v0.14 VERIFIED: 2 scripts installed and Source checked.")
+print("[Mythblox INSTALL] Server: " .. liveServer:GetFullName() .. " | Build v0.14")
+print("[Mythblox INSTALL] Client: " .. liveClient:GetFullName() .. " | Build v0.14")
 print("[Mythblox INSTALL] Cleaned " .. #removed .. " previous Mythblox script/UI objects.")
 print("[Mythblox INSTALL] Disabled " .. #disabledLegacy .. " other old game scripts found by source signature.")
 if #suspicious > 0 then
 	warn("[Mythblox INSTALL] Other Mythblox scripts still exist: " .. table.concat(suspicious, "; "))
 end
-print("[Mythblox INSTALL] NOW START A FRESH PLAY SESSION. Confirm the top HUD visibly says v0.13, and check Output for SERVER RUNNING v0.13 and CLIENT RUNNING v0.13.")
+print("[Mythblox INSTALL] NOW START A FRESH PLAY SESSION. Confirm the top HUD visibly says v0.14, and check Output for SERVER RUNNING v0.14 and CLIENT RUNNING v0.14.")
