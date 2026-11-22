@@ -46,7 +46,7 @@ local COLOR = {
 	InkBright = Color3.fromRGB(217, 200, 174),-- oat beige
 	Text = Color3.fromRGB(110, 90, 75),       -- soft brown
 	Muted = Color3.fromRGB(127, 110, 95),
-	Blue = Color3.fromRGB(145, 160, 136),     -- sage vote button
+	Blue = Color3.fromRGB(105, 133, 105),     -- readable deep sage controls
 	Green = Color3.fromRGB(90, 144, 106),     -- safe result
 	Red = Color3.fromRGB(176, 103, 99),       -- blocked result
 	Gold = Color3.fromRGB(185, 137, 115),     -- terracotta selection
@@ -733,6 +733,39 @@ local function update(state)
 		local allowed = mine.allowed or 0
 		description.Text = allowed > 0 and ("GO · ADVANCE 1–%d PANELS"):format(allowed)
 			or "NO ADVANCE · WAIT THIS TURN"
+	end
+
+	-- Phone HUD only: compress three descriptive rows into two slim lines.
+	-- The actual VOTE buttons and five-number reveal are unchanged.
+	-- Wins/coins are read from server-owned replicated leaderstats; no
+	-- purchases or scores can be changed from this presentation-only UI.
+	if isCompact then
+		local stats = player:FindFirstChild("leaderstats")
+		local wins = stats and stats:FindFirstChild("Wins")
+		local coins = stats and stats:FindFirstChild("Coins")
+		currencyChip.Text = ("%dW · %dC"):format(
+			wins and wins.Value or 0, coins and coins.Value or 0)
+		phaseText.Text = phase == "JOIN" and "NEXT MATCH"
+			or ("R%d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
+		if phase == "JOIN" then
+			ownStats.Text = state.queued and "QUEUED FOR NEXT RACE"
+				or ("%d/%d READY"):format(state.ready or 0, state.capacity or 8)
+		elseif phase == "RESULTS" then
+			ownStats.Text = "ROUND OVER · NEXT SOON"
+		elseif mine and not mine.alive then
+			ownStats.Text = "ELIMINATED · SPECTATING"
+		elseif phase == "MOVE" and mine and mine.alive then
+			local allowed = mine.allowed or 0
+			ownStats.Text = allowed > 0
+				and ("GO 1–%d · TILE %d/20"):format(allowed, mine.position or 0)
+				or ("WAIT · TILE %d/20"):format(mine.position or 0)
+		elseif mine then
+			ownStats.Text = ("T%d/20 · %d CR · PICK %s"):format(
+				mine.position or 0, mine.cracks or 0,
+				mine.vote and tostring(mine.vote) or "—")
+		else
+			ownStats.Text = "SPECTATING"
+		end
 	end
 
 	-- The five non-interactive number cards appear ONLY in the five-second reveal.
