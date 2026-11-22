@@ -1,4 +1,4 @@
--- Mythblox game-01: Soft Earth Coast v0.27 (server)
+-- Mythblox game-01: Soft Earth Coast v0.28 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -8,7 +8,7 @@ local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
 local DataStoreService = game:GetService("DataStoreService")
 local HttpService = game:GetService("HttpService")
-local BUILD_VERSION = "v0.27"
+local BUILD_VERSION = "v0.28"
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -41,7 +41,7 @@ local THEME = {
 	Ivory = Color3.fromRGB(239, 230, 214),       -- #EFE6D6 warm cream
 	Limestone = Color3.fromRGB(217, 200, 174),   -- #D9C8AE oat beige, small accents
 	Sandstone = Color3.fromRGB(201, 179, 148),   -- #C9B394 soft sand
-	-- v0.27: richer matte colors specifically for large, light-catching
+	-- v0.28: richer matte colors specifically for large, light-catching
 	-- floors, platforms and planters; not a dark filter over the game.
 	PlazaStone = Color3.fromRGB(184, 173, 154),   -- weathered oat
 	DeckStone = Color3.fromRGB(176, 167, 150),    -- shaded stone
@@ -73,7 +73,7 @@ local function glassColorFor(player)
 	return skin and skin.color or GLASS
 end
 local AMBER = Color3.fromRGB(255, 206, 75)
--- v0.27: neutral, soft coastal daylight. Let the deliberately warm
+-- v0.28: neutral, soft coastal daylight. Let the deliberately warm
 -- OAT/WOOD/TERRACOTTA materials carry the earth tones without a yellow
 -- filter across the sky, character, greenery, water, or every surface.
 -- Keep lighting gentle on mobile and preserve the matte material response.
@@ -138,7 +138,7 @@ if not clouds then
 	clouds.Parent = terrain
 end
 clouds.Name = "MythbloxAzureCoastClouds"
--- v0.27: visibly fuller soft coastal cloud cover, not a solid white sky.
+-- v0.28: visibly fuller soft coastal cloud cover, not a solid white sky.
 clouds.Cover = 0.72
 clouds.Density = 0.54
 clouds.Color = Color3.fromRGB(238, 242, 242)
@@ -761,7 +761,7 @@ cosmeticsPrompt.RequiresLineOfSight = false
 cosmeticsPrompt.MaxActivationDistance = 12
 cosmeticsPrompt.Parent = cosmeticsDesk
 
--- v0.27: The giant blank BACK of the leaderboard and a nearby lamp
+-- v0.28: The giant blank BACK of the leaderboard and a nearby lamp
 -- previously overlapped at the plaza edge. Keep the board completely
 -- outside the main plaza and make BOTH faces readable at normal scale.
 local boardPost = decorative(
@@ -2512,7 +2512,7 @@ local function scoreMatch(winners, participants)
 			awardProgress(player, awarded[player] and 1 or 0, awarded[player] and 25 or 5)
 		end
 	end
-	-- v0.27: Save match rewards immediately after a round finishes, while
+	-- v0.28: Save match rewards immediately after a round finishes, while
 	-- retaining autosave, exit and shutdown fallback attempts.
 	-- saveProfile uses stable reward-batch IDs and per-player write locks
 	-- so overlapping attempts do not double-award a completed round.
