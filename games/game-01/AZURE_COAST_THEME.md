@@ -1,6 +1,6 @@
-# Soft Earth Coast — Game 01 art direction (v0.22)
+# Soft Earth Coast — Game 01 art direction (palette v0.22; daylight v0.24)
 
-**Status:** The owner superseded the v0.20 vivid Azure Coast Resort palette after seeing overly bright floors and a mobile top bar that covered too much of the screen. **v0.22 Soft Earth Coast** retains the coastal social-lobby concept and v0.21 physical props but adopts a cute muted earthy style with matte lighting and a much smaller mobile HUD. **Soft Earth Coast is an art direction, not the unnamed game's final title.** Real phone and multiplayer QA pending. This file retains its older filename to keep existing GitHub links working.
+**Status:** The owner approved the v0.22 Soft Earth Coast material palette and compact mobile HUD, then approved **v0.24 neutral coastal daylight** after the v0.23 Studio screenshot showed a yellow screen-wide cast. **Keep the warm earth materials, but do not add a cream/yellow filter to the entire world.** v0.24 code is committed; phone/Studio visual retesting and friend QA remain pending. Soft Earth Coast is the art direction, not the unnamed game's final title. This file retains its older filename to preserve links.
 
 ## Creative direction
 
@@ -43,8 +43,24 @@ The first version is constructed in Luau from Roblox primitives with textured bu
 
 - Phone top status is **49px** in both portrait (width < 760px) and short landscape (height < 540px), excluding the native Roblox safe-area inset. Two rows show phase/countdown and brief personal guidance plus Wins/Coins; long details and progress bar remain desktop-only.
 - Five REVEAL result cards retain avatars, counts and red/green SAFE/BLOCKED indicators for the **full five-second reveal**. The mobile tray is roughly **156–172px tall** rather than a 228px desktop-height card. Private 1–5 vote buttons remain large and tappable.
-- Environmental **BloomEffect is disabled**; warm light brightness is ~1.85, specular response lowered, color correction gently desaturated, glass/metal/roof/ocean reflection minimized, cloud color softened and lamps dimmed. Preserve daylight and readable glass silhouettes without mobile glare.
+- Environmental **BloomEffect is disabled** and specular response remains low. **v0.24 uses neutral daylight brightness 1.75** with balanced gray ambient/outdoor light, no yellow sun color shift, white color-correction tint, near-neutral saturation and gently clearer blue-gray coastal atmosphere. Materials remain matte and the game avoids phone glare. Do not reintroduce beige post-processing to simulate an earthy palette.
 - Do not add additional floating HUD blocks or neon highlights to 'improve' quality. Favor actual textured surfaces, coherent materials, delicate furnishings and space for the player to see the world.
+
+## v0.24 neutral-daylight lighting parameters
+
+The following are set by the authoritative **server** script at runtime; these do not recolor the world assets.
+
+| Setting | v0.24 value | Why |
+|---|---|---|
+| Global light | Brightness 1.75; ClockTime 13.1 | Natural daylight, slightly lower glare |
+| Ambient / OutdoorAmbient | (158,161,163) / (188,194,196) | Neutral illumination instead of yellow |
+| ColorShift_Top / Bottom | (0,0,0) / (0,0,0) | No warm sunlight tint |
+| Color correction | Tint (255,255,255), Saturation -0.035, Contrast +0.015 | Remove all-scene beige cast without vivid/neon saturation |
+| Atmosphere | Density 0.20, Haze 0.38; Color (215,228,234) | More natural blue-gray coastal haze and visible colors |
+| Clouds | (238,242,242) | Soft, neutral-white clouds |
+| Reflections / bloom | EnvironmentSpecularScale 0.20; bloom disabled | Preserve soft matte feel |
+
+**Verification:** Still pending on actual Roblox Studio rendering and mobile devices. Preserve this palette while further refining the look, and never globally yellow-tint the scene to make individual materials appear warm.
 
 ## World zoning (coordinates, in studs)
 
@@ -67,7 +83,7 @@ The island's enlarged grass top is **186 × 124** studs, centered at `(0, 22, -7
 
 ## Sky, water and safety
 
-- Native Roblox **Clouds** under `Workspace.Terrain` with soft daylight cover. Atmosphere, bloom, color correction and sun rays reinforce the same ocean/ivory palette.
+- Native Roblox **Clouds** under `Workspace.Terrain` with soft neutral-white daylight cover. Atmosphere favors a pale blue-gray horizon (not beige); color correction is neutral white; bloom remains disabled and sun rays stay restrained. Earth colors are properties of materials and assets, not a full-screen filter.
 - Decorative ocean and distant cliff islets are **noncollidable**; there is no playable sea floor.
 - Edit-mode installer and runtime both delete **only** the stock large, low-altitude part explicitly named `Baseplate`, when present. Existing user-authored custom scenery is not blanket-deleted.
 - A tall, invisible safety perimeter covers the back and outer side of the enlarged hub, with openings for both original side promenades. It never sets a player's speed or disables jumping.
@@ -76,7 +92,7 @@ The island's enlarged grass top is **186 × 124** studs, centered at `(0, 22, -7
 
 ## Quality bar and next checks
 
-- [ ] Screenshots from front and side: coherent stone/teal/brass/evergreen color family, rich enough but not cluttered.
+- [ ] Front and side screenshots: oat/sand/sage/terracotta/rose/wood materials remain coherent, foliage is recognizably green, the sky is natural blue-gray and no yellow wash overlays the whole scene; environment stays rich without glare.
 - [ ] Spawn has good sightline toward JOIN. Cosmetics E prompt, SHOP placeholder and session leaderboard remain easy to find and operate.
 - [ ] No visible stock baseplate, floating stock spawn, walkable water, under-map routes or unwanted default terrain.
 - [ ] Dynamic clouds visible on supported graphics settings; horizon has distant islands and ocean depth.
