@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-22):** v0.19's crossing/shatter fix is still unverified in Studio. Owner approved a world/lobby theme improvement; **v0.20 Azure Coast Resort** is committed with larger island, same shop/bridge positions, Clouds, distant sea/islands and reset/edge protections. No Studio v0.20 QA has been performed. Saved Wins, cosmetics after restart, private-server persistence and mobile/multiplayer performance remain pending.
+**Status (2026-11-22):** Owner played v0.20 and reported pass-through trees/lamps, nonfunctional benches, and unstaffed open shop booths. **v0.21** now adds physical colliders, genuine Seats, and staffed enclosed service kiosks. Source/installer committed, **not yet owner-tested**; a 2-player friend test is next. Earlier v0.19 illegal-step elimination, saved Wins/cosmetics after restart and private-server/mobile QA remain unverified.
 
 ## Playtest log
 
@@ -15,6 +15,7 @@
 | 2026-11-22 | Roblox Studio v0.14 (owner-reported) | User says the cosmetics update works | Restarted cosmetic ownership and equipment, precise coin deductions, wins persistence, mobile UI, and multiple clients not individually reported |
 | 2026-11-22 | Roblox Studio v0.15 (owner-reported partial) | Joining, movement and cosmetics confirmed working | Voting reveal design needed adjustment; deeper multiplayer, saved Wins/skins after restart and mobile reliability tests remain open |
 | 2026-11-22 | Roblox Studio v0.18 (owner-reported regression) | User can continue running to finish and glass does not reliably break after invalid movement | v0.19 code fix committed, not yet verified in Studio; ensure eliminated character cannot traverse remaining tiles |
+| 2026-11-22 | Roblox Studio v0.20 (owner-reported) | Lobby environment loads; user walks through trees and lamps, cannot sit on benches; shops are open, lack front desks and attendants | v0.21 colliders, Seats and kiosks committed; not yet tested with a friend |
 
 ### Previously addressed: v0.2 fix verification (owner reports functionality works)
 
@@ -37,6 +38,27 @@
 6. Repeat with 3–4 clients if the two-player flow works.
 
 
+
+## v0.21 — physical interactions and two-player friend test
+
+**Installer status:** GitHub scripts and one-paste installer updated, **not tested in Roblox Studio**. Perform this before assuming the environment is fixed.
+
+- [ ] **v0.21 install:** Stop Play, reinstall latest [Raw Studio installer](INSTALL_STUDIO_COMMAND_BAR.luau) in **Edit mode**. Confirm Output shows `v0.21 VERIFIED` and both server/client show v0.21; top HUD shows `v0.21`.
+- [ ] **Collision:** In the expanded lobby, physically approach a tree trunk, its low canopy, a lamp post/base, a planter/foliage sphere, and pergola column. Your character should be stopped by the object rather than passing through. High decorative lighting accents need not collide.
+- [ ] **Path clearance:** Recheck that no new solid tree or lamp blocks the spawn → cosmetics, JOIN deck, either spectator promenade, photo spot or two lounge paths. Keep walking/jumping enabled everywhere.
+- [ ] **Bench seating:** Approach a resort bench. It has two distinct `Seat` parts. Press E **Sit** on the left seat; avatar should sit naturally. Jump to stand. Re-sit after the normal Roblox seat cooldown.
+- [ ] **Friend seating:** With two players, each sits on a different side of the **same bench simultaneously**. The occupied side should not advertise another Sit prompt. Either can get up without unseating the other. No accidental seat lock after leaving.
+- [ ] **Both shops visibly built:** Each kiosk has enclosed sides, glass side windows, a front customer desk, register, merchandise displays and roof/sign. Both contain a **visible shopkeeper with face/uniform/hat and a gentle wave**. The NPC should remain behind the counter rather than running around or blocking the player.
+- [ ] **Functional cosmetics:** Stand **outside the front counter** of the right COSMETICS kiosk, press E **Browse colors**, and check the existing four products/prices (Classic free, Pink 20, Mint 40, Violet 60), owned state, purchase/equip, closing UI. Do not need to step inside the kiosk. No double charge.
+- [ ] **Left shop remains placeholder:** It has a shopkeeper and service desk but still reads **COMING SOON**. No fake purchasable items, coins, new economy remote or unapproved feature.
+- [ ] **Two-player race:** In Studio choose **Test → Server & Clients (2 clients)**, or if testing remotely, publish/update a **private testing experience**, ensure your friend has play access, and have both join the same server. Both should be able to JOIN before countdown and get exactly two lanes.
+- [ ] **Secret votes:** A and B choose different numbers during VOTE. During the five-second REVEAL, see five cards with both avatars, exact pick counts, SAFE/BLOCKED red-green result cards only. No other player's choice is disclosed early.
+- [ ] **Illegal movement regression:** Try moving before MOVE, jumping over a tile, or advancing beyond a safe vote. The glass must visibly shatter; the racer must be eliminated and respawn at the lobby. **This important v0.19 fix has not been confirmed**; do not count the build as reliable if this fails.
+- [ ] **Safe progress and results:** Legal 1–N steps, win detection, confetti/dance, coins/wins and next match still function; two players should remain free to move/jump while alive.
+- [ ] **Exit/rejoin:** Both players can leave and join again without stuck seats or duplicated shop NPCs. Test stored Wins/Coins/owned/equipped skins separately in the published private experience; Studio uses a different test DataStore.
+- [ ] **Mobile/performance:** Inspect close-range E/Touch prompts, NPC visibility, seating on touch devices and two-player frame rate. Capture Output errors such as missing NPC properties, bad Seat connections, duplicate world models or Lua runtime exceptions.
+
+**Friend testing note:** A private published Roblox experience may require access to be explicitly granted to your friend. Studio's 2-client simulator is a useful local test, but it is **not** an actual online friend session. Don't make the game publicly discoverable merely to test.
 
 ## v0.20 — Azure Coast Resort lobby, clouds, no-template-floor and escape prevention
 
