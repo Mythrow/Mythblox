@@ -879,7 +879,7 @@ textSign(trophyAnchor, "TROPHY GARDEN | SOCIAL PLAZA", 0.3, 230)
 -- Calm sea backdrop covers the template's empty gray baseplate when viewed
 -- from the arena; unlike the grass island it has no collision.
 local ocean = part(
-	"OceanBackdrop", Vector3.new(1200, 1.5, 1200),
+	"OceanBackdrop", Vector3.new(1800, 1.5, 1800),
 	Vector3.new(0, 0.6, 58), Color3.fromRGB(57, 148, 157), Enum.Material.SmoothPlastic
 )
 ocean.CanCollide = false
@@ -956,7 +956,7 @@ end)
 -- Ocean and skyline are decorative. Anyone falling below the suspended
 -- island/bridges is returned to the actual lobby spawn rather than being
 -- allowed to roam on old template parts or below the map.
-local fallReset = part("WorldFallReset", Vector3.new(1300, 1.5, 1300),
+local fallReset = part("WorldFallReset", Vector3.new(1800, 1.5, 1800),
 	Vector3.new(0, 10.5, 0), THEME.DeepTeal, Enum.Material.SmoothPlastic, world)
 fallReset.CanCollide = false
 fallReset.CanTouch = true
