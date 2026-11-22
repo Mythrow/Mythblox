@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-22):** **v0.24** implements the owner-approved neutral-daylight fix after a Studio screenshot showed a yellowish global cast. The Soft Earth Coast palette, matte materials, 49px phone HUD, v0.23 round-end saves, social hub and gameplay remain unchanged. Lighting improvements are committed to source and installer, but **Studio/device visual retesting is pending**. The glass-elimination regression, friend testing and live data persistence also remain open. **Not launch-ready.**  
+**Status (2026-11-22):** **v0.25** applies the owner-approved extra clouds and matte platform pass: noticeably fuller cloud coverage, deeper weathered-oat stone on the main plaza and spectator decks, subdued planters/stone supports, and a hidden bright spawn marker. The v0.24 neutral daylight, 49px mobile HUD, voting, free movement, glass shatter, shop, and v0.23 reward saving remain unchanged. **Roblox Studio and actual-phone visual QA still pending. Not launch-ready.**  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -34,6 +34,17 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 | Reward | Win +25 coins, participation +5 coins |
 
 **Progress storage:** Wins and coins were session-only through v0.12. **v0.13 introduces DataStore persistence**, pending Roblox Studio and published-server verification. v0.14 adds a coin-only cosmetics stall (no Robux or paid items). Do not publicly launch or monetize before testing data recovery and purchases.
+
+## v0.25 — fuller sky and anti-glare stone platforms (Studio/phone QA pending)
+
+Owner approved the next visual revision after reporting sparse clouds and large bright white/cream stone surfaces that still looked almost neon on screen. This is a **world-only art/material pass**, not a change to player movement, gameplay, cosmetics or saving.
+
+- **More visible clouds:** The single native `Workspace.Terrain.Clouds` layer now uses **Cover 0.72** (was 0.39), **Density 0.54** (was 0.35) and the existing neutral-white tint. It remains one sky layer, rather than additional expensive parts or overlapping cloud objects.
+- **Matte weathered-stone floors:** Main spawn plaza now uses lower-brightness weathered-oat `#B8AD9A` and built-in **Concrete** rather than pale Sandstone; the shared JOIN/spectator platform and both side viewing walks/connectors use shaded stone `#B0A796` and **Concrete** instead of light ivory Limestone. Narrow paths retain muted sandy paving.
+- **White architectural surfaces subdued:** Store floors/countertops, stone planters, fountain approach/basin, pergola pillars, lamp pedestals, spectator edge piers and trophy pedestal now use muted stone colors and matte **Concrete/Pavement** where appropriate. Shop roofs, wooden furnishings and signage retain the existing earthy accent palette.
+- **Bright spawn rectangle removed:** The functioning lobby SpawnLocation remains in its original position, but its visible pale rectangle is now fully transparent and does not cast a shadow. Collision and respawn logic are unchanged.
+- **Preserved:** v0.24 neutral daylight, bloom disabled, low reflectance, 49px phone HUD, private 1–5 voting, glass shattering, free walking/jumping, social seating, two kiosks, cosmetics and v0.23 round-end DataStore saves.
+- **Test:** Use the [latest raw Studio installer](INSTALL_STUDIO_COMMAND_BAR.luau) with Play stopped and verify `v0.25 VERIFIED` and the `v0.25` HUD. Compare the exact spawn-plaza angle and spectator bridge with prior images on desktop and a real phone: check abundant but natural clouds, no glaring white rectangles/stone slabs, readable shaded paths and appropriate contrast. **Roblox-engine appearance has not yet been verified.**
 
 ## v0.24 — remove yellow cast; keep the soft-earth materials (Studio/phone QA pending)
 
@@ -410,6 +421,6 @@ See the [pre-launch roadmap](PRELAUNCH_ROADMAP.md). Cosmetic stall, sound effect
 
 ## Next step
 
-**Test v0.24 on a phone first:** verify the oat floor is comfortably matte, the 49px top strip no longer obscures play, all five reveal cards/avatars fit, and 1–5 voting remains tappable. Publish the updated private test experience to play with a friend; test bench seating, cosmetics and most importantly illegal-step glass shatter/elimination. Report a phone screenshot or any Output errors. Major additional features and independent multiplayer/data/security QA remain required before public launch.
+**Test v0.25 on a phone first:** verify the oat floor is comfortably matte, the 49px top strip no longer obscures play, all five reveal cards/avatars fit, and 1–5 voting remains tappable. Publish the updated private test experience to play with a friend; test bench seating, cosmetics and most importantly illegal-step glass shatter/elimination. Report a phone screenshot or any Output errors. Major additional features and independent multiplayer/data/security QA remain required before public launch.
 
 See [the Mythblox game-design memo](../../docs/FIRST_GAME_GLASS_BRIDGE_CONCEPT.md) for earlier alternatives, including the spinner idea that was explicitly deferred.
