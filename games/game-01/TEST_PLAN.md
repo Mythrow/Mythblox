@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-22):** Owner reports **v0.12 works in Roblox Studio**. Exact sound/UI and multiplayer cases were not itemized, so individual acceptance checks remain open pending more detailed QA. Work is paused after v0.12; mobile/spectator stress tests and release QA remain pending.
+**Status (2026-11-22):** Owner confirms v0.12 works in Studio. **v0.13 DataStore saving code and installer are committed, not yet verified in Roblox Studio.** Studio API Services configuration and restart tests are required; release/mobile QA remains pending.
 
 ## Playtest log
 
@@ -33,6 +33,24 @@
 6. Repeat with 3–4 clients if the two-player flow works.
 
 
+
+## v0.13 — persistent progress and safe failure handling
+
+The [persistence test guide](PERSISTENCE_TEST_GUIDE.md) contains beginner-friendly Studio setup and restart instructions.
+
+- [ ] Backup the Studio place, publish the experience **privately**, and enable **File → Experience Settings → Security → Enable Studio Access to API Services**.
+- [ ] Stop Play; install the latest [Command Bar installer](INSTALL_STUDIO_COMMAND_BAR.luau) in Edit mode. Confirm `v0.13 VERIFIED` in Output, and the top HUD displays v0.13 in Play.
+- [ ] Check server Output for `[Mythblox DATA] Loaded ...`, or the Player attribute `MythbloxDataStatus = READY`.
+- [ ] Complete one solo or two-player round. Confirm unchanged rewards: winners +1 Win/+25 Coins; other participants +5 Coins.
+- [ ] Stop Play and confirm `[Mythblox DATA] Saved ...` was printed (no save failure), then start **another** Play session. Saved totals should reappear.
+- [ ] Complete another round and restart again. The totals should **increase exactly once**—no duplicate wins or double coins from retried saves.
+- [ ] Two-client test with different users: results remain isolated by user ID; an eliminated or unqueued spectator does not receive match rewards.
+- [ ] Verify a failed Studio API configuration produces `SESSION_ONLY` and a clear warning **without stopping the gameplay**; do not assume temporary rewards saved.
+- [ ] Confirm Studio test data is isolated from the live published experience's DataStore.
+- [ ] Test rapid leave/rejoin and server shutdown, including an interrupted or failed save if possible. Investigate any `SAVE_ERROR`, `LOAD FAILED`, or `SAVE FAILED` messages.
+- [ ] Reconfirm unchanged voting, 20 tiles, 3 cracks, spectator boundaries, sound cues, and no new gameplay HUD clutter.
+
+**Not yet verified in Roblox Studio.** Source consistency and server-side guards are not substitutes for testing actual DataStore requests.
 
 ## v0.12 — gameplay feedback and sound regression
 
