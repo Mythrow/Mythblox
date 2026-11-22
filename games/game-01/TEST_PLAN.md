@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-22):** Owner confirms v0.14 works in Studio and Studio coins survived earlier restarts. **v0.15 server remote throttling/reliability changes have been committed, not tested in Studio.** Saving Wins and cosmetic purchases after restart, published-private server, 2–8 players and mobile layouts still require verification. User requires substantial feature additions and visual overhaul before public launch.
+**Status (2026-11-22):** Owner reports joining, movement and cosmetics work in v0.15 Studio testing; the rest of its multiplayer, data and mobile QA remains open. **v0.16 adds the approved five-number avatar reveal, committed in GitHub but not yet Studio-tested.** Saving Wins/skins across restarts and private published-server behavior require verification. Significant features and visuals are mandatory before launch.
 
 ## Playtest log
 
@@ -13,6 +13,7 @@
 | 2026-11-22 | Roblox Studio v0.12 (owner-reported) | User confirms updated gameplay feedback works | Specific regressions not individually enumerated; deeper mobile, multiplayer and audio verification pending |
 | 2026-11-22 | Roblox Studio v0.13 (owner-reported) | Coins remain after stopping and restarting Play, confirming a successful Studio persistence test | Win persistence and live/private published-server persistence not separately checked; Studio Game Settings 'Failed to parse secrets: Can't parse JSON' warning noted |
 | 2026-11-22 | Roblox Studio v0.14 (owner-reported) | User says the cosmetics update works | Restarted cosmetic ownership and equipment, precise coin deductions, wins persistence, mobile UI, and multiple clients not individually reported |
+| 2026-11-22 | Roblox Studio v0.15 (owner-reported partial) | Joining, movement and cosmetics confirmed working | Voting reveal design needed adjustment; deeper multiplayer, saved Wins/skins after restart and mobile reliability tests remain open |
 
 ### Previously addressed: v0.2 fix verification (owner reports functionality works)
 
@@ -35,6 +36,26 @@
 6. Repeat with 3–4 clients if the two-player flow works.
 
 
+
+## v0.16 — secret voting and avatar result cards
+
+**Owner-approved scope:** Exactly five numbered **results** cards appear only during the two-second REVEAL, showing voter avatars above each number, count below, GREEN safe/RED blocked. Keep voting selection controls, game rules and phase timing unchanged. Complete these tests after installing v0.16:
+
+- [ ] In Edit mode with Play stopped, reinstall the [one-paste installer](INSTALL_STUDIO_COMMAND_BAR.luau). Output prints `v0.16 VERIFIED`; client and server run v0.16 with no red errors.
+- [ ] During **VOTE**, racers can select numbers privately using the 1–5 buttons, but **no reveal cards, other players' choices, their avatars, vote counts, or SAFE/BLOCKED result colors appear**. Observers see no vote details either.
+- [ ] Exactly when **REVEAL** starts, the private vote buttons hide and exactly five non-interactive cards appear together. Attempting to tap a result card does **not** send another vote.
+- [ ] Each card shows the **selected players' circular avatar headshots at the top, the number in the middle, and exact N PICK/PICKS below**, including `0 PICKS` for an unselected number. Your own avatar has a gold border.
+- [ ] With **2 players choosing 4**, card 4 shows two avatars, `2 PICKS`, red and BLOCKED. Cards 1,2,3,5 are green and show `0 PICKS`; both players gain one crack.
+- [ ] With **2 players choosing 2 and 5**, cards 2 and 5 show one avatar each, `1 PICK`, green and SAFE. The remaining zero-vote cards are also green.
+- [ ] With **4 players choosing 2,2,3,3**, both cards 2 and 3 show `2 PICKS`, two avatars, and **RED**; the other three are GREEN.
+- [ ] With **one player voting nothing**, no avatar should appear on their behalf; the total counts should reflect only actual votes and a missed vote still causes one crack.
+- [ ] With **8 players all choosing the same number**, that result shows **eight distinct headshots** in a grid without covering its number or count; no avatars should be duplicated or dropped.
+- [ ] The full reveal is on screen only for **2 seconds**. When **MOVE** starts, it disappears for both racers and spectators; the original GO/STAY UI and movement controls remain usable.
+- [ ] Restart the next vote; no stale avatars/tallies or unsafe colors from the prior turn are visible before the next REVEAL.
+- [ ] Test narrow Studio Device Emulator phone and tablet screens. All five numbers, counts and green/red status must fit; thumbnails should remain recognizably circular. Report blank avatars, clipped text, or unreadably small cards.
+- [ ] Check wins, coins and purchased skins continue saving, and complete the rest of the v0.15 multiplayer/mobile QA before any public release.
+
+**Not yet verified in Studio.** No new gameplay rules, DataStore schema, pricing or reward changes.
 
 ## v0.15 — multiplayer, mobile and reliability checkpoint
 
