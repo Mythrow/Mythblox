@@ -1004,7 +1004,7 @@ local function loadProfile(player)
 		end
 		lastError = ok and "invalid stored data format" or tostring(stored)
 		if ok then break end -- Do not overwrite malformed saved data.
-		if attempt < 3 then task.wait(2 ^ (attempt - 1)) end
+		if attempt < 3 then task.wait(2 ^ (attempt - 1) + math.random() * 0.5) end
 	end
 
 	-- Critical: NEVER overwrite persistent data with defaults after a failed load.
@@ -1082,6 +1082,7 @@ local function saveProfile(player, reason)
 			profile.baseCoins = safeStat(result.coins)
 			profile.saving = false
 			updateProfileView(player, profile)
+			if player.Parent == Players then player:SetAttribute("MythbloxDataStatus", "READY") end
 			print(("[Mythblox DATA] Saved %s (+%dW +%dC; %s)"):format(
 				player.Name, winsDelta, coinsDelta, reason
 			))
@@ -1089,9 +1090,10 @@ local function saveProfile(player, reason)
 		end
 		lastError = ok and "update was cancelled by invalid stored data" or tostring(result)
 		if ok then break end
-		if attempt < 3 then task.wait(2 ^ (attempt - 1)) end
+		if attempt < 3 then task.wait(2 ^ (attempt - 1) + math.random() * 0.5) end
 	end
 	profile.saving = false
+	if player.Parent == Players then player:SetAttribute("MythbloxDataStatus", "SAVE_ERROR") end
 	warn("[Mythblox DATA] SAVE FAILED for " .. player.Name ..
 		" (" .. reason .. "): " .. tostring(lastError) ..
 		". Rewards remain pending in this server.")
@@ -1101,7 +1103,7 @@ end
 -- Incremental autosaves avoid excessive requests on every vote/round.
 task.spawn(function()
 	while true do
-		task.wait(150)
+		task.wait(150 + math.random(-15, 15))
 		for player, profile in pairs(profiles) do
 			if player.Parent == Players and profile.status == "ready" then
 				task.spawn(saveProfile, player, "autosave")
