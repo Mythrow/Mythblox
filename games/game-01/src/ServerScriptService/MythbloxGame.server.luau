@@ -1,4 +1,4 @@
--- Mythblox game-01: Soft Earth Coast v0.25 (server)
+-- Mythblox game-01: Soft Earth Coast v0.26 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -8,7 +8,7 @@ local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
 local DataStoreService = game:GetService("DataStoreService")
 local HttpService = game:GetService("HttpService")
-local BUILD_VERSION = "v0.25"
+local BUILD_VERSION = "v0.26"
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -38,7 +38,7 @@ local THEME = {
 	Ivory = Color3.fromRGB(239, 230, 214),       -- #EFE6D6 warm cream
 	Limestone = Color3.fromRGB(217, 200, 174),   -- #D9C8AE oat beige, small accents
 	Sandstone = Color3.fromRGB(201, 179, 148),   -- #C9B394 soft sand
-	-- v0.25: richer matte colors specifically for large, light-catching
+	-- v0.26: richer matte colors specifically for large, light-catching
 	-- floors, platforms and planters; not a dark filter over the game.
 	PlazaStone = Color3.fromRGB(184, 173, 154),   -- weathered oat
 	DeckStone = Color3.fromRGB(176, 167, 150),    -- shaded stone
@@ -70,7 +70,7 @@ local function glassColorFor(player)
 	return skin and skin.color or GLASS
 end
 local AMBER = Color3.fromRGB(255, 206, 75)
--- v0.25: neutral, soft coastal daylight. Let the deliberately warm
+-- v0.26: neutral, soft coastal daylight. Let the deliberately warm
 -- OAT/WOOD/TERRACOTTA materials carry the earth tones without a yellow
 -- filter across the sky, character, greenery, water, or every surface.
 -- Keep lighting gentle on mobile and preserve the matte material response.
@@ -135,7 +135,7 @@ if not clouds then
 	clouds.Parent = terrain
 end
 clouds.Name = "MythbloxAzureCoastClouds"
--- v0.25: visibly fuller soft coastal cloud cover, not a solid white sky.
+-- v0.26: visibly fuller soft coastal cloud cover, not a solid white sky.
 clouds.Cover = 0.72
 clouds.Density = 0.54
 clouds.Color = Color3.fromRGB(238, 242, 242)
@@ -364,14 +364,19 @@ local ground = decorative("HubGrassIsland", Vector3.new(186, 4, 124), Vector3.ne
 -- on broad, sun-facing surfaces. Narrow paths keep quiet paving texture.
 local plaza = decorative("SpawnPlaza", Vector3.new(56, 0.4, 39), Vector3.new(0, 24.2, -83), THEME.PlazaStone, Enum.Material.Concrete)
 local path = decorative("MainWalkPath", Vector3.new(13, 0.25, 39), Vector3.new(0, 24.14, -51.5), THEME.WalkStone, Enum.Material.Pavement)
-local spurLeft = decorative("LeftShopPath", Vector3.new(27, 0.22, 7), Vector3.new(-19, 24.13, -48), THEME.WalkStone, Enum.Material.Pavement)
-local spurRight = decorative("RightShopPath", Vector3.new(27, 0.22, 7), Vector3.new(19, 24.13, -48), THEME.WalkStone, Enum.Material.Pavement)
+-- Meet the 13-stud center path at x = +/-6.5 without laying duplicate
+-- coplanar paving over it (a visible seam/flicker source).
+local spurLeft = decorative("LeftShopPath", Vector3.new(26, 0.22, 7), Vector3.new(-19.5, 24.13, -48), THEME.WalkStone, Enum.Material.Pavement)
+local spurRight = decorative("RightShopPath", Vector3.new(26, 0.22, 7), Vector3.new(19.5, 24.13, -48), THEME.WalkStone, Enum.Material.Pavement)
 -- Additional social/gallery paths stay behind the original game-facing deck.
+-- Each lounge connector joins at the path edge, not through another
+-- coplanar textured slab. The horizontal segment ends at z=-85;
+-- the return begins there and continues toward the spectator route.
 for _, side in ipairs({-1, 1}) do
-	decorative("WestEastLoungePath", Vector3.new(57, 0.20, 6),
-		Vector3.new(side * 56, 24.1, -88), THEME.WalkStone, Enum.Material.Pavement)
-	decorative("LoungeReturnPath", Vector3.new(7, 0.20, 25),
-		Vector3.new(side * 67, 24.1, -75), THEME.WalkStone, Enum.Material.Pavement)
+	decorative("WestEastLoungePath", Vector3.new(56.5, 0.20, 6),
+		Vector3.new(side * 56.25, 24.1, -88), THEME.WalkStone, Enum.Material.Pavement)
+	decorative("LoungeReturnPath", Vector3.new(7, 0.20, 22.5),
+		Vector3.new(side * 67, 24.1, -73.75), THEME.WalkStone, Enum.Material.Pavement)
 end
 -- Pale ocean-stone inlays divide the oversized plaza into smaller elegant bays.
 for _, x in ipairs({-27, 27}) do
@@ -744,23 +749,24 @@ cosmeticsPrompt.RequiresLineOfSight = false
 cosmeticsPrompt.MaxActivationDistance = 12
 cosmeticsPrompt.Parent = cosmeticsDesk
 
--- Compact single-face leaderboard. Its front for arriving lobby visitors
--- points toward +Z (Back face in Roblox part-local coordinates).
+-- v0.26: The giant blank BACK of the leaderboard and a nearby lamp
+-- previously overlapped at the plaza edge. Keep the board completely
+-- outside the main plaza and make BOTH faces readable at normal scale.
 local boardPost = decorative(
 	"LeaderboardPost",
-	Vector3.new(1.4, 8.5, 1.2),
-	Vector3.new(33, 26.25, -83.4),
+	Vector3.new(1.3, 7.5, 1.2),
+	Vector3.new(35, 27.0, -82.9),
 	WOOD, Enum.Material.Wood
 )
 local board = decorative(
 	"LeaderboardBoard",
-	Vector3.new(13, 8, 1.1),
-	Vector3.new(33, 32.2, -82),
+	Vector3.new(10.8, 6.4, 0.8),
+	Vector3.new(35, 31.15, -82),
 	DEEP_NAVY, Enum.Material.Metal
 )
 board.Reflectance = 0.012
-detail("LeaderboardGoldRim", Vector3.new(13.4, 0.24, 1.15),
-	Vector3.new(33, 36.12, -82), METAL_TRIM)
+detail("LeaderboardWoodRim", Vector3.new(11.1, 0.19, 0.95),
+	Vector3.new(35, 34.42, -82), METAL_TRIM)
 local boardGui = Instance.new("SurfaceGui")
 boardGui.Name = "ServerLeaderboard"
 boardGui.Face = Enum.NormalId.Back
@@ -813,6 +819,19 @@ for i = 1, 4 do
 	)
 end
 
+-- Clone the finished scorecard onto the formerly blank outward face.
+-- Both card faces update from the same server-owned values below.
+local outerBoardGui = boardGui:Clone()
+outerBoardGui.Name = "ServerLeaderboardOtherSide"
+outerBoardGui.Face = Enum.NormalId.Front
+outerBoardGui.Parent = board
+local otherBoardRows = {}
+local reverseCard = outerBoardGui:FindFirstChild("ScoreCard")
+for n = 1, 4 do
+	otherBoardRows[n] = assert(reverseCard:FindFirstChild("Player" .. n),
+		"Missing mirrored leaderboard row " .. n)
+end
+
 local lastLeaderboardText = ""
 local function refreshSessionLeaderboard()
 	local contestants = Players:GetPlayers()
@@ -844,6 +863,7 @@ local function refreshSessionLeaderboard()
 	lastLeaderboardText = key
 	for i, textLabel in ipairs(boardRows) do
 		textLabel.Text = rows[i]
+		otherBoardRows[i].Text = rows[i]
 	end
 end
 local rewardsBase = decorative("FutureRewardsPodium", Vector3.new(12, 1.5, 10),
@@ -1052,8 +1072,10 @@ local function resortLamp(x, z)
 	glow.Shadows = false
 	glow.Parent = lamp
 end
+-- Keep these fixtures out of the leaderboard and rewards podium footprints.
+-- Earlier x=+/-34 at z=-83 interpenetrated both display structures.
 for _, pair in ipairs({
-	{-34, -83}, {34, -83},
+	{-47, -79}, {47, -79},
 	{-12, -64}, {12, -64},
 	{-12, -34}, {12, -34},
 	{-79, -91}, {79, -91},
@@ -2466,7 +2488,7 @@ local function scoreMatch(winners, participants)
 			awardProgress(player, awarded[player] and 1 or 0, awarded[player] and 25 or 5)
 		end
 	end
-	-- v0.25: Save match rewards immediately after a round finishes, while
+	-- v0.26: Save match rewards immediately after a round finishes, while
 	-- retaining autosave, exit and shutdown fallback attempts.
 	-- saveProfile uses stable reward-batch IDs and per-player write locks
 	-- so overlapping attempts do not double-award a completed round.
