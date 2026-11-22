@@ -630,13 +630,43 @@ end
 -- from the arena; unlike the grass island it has no collision.
 local ocean = part(
 	"OceanBackdrop", Vector3.new(820, 1.5, 820),
-	Vector3.new(0, 0.6, 58), Color3.fromRGB(72, 185, 234), Enum.Material.SmoothPlastic
+	Vector3.new(0, 0.6, 58), Color3.fromRGB(76, 163, 199), Enum.Material.SmoothPlastic
 )
 ocean.CanCollide = false
 ocean.CanTouch = false
-local lava = part("Lava", Vector3.new(105, 2, 235), Vector3.new(0, 7, 68), Color3.fromRGB(255, 105, 35), Enum.Material.Neon)
+ocean.CanQuery = false
+ocean.Reflectance = 0.095
+
+-- Sparse ocean glints: reflective wave texture without huge moving models.
+for i = 1, 32 do
+	local column = i % 4
+	local band = math.floor(i / 4)
+	local x = -145 + column * 95 + (i % 3) * 7
+	local z = -128 + band * 58
+	local shimmer = detail("OceanSunGlint", Vector3.new(10 + i % 5, 0.025, 0.3),
+		Vector3.new(x, 1.39, z), Color3.fromRGB(209, 241, 253), Enum.Material.SmoothPlastic, world)
+	shimmer.Transparency = 0.65
+end
+
+-- Roblox's built-in CrackedLava has physically textured dark crust rather
+-- than the previous solid glowing orange rectangle.
+local lava = part("Lava", Vector3.new(105, 2, 235),
+	Vector3.new(0, 7, 68), Color3.fromRGB(247, 105, 64), Enum.Material.CrackedLava)
 lava.CanCollide = false
-lava.Transparency = 0.12
+lava.Transparency = 0.03
+for _, edge in ipairs({-1, 1}) do
+	detail("VolcanicBasaltRim", Vector3.new(1.4, 1.1, 235),
+		Vector3.new(edge * 52.9, 8.05, 68), Color3.fromRGB(56, 60, 70),
+		Enum.Material.Basalt, world)
+end
+for i = 1, 16 do
+	local x = ((i * 19) % 83) - 41
+	local z = -40 + i * 13
+	local flow = detail("MoltenHighlight", Vector3.new(1.2, 0.035, 6 + i % 5),
+		Vector3.new(x, 8.02, z), Color3.fromRGB(254, 143, 76),
+		Enum.Material.Neon, world)
+	flow.Transparency = 0.28
+end
 lava.Touched:Connect(function(hit)
 	local character = hit:FindFirstAncestorOfClass("Model")
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
@@ -673,8 +703,17 @@ local function buildBridges(count)
 				Enum.Material.Glass,
 				bridgeModel
 			)
-			tile.Transparency = 0.22
+			tile.Transparency = 0.25
+			tile.Reflectance = 0.095
 			lanes[lane].tiles[index] = tile
+			-- Tiny, uniform brushed-metal corner brackets on every tile.
+			-- All panels receive the same trim: no valid steps are disclosed.
+			for _, corner in ipairs({-1, 1}) do
+				detail("GlassCornerMetal", Vector3.new(0.58, 0.07, 0.58),
+					Vector3.new(x + corner * 2.84, SETTINGS.BridgeY + 0.47,
+						index * SETTINGS.TileSpacing + 2.83),
+					Color3.fromRGB(153, 177, 188), Enum.Material.Metal, bridgeModel)
+			end
 		end
 		-- Pale-blue decorative rails sit below the glass and cannot be stood on.
 		-- Only two rails per player, keeping the world small on mobile devices.
@@ -683,11 +722,12 @@ local function buildBridges(count)
 				("Lane%02d_EdgeGlow"):format(lane),
 				Vector3.new(0.35, 0.35, SETTINGS.TileSpacing * SETTINGS.BridgeLength + 6.7),
 				Vector3.new(x + edge * (3.35 - 0.175), SETTINGS.BridgeY - 0.625, SETTINGS.BridgeLength * SETTINGS.TileSpacing / 2),
-				VIOLET, Enum.Material.SmoothPlastic, bridgeModel
+				Color3.fromRGB(139, 178, 200), Enum.Material.Metal, bridgeModel
 			)
 			rail.CanCollide = false
 			rail.CanTouch = false
-			rail.Transparency = 0.12
+			rail.Transparency = 0.23
+			rail.Reflectance = 0.1
 		end
 	end
 
@@ -700,7 +740,7 @@ local function buildBridges(count)
 		"FinishGateBeam",
 		Vector3.new(occupiedSpan + 6.2, 3.0, 1.5),
 		Vector3.new(0, SETTINGS.BridgeY + 11.6, finishZ),
-		Color3.fromRGB(249, 252, 255), Enum.Material.SmoothPlastic, bridgeModel
+		Color3.fromRGB(236, 243, 244), Enum.Material.Metal, bridgeModel
 	)
 	beam.CanCollide = false
 	beam.CanTouch = false
@@ -730,11 +770,21 @@ local function buildBridges(count)
 			"FinishGatePillar",
 			Vector3.new(2.0, 11.7, 2.5),
 			Vector3.new(side * postX, SETTINGS.BridgeY + 5.85, finishZ),
-			Color3.fromRGB(73, 171, 235), Enum.Material.SmoothPlastic, bridgeModel
+			Color3.fromRGB(94, 146, 170), Enum.Material.Metal, bridgeModel
 		)
 		column.CanCollide = false
 		column.CanTouch = false
 	end
+	-- A gold cap and thin metallic vertical highlights frame the finish sign.
+	detail("FinishGateBrassTop", Vector3.new(occupiedSpan + 6.4, 0.22, 1.55),
+		Vector3.new(0, SETTINGS.BridgeY + 13.18, finishZ), METAL_TRIM,
+		Enum.Material.Metal, bridgeModel)
+	for _, side in ipairs({-1, 1}) do
+		detail("FinishPillarAccent", Vector3.new(0.14, 10.8, 0.22),
+			Vector3.new(side * postX, SETTINGS.BridgeY + 5.86, finishZ - 1.29),
+			METAL_TRIM, Enum.Material.Metal, bridgeModel)
+	end
+
 	-- Checkered stripes belong only to the final glass tile, not across gaps
 	-- between player lanes; they cannot be walked on independently.
 	for lane = 1, count do
