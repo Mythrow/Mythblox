@@ -61,6 +61,9 @@ Use this file to separate **confirmed project rules** from **ideas not yet appro
 
 - **2026-11-22:** Owner confirms the **v0.14 cosmetics shop works in Roblox Studio**. This is an overall report, not an itemized validation of transaction costs or ownership after restart. The next recommended focus is **v0.15 multiplayer/mobile/release QA**, specifically verifying saved Wins, skin ownership across restarts, secure purchases, and private published-server behavior. Not yet approved or implemented.
 
+- **2026-11-22:** Owner approves v0.15 reliability/multiplayer/mobile groundwork **but explicitly rejects treating the current visual quality and feature depth as launch-ready**. A substantial approved feature expansion and **major graphical/environment/UI overhaul** must happen before public release; technical QA now is only a stable foundation, not a final launch gate. New [pre-launch roadmap](../games/game-01/PRELAUNCH_ROADMAP.md) records this mandatory sequence. Proposed extra mechanics/content are not yet approved.
+- **2026-11-22:** v0.15 scripts and installer committed with conservative remote command throttles and cosmetic prompt-spam protection. No game mechanics, shop pricing, visuals or reward rules changed. **Roblox Studio testing pending**; saved Wins, ownership across restarts and private published-server persistence remain unverified.
+
 ## Open decisions
 
 | Question | Options | Status |
