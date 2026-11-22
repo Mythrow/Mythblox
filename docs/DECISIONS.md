@@ -68,6 +68,8 @@ Use this file to separate **confirmed project rules** from **ideas not yet appro
 
 - **2026-11-22:** Owner requests simplifying the redundant MOVE instructions, extending the too-short number/avatars reveal and adding a visible winning dance. **v0.17 committed:** REVEAL length now 5 seconds (was 2), bottom MOVE warning panel removed while preserving a short top GO/STAY cue, and living winner(s) play Roblox default R15/R6 dance during the existing 5-second RESULTS phase. Animations are cosmetic with a guarded fallback; all voting, crack, movement, rewards, shop, persistence and map rules remain unchanged. Installer contains exact sources. **No Roblox Studio v0.17 test has been done yet.** Major feature and visual upgrades still required before launch.
 
+- **2026-11-22:** Owner clarifies the victory animation should be **choosable**, requests walking and jumping **never be frozen during the game**, wants substantially better built-in materials/textures and atmosphere, and explicitly rejects whole-tile red/green hints disclosing exactly where to step. **v0.18 committed:** editable R15/R6 winner dance IDs; avatar movement and jumping enabled in all match phases (no WalkSpeed/JumpPower zeroing); the existing early/forbidden-advance elimination rule remains; neutral/purchased glass colors stay fixed while cracks are represented by overlays; polished marble, granite, pavement, metal, gold accents, leafy trees, ocean glints, CrackedLava/Basalt, daytime post-processing, and pearl UI finish implemented. **Source and installer matched; Studio testing pending.** The user still requires expanded features and a bigger custom-art pass before any public release.
+
 ## Open decisions
 
 | Question | Options | Status |
