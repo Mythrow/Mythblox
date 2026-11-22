@@ -1,8 +1,12 @@
 # Game 01 — Mini-Game Island / Spectator Arena Blueprint
 
-**Status (2026-11-22):** **v0.29** has a single whole-row front auto-join/spectator deck, no side viewing promenades, and continuous visible collidable fencing. Earlier v0.5/v0.11 layout notes remain below for history and must not be treated as current placement instructions. Studio/mobile QA pending.  
+**Status (2026-11-22):** **v0.31** keeps the existing automatic full-row join deck, removes the raised rewards-board podium, shifts lamps off paving, replaces side/rear/front-end glass with open solid fences backed by tall invisible blockers, and cleans up duplicated trim and kiosk wall joints. Earlier plan diagrams remain historic; current server geometry is authoritative. Studio/mobile tests pending.  
 **Game title:** Unnamed (Game 01 is only the internal development label).  
 **References:** Three Roblox game screenshots supplied by the owner in the conversation (2026-11-21), showing bright social hubs, green island terrain, colorful blocky scenery, decorative paths/fences, shop/leaderboard landmarks, and clear game-viewing areas. **Copy the design vocabulary, not their exact map, asset artwork, logos, or UI.**
+
+## v0.31 geometry supersedes old glass-perimeter plan
+
+The owner supplied close-up screenshots of floating/overlapping lobby details. **The v0.31 source is authoritative** over historical side-glass/plaza-trim descriptions below. The 12×10 REWARDS pedestal is removed; signboard posts reach ground directly. Perimeter ends use open stone-and-wood fencing, with 22-stud-tall hidden collision walls at x=±91.3, z=-131.1 and z=-9.65. The bridge-facing **central 90-stud** section keeps only the transparent spectator window. Lamps formerly at ±12,-34 and ±12,-64 move to ±16,-39 and ±38,-63. Plaza/join trim and two kiosk corner seams are simplified. Live Studio and Roblox-app validation is pending.
 
 ## Current built layout supersedes early v0.5 plans — v0.29 (2026-11-22)
 
