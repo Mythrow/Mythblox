@@ -1,10 +1,10 @@
--- Mythblox Game 01 · Soft Earth Coast mobile UI v0.30
+-- Mythblox Game 01 · Soft Earth Coast mobile UI v0.31
 -- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
-local BUILD_VERSION = "v0.30"
+local BUILD_VERSION = "v0.31"
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local network = ReplicatedStorage:WaitForChild("MythbloxGame01")
@@ -302,7 +302,7 @@ end
 -- Results appear in the compact top status strip instead of a centered
 -- modal. The arena and other players remain visible when a match ends.
 
--- v0.30: Secret selections are never displayed to others while voting.
+-- v0.31: Secret selections are never displayed to others while voting.
 -- ONLY during the five-second REVEAL do five non-clickable results cards
 -- show every numbered choice, picking players' avatars, totals, and safety.
 -- The existing teal voting buttons remain PRIVATE selection controls.
@@ -547,7 +547,7 @@ shopEvent.OnClientEvent:Connect(function(kind, details, message)
 	end
 end)
 
--- v0.30: Seven lightweight UI capabilities, each with independent
+-- v0.31: Seven lightweight UI capabilities, each with independent
 -- visibility and no changes to humanoid movement or bridge rules.
 local lobbyMenu = Instance.new("Frame")
 lobbyMenu.Name = "LobbyMenu"
@@ -922,7 +922,7 @@ layoutForViewport = function()
 	if compact then feedback.Visible = false end
 	local shortScreen = height < 570
 
-	-- v0.30: phone status is smaller, at the TOP RIGHT of the core-UI safe
+	-- v0.31: phone status is smaller, at the TOP RIGHT of the core-UI safe
 	-- area rather than a wide center banner obscuring the avatar/camera.
 	-- Never put it above Roblox's native safe-area inset.
 	local topW = compact and math.min(270, math.max(180, width - 110))
@@ -978,7 +978,7 @@ layoutForViewport = function()
 	shop.AnchorPoint = compact and Vector2.new(0.5, 0.5) or Vector2.new(1, 0.5)
 	shop.Position = compact and UDim2.new(0.5, 0, 0.56, 0) or UDim2.new(1, -18, 0.54, 0)
 
-	-- v0.30: Omit the unnecessary red/green legend and reclaim its 16–18px.
+	-- v0.31: Omit the unnecessary red/green legend and reclaim its 16–18px.
 	-- Avatar grids, vote totals, numbered SAFE/BLOCKED cards and five-second
 	-- server reveal duration are unchanged. The phone tray obscures less play.
 	local revealW = math.min(width - 18, compact and 560 or 780)
@@ -1133,7 +1133,7 @@ local function update(state)
 	if phase == "JOIN" or phase == "VOTE" then
 		lastTurnRendered = -1
 	end
-	phaseText.Text = ("v0.30 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
+	phaseText.Text = ("v0.31 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
 	clockText.Text = tostring(state.time or 0) .. "s"
 	clockText.TextColor3 = phase == "VOTE" and (state.time or 0) <= 2 and COLOR.Red or COLOR.Purple
 	description.Text = state.message or ""
@@ -1143,7 +1143,7 @@ local function update(state)
 	if voting.Visible then shop.Visible = false end
 
 	if phase == "JOIN" then
-		phaseText.Text = "v0.30 · JOIN ZONE"
+		phaseText.Text = "v0.31 · JOIN ZONE"
 		description.Text = state.queued
 			and ((state.ready or 0) == 1 and state.liveSoloPractice
 				and "In zone · stay for solo practice (no rewards)."
@@ -1165,7 +1165,7 @@ local function update(state)
 	if phase == "RESULTS" then
 		-- Server sends winner/draw text in state.message; show it only in
 		-- the small status panel and avoid blocking the camera.
-		phaseText.Text = "v0.30 · ROUND OVER"
+		phaseText.Text = "v0.31 · ROUND OVER"
 		ownStats.Text = state.practiceNoRewards and "PRACTICE · NO WINS / COINS"
 			or "NEXT MATCH STARTS SOON"
 	end
