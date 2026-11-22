@@ -1,10 +1,10 @@
--- Mythblox Game 01 · Soft Earth Coast mobile UI v0.22
+-- Mythblox Game 01 · Soft Earth Coast mobile UI v0.23
 -- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
-local BUILD_VERSION = "v0.22"
+local BUILD_VERSION = "v0.23"
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local network = ReplicatedStorage:WaitForChild("MythbloxGame01")
@@ -278,7 +278,7 @@ end
 -- Results appear in the compact top status strip instead of a centered
 -- modal. The arena and other players remain visible when a match ends.
 
--- v0.22: Secret selections are never displayed to others while voting.
+-- v0.23: Secret selections are never displayed to others while voting.
 -- ONLY during the five-second REVEAL do five non-clickable results cards
 -- show every numbered choice, picking players' avatars, totals, and safety.
 -- The existing teal voting buttons remain PRIVATE selection controls.
@@ -639,7 +639,9 @@ local previousPhase = nil
 local previousTurn = -1
 local previousAlive = nil
 local lastTickKey = ""
+local latestState = nil
 local function update(state)
+	latestState = state
 	local phase = state.phase or "JOIN"
 	local mine = state.mine
 	local changedPhase = phase ~= previousPhase or state.turn ~= previousTurn
@@ -681,7 +683,7 @@ local function update(state)
 	if phase == "JOIN" or phase == "VOTE" then
 		lastTurnRendered = -1
 	end
-	phaseText.Text = ("v0.22 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
+	phaseText.Text = ("v0.23 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
 	clockText.Text = tostring(state.time or 0) .. "s"
 	clockText.TextColor3 = phase == "VOTE" and (state.time or 0) <= 2 and COLOR.Red or COLOR.Purple
 	description.Text = state.message or ""
@@ -691,7 +693,7 @@ local function update(state)
 	if voting.Visible then shop.Visible = false end
 
 	if phase == "JOIN" then
-		phaseText.Text = "v0.22 · NEXT MATCH"
+		phaseText.Text = "v0.23 · NEXT MATCH"
 		description.Text = state.queued and "You're queued for the next race."
 			or "Join at the gold pad or use the button below."
 		ownStats.Text = ("%d/%d PLAYERS READY"):format(state.ready or 0, state.capacity or 8)
@@ -710,7 +712,7 @@ local function update(state)
 	if phase == "RESULTS" then
 		-- Server sends winner/draw text in state.message; show it only in
 		-- the small status panel and avoid blocking the camera.
-		phaseText.Text = "v0.22 · ROUND OVER"
+		phaseText.Text = "v0.23 · ROUND OVER"
 		ownStats.Text = "NEXT MATCH STARTS SOON"
 	end
 
@@ -768,6 +770,19 @@ local function update(state)
 		end
 	end
 
+	-- Save failures appear in the existing HUD line without extra overlays,
+	-- and never displace GO/WAIT guidance while racing.
+	local dataStatus = player:GetAttribute("MythbloxDataStatus")
+	if (phase == "JOIN" or phase == "RESULTS")
+		and (dataStatus == "SESSION_ONLY" or dataStatus == "SAVE_ERROR") then
+		ownStats.Text = dataStatus == "SAVE_ERROR"
+			and "SAVE ERROR · REJOIN TO VERIFY"
+			or "SESSION ONLY · NO PROGRESS SAVED"
+		ownStats.TextColor3 = COLOR.Red
+	else
+		ownStats.TextColor3 = COLOR.Muted
+	end
+
 	-- The five non-interactive number cards appear ONLY in the five-second reveal.
 	-- Never show aggregates, avatars or the previous turn's choices in VOTE/MOVE.
 	reveal.Visible = phase == "REVEAL"
@@ -789,4 +804,8 @@ feedback.Visible = false
 voting.Visible = false
 reveal.Visible = false
 stateEvent.OnClientEvent:Connect(update)
+-- The DataStore status can change between server countdown snapshots.
+player:GetAttributeChangedSignal("MythbloxDataStatus"):Connect(function()
+	if latestState then update(latestState) end
+end)
 command:FireServer("Sync")
