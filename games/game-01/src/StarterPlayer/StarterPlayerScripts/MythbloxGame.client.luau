@@ -55,6 +55,12 @@ local COLOR = {
 	White = Color3.fromRGB(250, 244, 233),    -- legible on sage/dusty rose
 }
 
+local prefs = {tutorialSeen=false, soundOn=true, musicOn=false, lowEffects=false, largeText=false, highContrast=false}
+local prefsReady = false
+local latestState = nil
+local layoutForViewport
+local menuDismissedTutorial = false
+
 local function addCorner(parent, radius)
 	local c = Instance.new("UICorner")
 	c.CornerRadius = UDim.new(0, radius)
@@ -136,7 +142,7 @@ gui.Destroying:Connect(function()
 end)
 local function cue(kind)
 	local audio = sounds[kind]
-	if not audio then return end
+	if not audio or not prefs.soundOn then return end
 	audio.TimePosition = 0
 	audio:Play()
 end
@@ -394,7 +400,8 @@ local function drawOutcomes(state)
 		card.outline.Color = blocked and COLOR.Red or COLOR.Green
 		card.number.TextColor3 = blocked and COLOR.Red or COLOR.Green
 		card.status.TextColor3 = blocked and COLOR.Red or COLOR.Green
-		card.status.Text = blocked and "BLOCKED" or "SAFE"
+		card.status.Text = prefs.highContrast
+			and (blocked and "X BLOCKED" or "+ SAFE") or (blocked and "BLOCKED" or "SAFE")
 		card.votes.Text = tostring(total) .. (total == 1 and " PICK" or " PICKS")
 
 		for _, child in ipairs(card.avatars:GetChildren()) do
@@ -521,12 +528,364 @@ end
 
 shopEvent.OnClientEvent:Connect(function(kind, details, message)
 	if kind == "Open" then shop.Visible = true end
+	if type(details) == "table" then
+		shopCache=details
+		if details.ui then acceptUIState(details) end
+		if inventory.Visible then showInventory() end
+	end
 	if shop.Visible and (kind == "Open" or kind == "Update") then
 		renderShop(details, message)
 	end
+	if kind == "Update" and type(message) == "string" then
+		if string.find(message,"Purchased ",1,true)
+			or string.find(message," equipped.",1,true) then notify(message) end
+	end
 end)
 
-local function layoutForViewport()
+-- v0.30: Seven lightweight UI capabilities, each with independent
+-- visibility and no changes to humanoid movement or bridge rules.
+local lobbyMenu = Instance.new("Frame")
+lobbyMenu.Name = "LobbyMenu"
+lobbyMenu.BackgroundTransparency = 1
+lobbyMenu.Size = UDim2.fromOffset(206, 34)
+lobbyMenu.Parent = gui
+local ml = Instance.new("UIListLayout")
+ml.FillDirection = Enum.FillDirection.Horizontal
+ml.HorizontalAlignment = Enum.HorizontalAlignment.Right
+ml.Padding = UDim.new(0, 5)
+ml.Parent = lobbyMenu
+local bagButton = button(lobbyMenu,"Bag","BAG",COLOR.Blue)
+bagButton.LayoutOrder=1; bagButton.Size=UDim2.fromOffset(59,32); bagButton.TextSize=12
+local settingsButton = button(lobbyMenu,"Settings","SETTINGS",COLOR.Blue)
+settingsButton.LayoutOrder=2; settingsButton.Size=UDim2.fromOffset(94,32); settingsButton.TextSize=12
+local helpButton = button(lobbyMenu,"Help","?",COLOR.Gold)
+helpButton.LayoutOrder=3; helpButton.Size=UDim2.fromOffset(32,32); helpButton.TextSize=17
+local function closeButton(container)
+	local b = button(container,"Close","X",COLOR.Red)
+	b.AnchorPoint=Vector2.new(1,0)
+	b.Position=UDim2.new(1,-10,0,10)
+	b.Size=UDim2.fromOffset(33,30)
+	b.TextSize=13
+	b.MouseButton1Click:Connect(function() container.Visible=false end)
+	return b
+end
+local function scrollArea(container,name,top)
+	local sf=Instance.new("ScrollingFrame")
+	sf.Name=name; sf.Position=UDim2.fromOffset(11,top)
+	sf.Size=UDim2.new(1,-22,1,-top-12)
+	sf.BackgroundTransparency=1; sf.BorderSizePixel=0
+	sf.ScrollBarThickness=4; sf.ScrollingDirection=Enum.ScrollingDirection.Y
+	sf.Parent=container
+	local list=Instance.new("UIListLayout")
+	list.SortOrder=Enum.SortOrder.LayoutOrder
+	list.Padding=UDim.new(0,5)
+	list.Parent=sf
+	return sf
+end
+
+local tutorial = panel("Tutorial")
+tutorial.Visible=false; tutorial.AnchorPoint=Vector2.new(0.5,0)
+closeButton(tutorial)
+local tutTitle=label(tutorial,"Title","HOW TO PLAY",12,10,-61,29,17,COLOR.Purple,true)
+local tutBody=label(tutorial,"Body","",12,44,-24,89,14,COLOR.Text,false)
+tutBody.TextYAlignment=Enum.TextYAlignment.Top
+local tutCounter=label(tutorial,"Progress","",12,138,-24,20,12,COLOR.Muted,true)
+local tutSkip=button(tutorial,"Skip","SKIP",COLOR.Gold)
+tutSkip.Size=UDim2.fromOffset(86,34)
+tutSkip.Position=UDim2.new(0,12,1,-43)
+tutSkip.TextSize=12
+local tutNext=button(tutorial,"Next","NEXT",COLOR.Blue)
+tutNext.AnchorPoint=Vector2.new(1,0)
+tutNext.Size=UDim2.fromOffset(98,34)
+tutNext.Position=UDim2.new(1,-12,1,-43)
+tutNext.TextSize=12
+local tutPages={
+	{"JOIN ZONE","Stand anywhere on the wide front deck. Stay inside at zero to enter; step out to unqueue."},
+	{"PICK 1–5","Vote privately for how many steps to try. The most popular number becomes blocked."},
+	{"CROSS SAFELY","MOVE only when GO appears. Walk and jump freely, but an early or forbidden step shatters glass."},
+	{"COINS & COLORS","Multiplayer races earn Coins and Wins. Solo practice has no rewards. Own colors in BAG; buy new ones at COSMETICS."},
+}
+local tutStep=1
+local function drawTutorial()
+	tutTitle.Text=tutPages[tutStep][1]
+	tutBody.Text=tutPages[tutStep][2]
+	tutCounter.Text=("%d / %d"):format(tutStep,#tutPages)
+	tutNext.Text=tutStep==#tutPages and "DONE" or "NEXT"
+end
+local function tutorialDone()
+	menuDismissedTutorial=true
+	tutorial.Visible=false
+	if not prefs.tutorialSeen then
+		prefs.tutorialSeen=true
+		command:FireServer("UI",{key="tutorialSeen",value=true})
+	end
+end
+tutSkip.MouseButton1Click:Connect(tutorialDone)
+tutNext.MouseButton1Click:Connect(function()
+	if tutStep==#tutPages then tutorialDone()
+	else tutStep+=1;drawTutorial() end
+end)
+
+local inventory=panel("Inventory")
+inventory.Visible=false; inventory.AnchorPoint=Vector2.new(0.5,0.5)
+label(inventory,"Title","MY GLASS COLORS",12,9,-65,32,18,COLOR.Purple,true)
+closeButton(inventory)
+local invHelp=label(inventory,"Hint","Owned colors · equip anywhere",12,43,-24,26,12,COLOR.Muted)
+local invScroll=scrollArea(inventory,"Owned",75)
+local shopCache=nil
+local function showInventory()
+	for _,child in ipairs(invScroll:GetChildren()) do
+		if child:IsA("Frame") then child:Destroy() end
+	end
+	if not shopCache then invHelp.Text="LOADING OWNED COLORS";return end
+	local count=0
+	for _,item in ipairs(shopCache.items or {}) do
+		if item.id=="classic" or (shopCache.owned and shopCache.owned[item.id]==true) then
+			count+=1
+			local row=Instance.new("Frame")
+			row.Name="Owned_"..item.id;row.LayoutOrder=count
+			row.Size=UDim2.new(1,-7,0,50)
+			row.BorderSizePixel=0;row.BackgroundColor3=COLOR.InkBright;row.Parent=invScroll
+			addCorner(row,8)
+			local sw=Instance.new("Frame")
+			sw.Name="Color";sw.Position=UDim2.fromOffset(8,10);sw.Size=UDim2.fromOffset(29,29)
+			sw.BackgroundColor3=typeof(item.color)=="Color3" and item.color or COLOR.Blue
+			sw.Parent=row;addCorner(sw,7)
+			local nm=label(row,"Name",item.title,43,7,-145,36,12,COLOR.Text,true)
+			nm.TextWrapped=false;nm.TextTruncate=Enum.TextTruncate.AtEnd
+			local equip=button(row,"Equip",shopCache.equipped==item.id and "EQUIPPED" or "EQUIP",
+				shopCache.equipped==item.id and COLOR.Green or COLOR.Blue)
+			equip.AnchorPoint=Vector2.new(1,0.5)
+			equip.Position=UDim2.new(1,-7,0.5,0)
+			equip.Size=UDim2.fromOffset(85,31)
+			equip.TextSize=11
+			if shopCache.equipped==item.id or not shopCache.ready then
+				equip.Active=false;equip.AutoButtonColor=false
+			else
+				equip.MouseButton1Click:Connect(function()
+					equip.Text="..."
+					command:FireServer("Equip",item.id)
+				end)
+			end
+		end
+	end
+	invScroll.CanvasSize=UDim2.fromOffset(0,count*55)
+	invHelp.Text=shopCache.ready and (count.." OWNED · EQUIP ANYWHERE") or "PROFILE IS SESSION-ONLY"
+end
+
+local settings=panel("Preferences")
+settings.Visible=false;settings.AnchorPoint=Vector2.new(0.5,0.5)
+label(settings,"Title","SETTINGS",12,9,-65,32,18,COLOR.Purple,true)
+closeButton(settings)
+local settingScroll=scrollArea(settings,"Options",49)
+settingScroll.Size=UDim2.new(1,-22,1,-75)
+local settingNote=label(settings,"Note","Saved with your profile",12,0,-24,18,10,COLOR.Muted)
+settingNote.AnchorPoint=Vector2.new(0,1)
+settingNote.Position=UDim2.new(0,12,1,-4)
+local settingOrder={
+	{"soundOn","SOUND EFFECTS"},
+	{"musicOn","MUSIC (NO TRACK YET)"},
+	{"lowEffects","REDUCE EFFECTS"},
+	{"largeText","LARGER TEXT"},
+	{"highContrast","EXTRA SAFE/BLOCKED CUES"},
+}
+local toggles={}
+local function applyPreferences()
+	for _,sound in pairs(sounds) do
+		local base=sound:GetAttribute("BaseMythbloxVolume")
+		if base==nil then base=sound.Volume;sound:SetAttribute("BaseMythbloxVolume",base) end
+		sound.Volume=prefs.soundOn and base or 0
+	end
+	local group=SoundService:FindFirstChild("MythbloxMusicGroup")
+	if not group then
+		group=Instance.new("SoundGroup")
+		group.Name="MythbloxMusicGroup"
+		group.Parent=SoundService
+	end
+	group.Volume=prefs.musicOn and 0.35 or 0
+	local world=workspace:FindFirstChild("MythbloxGame01")
+	if world then
+		for _,obj in ipairs(world:GetDescendants()) do
+			if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") then
+				local base=obj:GetAttribute("MythbloxOriginalEffectEnabled")
+				if base==nil then
+					base=obj.Enabled
+					obj:SetAttribute("MythbloxOriginalEffectEnabled",base)
+				end
+				obj.Enabled=not prefs.lowEffects and base or false
+			end
+		end
+	end
+end
+workspace.DescendantAdded:Connect(function(obj)
+	if not prefs.lowEffects then return end
+	local w=workspace:FindFirstChild("MythbloxGame01")
+	if w and obj:IsDescendantOf(w) and
+		(obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam")) then
+		task.defer(function()
+			if not obj.Parent or not prefs.lowEffects then return end
+			if obj:GetAttribute("MythbloxOriginalEffectEnabled")==nil then
+				obj:SetAttribute("MythbloxOriginalEffectEnabled",obj.Enabled)
+			end
+			obj.Enabled=false
+		end)
+	end
+end)
+local function redrawSettings()
+	for key,btn in pairs(toggles) do
+		btn.Text=prefs[key] and "ON" or "OFF"
+		btn.BackgroundColor3=prefs[key] and COLOR.Green or COLOR.Gold
+	end
+	settingNote.Text=player:GetAttribute("MythbloxDataStatus")=="READY"
+		and "Saved with your profile" or "Session-only until data loads"
+	applyPreferences()
+	if layoutForViewport then layoutForViewport() end
+	if latestState and latestState.phase=="REVEAL" then
+		lastTurnRendered=-1
+		drawOutcomes(latestState)
+	end
+end
+for n,entry in ipairs(settingOrder) do
+	local key,text=entry[1],entry[2]
+	local row=Instance.new("Frame")
+	row.LayoutOrder=n;row.Name=key;row.Size=UDim2.new(1,-6,0,44)
+	row.BackgroundColor3=COLOR.InkBright;row.BorderSizePixel=0;row.Parent=settingScroll
+	addCorner(row,8)
+	local nm=label(row,"Name",text,8,6,-93,31,11,COLOR.Text,true)
+	nm.TextWrapped=false;nm.TextTruncate=Enum.TextTruncate.AtEnd
+	local b=button(row,"Toggle","ON",COLOR.Green)
+	b.AnchorPoint=Vector2.new(1,0.5)
+	b.Position=UDim2.new(1,-6,0.5,0)
+	b.Size=UDim2.fromOffset(66,30);b.TextSize=12
+	toggles[key]=b
+	b.MouseButton1Click:Connect(function()
+		prefs[key]=not prefs[key]
+		command:FireServer("UI",{key=key,value=prefs[key]})
+		redrawSettings()
+	end)
+end
+settingScroll.CanvasSize=UDim2.fromOffset(0,#settingOrder*49)
+
+local raceHud=panel("RaceStatus")
+raceHud.Visible=false;raceHud.AnchorPoint=Vector2.new(1,0)
+local raceLine=label(raceHud,"Progress","TILE 0/20 · 0/3 CRACKS",8,3,-16,18,12,COLOR.Text,true)
+raceLine.TextWrapped=false;raceLine.TextTruncate=Enum.TextTruncate.AtEnd
+local permissionLine=label(raceHud,"Permission","VOTE 1–5",8,22,-16,17,11,COLOR.Muted,true)
+permissionLine.TextWrapped=false;permissionLine.TextTruncate=Enum.TextTruncate.AtEnd
+
+local recap=panel("RoundRecap")
+recap.Visible=false;recap.AnchorPoint=Vector2.new(0.5,0)
+local recapTitle=label(recap,"Winner","ROUND COMPLETE",10,7,-20,28,16,COLOR.Purple,true)
+local recapPlace=label(recap,"Place","",10,41,-20,26,13,COLOR.Text,true)
+local recapReward=label(recap,"Rewards","",10,72,-20,27,15,COLOR.Green,true)
+local recapTimer=label(recap,"NextMatch","",10,103,-20,20,11,COLOR.Muted)
+for _,lbl in ipairs({recapTitle,recapPlace,recapReward,recapTimer}) do
+	lbl.TextXAlignment=Enum.TextXAlignment.Center
+end
+
+local toast=panel("Toast")
+toast.Visible=false;toast.AnchorPoint=Vector2.new(0.5,0)
+local toastText=label(toast,"Message","",9,3,-18,25,12,COLOR.Text,true)
+toastText.TextWrapped=false;toastText.TextTruncate=Enum.TextTruncate.AtEnd
+toastText.TextXAlignment=Enum.TextXAlignment.Center
+local toastTick=0
+local function notify(message)
+	toastTick+=1
+	local ticket=toastTick
+	toastText.Text=message
+	toast.Visible=true
+	task.delay(2.6,function()
+		if toast.Parent and ticket==toastTick then toast.Visible=false end
+	end)
+end
+
+local spectator=panel("SpectatorControls")
+spectator.Visible=false;spectator.AnchorPoint=Vector2.new(0.5,1)
+local prev=button(spectator,"Previous","<",COLOR.Blue)
+local nextButton=button(spectator,"Next",">",COLOR.Blue)
+local stop=button(spectator,"Stop","EXIT",COLOR.Gold)
+local watchedName=label(spectator,"Target","FOLLOW A RACER",0,5,0,24,12,COLOR.Text,true)
+watchedName.TextXAlignment=Enum.TextXAlignment.Center
+local spectateIds={}
+local spectateIndex=1
+local isFollowing=false
+local function ownCamera()
+	isFollowing=false
+	local camera=workspace.CurrentCamera
+	local character=player.Character
+	local humanoid=character and character:FindFirstChildOfClass("Humanoid")
+	if camera and humanoid then
+		camera.CameraType=Enum.CameraType.Custom
+		camera.CameraSubject=humanoid
+	end
+end
+local function followRacer()
+	local id=spectateIds[spectateIndex]
+	local target=id and Players:GetPlayerByUserId(id)
+	local humanoid=target and target.Character and target.Character:FindFirstChildOfClass("Humanoid")
+	local cam=workspace.CurrentCamera
+	if not cam or not humanoid or humanoid.Health<=0 then
+		watchedName.Text="RACER UNAVAILABLE"
+		return
+	end
+	cam.CameraType=Enum.CameraType.Custom
+	cam.CameraSubject=humanoid
+	isFollowing=true
+	watchedName.Text=target.DisplayName
+end
+prev.MouseButton1Click:Connect(function()
+	if #spectateIds==0 then return end
+	spectateIndex=(spectateIndex-2)%#spectateIds+1
+	followRacer()
+end)
+nextButton.MouseButton1Click:Connect(function()
+	if #spectateIds==0 then return end
+	spectateIndex=spectateIndex%#spectateIds+1
+	followRacer()
+end)
+stop.MouseButton1Click:Connect(function()
+	ownCamera()
+	watchedName.Text="FOLLOW A RACER"
+end)
+player.CharacterAdded:Connect(function()
+	if isFollowing then ownCamera() end
+end)
+
+bagButton.MouseButton1Click:Connect(function()
+	inventory.Visible=not inventory.Visible
+	if inventory.Visible then
+		settings.Visible=false;tutorial.Visible=false;shop.Visible=false
+		command:FireServer("Inventory")
+		showInventory()
+	end
+end)
+settingsButton.MouseButton1Click:Connect(function()
+	settings.Visible=not settings.Visible
+	if settings.Visible then
+		inventory.Visible=false;tutorial.Visible=false;shop.Visible=false
+		redrawSettings()
+	end
+end)
+helpButton.MouseButton1Click:Connect(function()
+	tutStep=1;drawTutorial()
+	tutorial.Visible=not tutorial.Visible
+	inventory.Visible=false;settings.Visible=false
+end)
+local function acceptUIState(data)
+	if type(data)~="table" or type(data.ui)~="table" then return end
+	local first=not prefsReady
+	prefsReady=true
+	for key in pairs(prefs) do
+		if type(data.ui[key])=="boolean" then prefs[key]=data.ui[key] end
+	end
+	redrawSettings()
+	if first and not prefs.tutorialSeen and not menuDismissedTutorial
+		and (not latestState or latestState.phase=="JOIN") then
+		tutStep=1;drawTutorial();tutorial.Visible=true
+	end
+end
+
+layoutForViewport = function()
 	local cam = workspace.CurrentCamera
 	local view = cam and cam.ViewportSize or Vector2.new(1100, 700)
 	local width = math.max(300, view.X)
@@ -655,7 +1014,7 @@ local previousPhase = nil
 local previousTurn = -1
 local previousAlive = nil
 local lastTickKey = ""
-local latestState = nil
+local lastNotifiedRound = -1
 local function update(state)
 	latestState = state
 	local phase = state.phase or "JOIN"
