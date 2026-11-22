@@ -5,7 +5,7 @@
 ## What is saved
 
 - The authoritative **Wins** and **Coins** values earned from completed matches.
-- Winners earn **1 win and 25 coins**; other participants earn **5 coins**. The existing game rules are unchanged.
+- In **competitive matches with 2–8 ready players**, winners earn **1 win and 25 coins**; other participants earn **5 coins**. As of **v0.27**, a single player on a **published server** may play solo practice but receives **no Wins or Coins**; the existing Studio solo test behavior is unchanged. Never treat live solo practice as an eligible competitive reward.
 - **v0.23:** On completion of each match, the server also attempts to save awarded rewards immediately. The ~150-second autosave (with jitter), player exit and shutdown saves remain fallbacks, using the same per-user lock and idempotent reward-batch ID.
 - **v0.14 now additionally saves purchased glass-color cosmetics and the equipped color in this same DataStore record.** There is no Robux shop or paid monetization. Purchase/equipment is server validated and must be tested in Studio before release.
 - **Older v0.12 coin/win totals were session-only**, so they cannot be restored retroactively. A player with no v0.13 stored profile starts at zero.
