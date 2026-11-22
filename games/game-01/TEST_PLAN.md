@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-22):** v0.13 coins survived Studio Play restarts in an owner-confirmed test. **v0.14 adds persistent, coin-only cosmetic glass colors**, committed in source/installer but **not yet tested in Studio**. Saving Wins and private published-server persistence remain unverified.
+**Status (2026-11-22):** Owner reports **v0.14 works in Roblox Studio**; v0.13 coin persistence across Play restarts was separately confirmed. Cosmetic purchases/re-equipping after a restart, saved Wins, a private published-server test, mobile layouts, and release QA have not been individually confirmed.
 
 ## Playtest log
 
@@ -12,6 +12,7 @@
 | 2026-11-22 | Roblox Studio v0.11 (owner-reported) | User says the updated environment works | Individual v0.11 visual checks not itemized; release QA, mobile and spectator stress testing still pending |
 | 2026-11-22 | Roblox Studio v0.12 (owner-reported) | User confirms updated gameplay feedback works | Specific regressions not individually enumerated; deeper mobile, multiplayer and audio verification pending |
 | 2026-11-22 | Roblox Studio v0.13 (owner-reported) | Coins remain after stopping and restarting Play, confirming a successful Studio persistence test | Win persistence and live/private published-server persistence not separately checked; Studio Game Settings 'Failed to parse secrets: Can't parse JSON' warning noted |
+| 2026-11-22 | Roblox Studio v0.14 (owner-reported) | User says the cosmetics update works | Restarted cosmetic ownership and equipment, precise coin deductions, wins persistence, mobile UI, and multiple clients not individually reported |
 
 ### Previously addressed: v0.2 fix verification (owner reports functionality works)
 
@@ -52,7 +53,7 @@
 - [ ] Test a narrow/mobile viewport: item list scrolls and shop close button remains usable.
 - [ ] Separately confirm **saved Wins** (still unchecked) and test private published-server persistence. Studio uses a different DataStore than published gameplay.
 
-**Status:** GitHub scripts and installer committed. **Studio visual, purchase and data-retention tests pending.** Do not overwrite existing saved balances by changing the store name.
+**Status:** Owner confirms v0.14 overall functionality in Studio. Individual purchase, cosmetic ownership persistence, and data-retention test cases remain unchecked until explicitly verified. Do not change the DataStore name or overwrite existing balances.
 
 ## v0.13 — persistent progress and safe failure handling
 
