@@ -707,7 +707,14 @@ local function update(state)
 	-- The five non-interactive number cards appear ONLY in the two-second reveal.
 	-- Never show aggregates, avatars or the previous turn's choices in VOTE/MOVE.
 	reveal.Visible = phase == "REVEAL"
-	if reveal.Visible then drawOutcomes(state) end
+	if reveal.Visible then
+		-- The reveal is the only foreground feedback during these two seconds.
+		-- Hide earlier vote chips and any open stall panel rather than overlap it.
+		shop.Visible = false
+		feedback.Visible = false
+		feedbackGeneration += 1
+		drawOutcomes(state)
+	end
 
 
 end
