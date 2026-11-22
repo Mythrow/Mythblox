@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-22):** Owner reports earlier joining/movement/cosmetics functionality. **v0.18 source/installer adds permanently enabled walking/jumping, removes full-panel path hints, configurable dance IDs and a premium material/lighting pass; not yet tested in Studio.** The 5-second avatar reveal remains; saved Wins/skins after restart and private-server/mobile QA remain open. Significant further features and custom visuals are still required before launch.
+**Status (2026-11-22):** Owner finds a critical v0.18 regression: they can run across the bridge without being stopped after elimination. **v0.19 fixes character removal after illegal advances and adds per-glass-tile collision checks**; source and installer are committed but **not yet tested in Roblox Studio**. Movement/jumping remain freely enabled while alive, with safe-step colors hidden. Saved Wins/skins after restart, mobile and private-server QA remain open.
 
 ## Playtest log
 
@@ -14,6 +14,7 @@
 | 2026-11-22 | Roblox Studio v0.13 (owner-reported) | Coins remain after stopping and restarting Play, confirming a successful Studio persistence test | Win persistence and live/private published-server persistence not separately checked; Studio Game Settings 'Failed to parse secrets: Can't parse JSON' warning noted |
 | 2026-11-22 | Roblox Studio v0.14 (owner-reported) | User says the cosmetics update works | Restarted cosmetic ownership and equipment, precise coin deductions, wins persistence, mobile UI, and multiple clients not individually reported |
 | 2026-11-22 | Roblox Studio v0.15 (owner-reported partial) | Joining, movement and cosmetics confirmed working | Voting reveal design needed adjustment; deeper multiplayer, saved Wins/skins after restart and mobile reliability tests remain open |
+| 2026-11-22 | Roblox Studio v0.18 (owner-reported regression) | User can continue running to finish and glass does not reliably break after invalid movement | v0.19 code fix committed, not yet verified in Studio; ensure eliminated character cannot traverse remaining tiles |
 
 ### Previously addressed: v0.2 fix verification (owner reports functionality works)
 
@@ -36,6 +37,25 @@
 6. Repeat with 3–4 clients if the two-player flow works.
 
 
+
+## v0.19 — critical crossing regression (test before anything else)
+
+**v0.18 failed owner testing.** Reinstall the latest [Studio installer](INSTALL_STUDIO_COMMAND_BAR.luau) in **Edit mode with Play stopped** and check `v0.19 VERIFIED`, server/client `v0.19`, and Output free from script errors.
+
+- [ ] **Early advance during VOTE**: walk forward from tile 0 to tile 1 before reveal. Attempted + supporting glass must **shatter and fade** (not a full-tile red highlight), the player must be **eliminated and return to the lobby**, and cannot continue running to tile 20 or win.
+- [ ] **Advance during REVEAL**: step or jump onto tile 1 before MOVE. Same elimination, shatter and respawn.
+- [ ] **Blocked pick**: with two clients choosing the same number, both get a crack and must not advance. Walking/jumping **on their existing tile** remains allowed. A forbidden forward step must break glass and end that player's run.
+- [ ] **Safe pick overrun**: solo Studio or with two clients, choose a safe `1`, advance one tile normally, then attempt to advance to tile 2 in the same MOVE. Second tile and supporting glass must break, eliminating the racer.
+- [ ] **Legal move and valid jump**: choose safe `3`, walk/jump normally on the current tile and advance 1–3 tiles during MOVE without elimination, then complete MOVE. Glass **behind** the successful advance shatters as the next turn starts.
+- [ ] **No progress**: choose a safe number and stand still through MOVE. Your starting glass shatters; the character falls/dies and returns to the lobby.
+- [ ] **Three cracks**: blocked or missing votes accumulate 3 strikes and break the current tile on the third, ending the run.
+- [ ] **Jump across several tiles**: try to jump from tile 0 directly to tile 2. The server's position check must eliminate even if the contact check did not fire on an intervening tile.
+- [ ] **No extra rewards**: a racer eliminated by illegal advancement must not become the finisher or collect a winner reward; other racers continue normally.
+- [ ] **Spectators after respawn**: eliminated players return safely to lobby/deck, cannot interfere with lanes or acquire extra votes in the current round.
+- [ ] **No spoilers**: intact bridge tiles stay their neutral/purchased tint. Only reveal cards mark safe/blocked with green/red; cracked/broken glass must be visibly damaged or absent.
+- [ ] **Output**: confirm `[Mythblox RACE] ELIMINATED <name>: <reason>` appears when a racer breaks the rules. Capture any red errors or unexpected continued movement.
+
+**Studio execution is not available to the assistant.** The commit fixes a specific source bug; the test is **not marked passed** until owner checks it.
 
 ## v0.18 — unrestricted avatar controls, fair no-spoiler glass and upgraded environment
 
