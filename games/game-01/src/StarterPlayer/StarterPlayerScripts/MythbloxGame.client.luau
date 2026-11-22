@@ -513,7 +513,7 @@ local function layoutForViewport()
 	local view = cam and cam.ViewportSize or Vector2.new(1100, 700)
 	local width = math.max(300, view.X)
 	local height = math.max(320, view.Y)
-	local compact = width < 760
+	local compact = width < 760 or height < 540 -- portrait AND landscape phones
 	isCompact = compact
 	if compact then feedback.Visible = false end
 	local shortScreen = height < 570
