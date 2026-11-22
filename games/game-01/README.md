@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-22):** The owner reports **v0.15 joining, movement and cosmetics work in Roblox Studio**; v0.13 coin persistence was previously confirmed. **v0.16 reveal-only player-avatar vote results are committed but not yet tested in Studio.** Remaining v0.15 reliability cases, saved wins and cosmetics after restart, private-server data and mobile QA are not fully verified. The game remains an **unreleased prototype**, with significant features and a visual overhaul required before any public launch.  
+**Status (2026-11-22):** The owner reports v0.15 joining, movement and cosmetics work, and v0.13 coins persist. After feedback that the v0.16 avatar reveal was too brief and its large bottom MOVE warning unnecessary, **v0.17 now extends REVEAL to 5 seconds, removes the bottom movement banner and adds a winner dance**. Source and installer are committed; **v0.17 has not been tested in Studio**. Saved wins, skin persistence after restarting and private-server/mobile QA remain open. This is still an **unreleased prototype** requiring major feature and visual development before launch.  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -35,7 +35,19 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 
 **Progress storage:** Wins and coins were session-only through v0.12. **v0.13 introduces DataStore persistence**, pending Roblox Studio and published-server verification. v0.14 adds a coin-only cosmetics stall (no Robux or paid items). Do not publicly launch or monetize before testing data recovery and purchases.
 
-## v0.16 — reveal-only five-number avatar results (Studio test pending)
+## v0.17 — longer reveal, cleaner screen and winner dance (Studio test pending)
+
+A gameplay-presentation adjustment based on owner feedback; **the vote rules and shop are unchanged**.
+
+- **REVEAL lasts 5 seconds** instead of 2. This gives everyone more time to inspect the five result cards, Roblox avatars and counts. VOTE remains 5 seconds and MOVE remains 6 seconds.
+- **Removed the large bottom MOVE warning panel**, including the redundant "Your next tile is unsafe" instruction. During MOVE the top HUD now says only `GO · WALK 1–N GREEN TILES` or `STAY · THIS TURN`, with no large overlay blocking the arena or mobile controls. Actual green/red bridge coloring and server movement rules are unchanged.
+- **During the 5-second RESULTS phase, surviving winner(s) automatically perform a short Roblox default dance**, using rig-appropriate R15/R6 animation IDs. They dance in place where they won. The existing confetti and win audio remain. The animation stops before players respawn. Any animation load failure is caught and logged; the match still completes and pays rewards normally.
+- **No additional paid assets** or game passes are involved. Roblox animation playback and rig compatibility still need to be checked in Studio.
+- Install the latest [one-paste installer](INSTALL_STUDIO_COMMAND_BAR.luau) in **Edit mode while Play is stopped**. Check `v0.17 VERIFIED` in Output and `v0.17` in the HUD.
+
+**Owner playtest pending:** Verify the five-second reveal, clean MOVE layout and visible winner dance in a two-client session. See the [v0.17 tests](TEST_PLAN.md).
+
+## v0.16 — reveal-only five-number avatar results (historical 2-second prototype)
 
 **Explicit owner-approved UI behavior:** Voting stays secret. During the **5-second VOTE**, active racers use the existing private 1–5 selection buttons; **no public number-result cards, other players' selections, avatars or vote totals** are visible. At the start of the **2-second REVEAL**, the selection buttons disappear and five **non-clickable** result cards appear together, only for that phase.
 
@@ -312,6 +324,6 @@ See the [pre-launch roadmap](PRELAUNCH_ROADMAP.md). Cosmetic stall, sound effect
 
 ## Next step
 
-**Test v0.16's reveal-only five-avatar-group result UI in Roblox Studio** using [TEST_PLAN.md](TEST_PLAN.md). Also finish v0.15 multiplayer, persistence, private-server and mobile reliability checks. Then move on to additional approved game features and a substantial visual redesign before any launch. The 1–5 voting and movement rules remain unchanged.
+**Test v0.17**: watch the five-avatar-group result cards for the full five seconds, verify the bottom GO/STAY warning is gone, and check whether winners visibly dance during the results phase. Continue v0.15 multiplayer, persistence, private-server and mobile reliability testing. Major feature development and a visual overhaul are still required before public launch. The 1–5 voting, cracks, movement and reward rules remain unchanged.
 
 See [the Mythblox game-design memo](../../docs/FIRST_GAME_GLASS_BRIDGE_CONCEPT.md) for earlier alternatives, including the spinner idea that was explicitly deferred.
