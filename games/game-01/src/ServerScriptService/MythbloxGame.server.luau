@@ -1,4 +1,4 @@
--- Mythblox game-01: Soft Earth Coast v0.29 (server)
+-- Mythblox game-01: Soft Earth Coast v0.30 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -8,7 +8,7 @@ local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
 local DataStoreService = game:GetService("DataStoreService")
 local HttpService = game:GetService("HttpService")
-local BUILD_VERSION = "v0.29"
+local BUILD_VERSION = "v0.30"
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -41,7 +41,7 @@ local THEME = {
 	Ivory = Color3.fromRGB(239, 230, 214),       -- #EFE6D6 warm cream
 	Limestone = Color3.fromRGB(217, 200, 174),   -- #D9C8AE oat beige, small accents
 	Sandstone = Color3.fromRGB(201, 179, 148),   -- #C9B394 soft sand
-	-- v0.29: richer matte colors specifically for large, light-catching
+	-- v0.30: richer matte colors specifically for large, light-catching
 	-- floors, platforms and planters; not a dark filter over the game.
 	PlazaStone = Color3.fromRGB(184, 173, 154),   -- weathered oat
 	DeckStone = Color3.fromRGB(176, 167, 150),    -- shaded stone
@@ -67,13 +67,37 @@ local SKIN_CATALOG = {
 }
 local SKIN_BY_ID = {}
 for _, item in ipairs(SKIN_CATALOG) do SKIN_BY_ID[item.id] = item end
+
+-- v0.30: Persist lightweight tutorial and accessibility/audio preferences in
+-- the EXISTING player record; do not create separate stores or grant currency.
+local UI_DEFAULTS = {
+	tutorialSeen = false,
+	soundOn = true,
+	musicOn = false, -- no licensed/original music track is shipped yet
+	lowEffects = false,
+	largeText = false,
+	highContrast = false,
+}
+local function sanitizeUI(raw)
+	local output = {}
+	for key, defaultValue in pairs(UI_DEFAULTS) do
+		output[key] = type(raw) == "table" and type(raw[key]) == "boolean"
+			and raw[key] or defaultValue
+		-- Explicit false must override a true default; the expression above
+		-- is intentionally NOT used for this case.
+		if type(raw) == "table" and type(raw[key]) == "boolean" then
+			output[key] = raw[key]
+		end
+	end
+	return output
+end
 local equippedSkins = {}
 local function glassColorFor(player)
 	local skin = SKIN_BY_ID[equippedSkins[player] or "classic"]
 	return skin and skin.color or GLASS
 end
 local AMBER = Color3.fromRGB(255, 206, 75)
--- v0.29: neutral, soft coastal daylight. Let the deliberately warm
+-- v0.30: neutral, soft coastal daylight. Let the deliberately warm
 -- OAT/WOOD/TERRACOTTA materials carry the earth tones without a yellow
 -- filter across the sky, character, greenery, water, or every surface.
 -- Keep lighting gentle on mobile and preserve the matte material response.
@@ -138,7 +162,7 @@ if not clouds then
 	clouds.Parent = terrain
 end
 clouds.Name = "MythbloxAzureCoastClouds"
--- v0.29: visibly fuller soft coastal cloud cover, not a solid white sky.
+-- v0.30: visibly fuller soft coastal cloud cover, not a solid white sky.
 clouds.Cover = 0.72
 clouds.Density = 0.54
 clouds.Color = Color3.fromRGB(238, 242, 242)
@@ -402,7 +426,7 @@ for _, z in ipairs({-97, -75}) do
 		Vector3.new(0, 24.43, z), THEME.Sandstone, Enum.Material.Limestone)
 end
 
--- v0.29: Fence the ENTIRE lobby perimeter. The previous opening for
+-- v0.30: Fence the ENTIRE lobby perimeter. The previous opening for
 -- long spectator paths is closed; the central deck remains the waiting area.
 -- These tall safety limits remain behind VISIBLE, collidable fence panels.
 -- They stop map escapes, but never change humanoid walking or jumping.
@@ -730,7 +754,7 @@ cosmeticsPrompt.RequiresLineOfSight = false
 cosmeticsPrompt.MaxActivationDistance = 12
 cosmeticsPrompt.Parent = cosmeticsDesk
 
--- v0.29: The giant blank BACK of the leaderboard and a nearby lamp
+-- v0.30: The giant blank BACK of the leaderboard and a nearby lamp
 -- previously overlapped at the plaza edge. Keep the board completely
 -- outside the main plaza and make BOTH faces readable at normal scale.
 local boardPost = decorative(
@@ -1350,9 +1374,14 @@ local message = "Join the next match!"
 local winnerPlayer = nil
 local initialMatchCount = 0
 local practiceWithoutRewards = false
+local roundSerial = 0
+local roundSummary = nil
 -- Reject excessively repeated remote requests without changing normal inputs.
 -- The server still owns every vote, purchase, movement and reward decision.
-local COMMAND_COOLDOWN = { Sync = 1.0, Vote = 0.065, Shop = 0.35 }
+local COMMAND_COOLDOWN = {
+	Sync = 1.0, Vote = 0.065, Shop = 0.35,
+	Inventory = 0.35, Equip = 0.4, UI = 0.18,
+}
 local lastRemoteCommand = {}
 local lastShopPrompt = {}
 local publish
@@ -1638,6 +1667,7 @@ local function publicRoster()
 	local roster = {}
 	for player, info in pairs(active) do
 		table.insert(roster, {
+			userId = player.UserId,
 			name = player.DisplayName,
 			position = info.index,
 			cracks = info.cracks,
@@ -1662,6 +1692,14 @@ local function snapshot(player)
 		queued = queue[player] == true,
 		liveSoloPractice = SETTINGS.LiveSoloPractice and not RunService:IsStudio(),
 		practiceNoRewards = practiceWithoutRewards,
+		-- Results are only exposed after votes and match scoring finish;
+		-- only the player's own earned currency appears in personalSummary.
+		results = phase == "RESULTS" and roundSummary and {
+			serial = roundSummary.serial,
+			winners = roundSummary.winners,
+			total = roundSummary.total,
+			personal = roundSummary.byUser[player.UserId],
+		} or nil,
 		participating = mine ~= nil,
 		mine = mine and {
 			position = mine.index,
@@ -1777,6 +1815,7 @@ local function validRecord(value)
 	end
 	if value.ownedSkins ~= nil and type(value.ownedSkins) ~= "table" then return false end
 	if value.equippedSkin ~= nil and type(value.equippedSkin) ~= "string" then return false end
+	if value.uiSettings ~= nil and type(value.uiSettings) ~= "table" then return false end
 	return true
 end
 
@@ -1817,6 +1856,7 @@ local function shopSnapshot(player)
 		equipped = profile and profile.equippedSkin or "classic",
 		coins = coins and coins.Value or 0,
 		ready = profile ~= nil and profile.status == "ready",
+		ui = sanitizeUI(profile and profile.uiSettings),
 	}
 end
 
@@ -1846,7 +1886,10 @@ local function loadProfile(player)
 	if not profile then return end
 	if not dataStore then
 		profile.status = "unavailable"
-		if player.Parent == Players then player:SetAttribute("MythbloxDataStatus", "SESSION_ONLY") end
+		if player.Parent == Players then
+			player:SetAttribute("MythbloxDataStatus", "SESSION_ONLY")
+			sendShop(player, "UIState", "Preferences are session-only.")
+		end
 		return
 	end
 
@@ -1861,12 +1904,15 @@ local function loadProfile(player)
 			profile.baseCoins = stored and safeStat(stored.coins) or 0
 			profile.ownedSkins = sanitizedOwned(stored and stored.ownedSkins)
 			profile.equippedSkin = sanitizedEquipped(stored and stored.equippedSkin, profile.ownedSkins)
+			profile.uiSettings = sanitizeUI(stored and stored.uiSettings)
+			profile.uiDirty = false
 			equippedSkins[player] = profile.equippedSkin
 			profile.status = "ready"
 			if player.Parent == Players then
 				updateProfileView(player, profile)
 				player:SetAttribute("MythbloxDataStatus", "READY")
 				sendShop(player, "Update", "")
+				sendShop(player, "UIState", "")
 			end
 			print(("[Mythblox DATA] Loaded %s: %d wins, %d coins (%s)"):format(
 				player.Name, profile.baseWins, profile.baseCoins, DATA_STORE_NAME
@@ -1880,7 +1926,10 @@ local function loadProfile(player)
 
 	-- Critical: NEVER overwrite persistent data with defaults after a failed load.
 	profile.status = "unavailable"
-	if player.Parent == Players then player:SetAttribute("MythbloxDataStatus", "SESSION_ONLY") end
+	if player.Parent == Players then
+		player:SetAttribute("MythbloxDataStatus", "SESSION_ONLY")
+		sendShop(player, "UIState", "Preferences are session-only.")
+	end
 	warn("[Mythblox DATA] LOAD FAILED for " .. player.Name .. ": " ..
 		tostring(lastError) .. ". This session's rewards will NOT be saved.")
 end
@@ -1912,11 +1961,14 @@ local function saveProfile(player, reason)
 	-- a later autosave must not treat those same rewards as a new transaction.
 	local batch = profile.rewardBatch
 	if not batch then
-		if profile.pendingWins == 0 and profile.pendingCoins == 0 then return true end
+		if profile.pendingWins == 0 and profile.pendingCoins == 0
+			and not profile.uiDirty then return true end
 		batch = {
 			id = HttpService:GenerateGUID(false),
 			wins = profile.pendingWins,
 			coins = profile.pendingCoins,
+			uiSettings = sanitizeUI(profile.uiSettings),
+			uiRevision = profile.uiRevision,
 		}
 		profile.rewardBatch = batch
 	end
@@ -1953,6 +2005,7 @@ local function saveProfile(player, reason)
 					-- Preserve shop fields written by another live server.
 					ownedSkins = sanitizedOwned(stored and stored.ownedSkins),
 					equippedSkin = stored and stored.equippedSkin or "classic",
+					uiSettings = sanitizeUI(batch.uiSettings),
 					recentSaves = recent,
 				}
 			end)
@@ -1967,8 +2020,22 @@ local function saveProfile(player, reason)
 			profile.ownedSkins = sanitizedOwned(result.ownedSkins)
 			profile.equippedSkin = sanitizedEquipped(result.equippedSkin, profile.ownedSkins)
 			equippedSkins[player] = profile.equippedSkin
+			-- Keep UI changes made while UpdateAsync was in flight. A retry
+			-- uses a NEW batch ID if an older idempotent batch already landed.
+			if profile.uiRevision == batch.uiRevision then
+				profile.uiDirty = not (result.uiSettings
+					and result.uiSettings.tutorialSeen == batch.uiSettings.tutorialSeen
+					and result.uiSettings.soundOn == batch.uiSettings.soundOn
+					and result.uiSettings.musicOn == batch.uiSettings.musicOn
+					and result.uiSettings.lowEffects == batch.uiSettings.lowEffects
+					and result.uiSettings.largeText == batch.uiSettings.largeText
+					and result.uiSettings.highContrast == batch.uiSettings.highContrast)
+			end
 			profile.saving = false
 			updateProfileView(player, profile)
+			if profile.uiDirty and player.Parent == Players then
+				task.defer(saveProfile, player, "ui-followup")
+			end
 			if player.Parent == Players then player:SetAttribute("MythbloxDataStatus", "READY") end
 			print(("[Mythblox DATA] Saved %s (+%dW +%dC; %s)"):format(
 				player.Name, winsDelta, coinsDelta, reason
@@ -1990,9 +2057,9 @@ end
 -- A cosmetic purchase/equip transaction uses the SAME stored record as earned
 -- coins. UpdateAsync checks ownership and balance atomically; no client prices.
 -- It also commits any pending match rewards in the same write.
-local function transactSkin(player, skinId)
+local function transactSkin(player, skinId, fromInventory)
 	if player.Parent ~= Players then return end
-	if not nearCosmetics(player) then
+	if not fromInventory and not nearCosmetics(player) then
 		sendShop(player, "Update", "Return to the cosmetics stall.")
 		return
 	end
@@ -2018,6 +2085,10 @@ local function transactSkin(player, skinId)
 	end
 	profile.lastShopAction = os.clock()
 	local alreadyOwned = skinId == "classic" or profile.ownedSkins[skinId] == true
+	if fromInventory and not alreadyOwned then
+		sendShop(player, "Update", "Purchase this color at the cosmetics kiosk.")
+		return
+	end
 	if not alreadyOwned and profile.baseCoins + profile.pendingCoins < item.price then
 		sendShop(player, "Update", "Not enough coins.")
 		return
@@ -2053,6 +2124,7 @@ local function transactSkin(player, skinId)
 
 				local owned = sanitizedOwned(stored and stored.ownedSkins)
 				local hasSkin = skinId == "classic" or owned[skinId] == true
+				if fromInventory and not hasSkin then return nil end
 				local cost = hasSkin and 0 or item.price
 				local wallet = safeStat(stored and stored.coins) + coinsDelta
 				if wallet < cost then
@@ -2066,6 +2138,7 @@ local function transactSkin(player, skinId)
 					coins = safeStat(wallet - cost),
 					ownedSkins = owned,
 					equippedSkin = skinId,
+					uiSettings = sanitizeUI(stored and stored.uiSettings),
 					recentSaves = recent,
 				}
 			end)
@@ -2082,7 +2155,9 @@ local function transactSkin(player, skinId)
 			updateProfileView(player, profile)
 			if player.Parent == Players then
 				player:SetAttribute("MythbloxDataStatus", "READY")
-				sendShop(player, "Update", item.title .. " equipped.")
+				sendShop(player, "Update", alreadyOwned
+					and (item.title .. " equipped.")
+					or ("Purchased %s for %d Coins · equipped."):format(item.title, item.price))
 			end
 			print("[Mythblox SHOP] " .. player.Name .. " equipped " .. skinId)
 			return
@@ -2170,6 +2245,9 @@ local function onPlayerAdded(player)
 		pendingCoins = 0,
 		ownedSkins = {},
 		equippedSkin = "classic",
+		uiSettings = sanitizeUI(nil),
+		uiDirty = false,
+		uiRevision = 0,
 		status = "loading",
 		saving = false,
 	}
@@ -2245,7 +2323,37 @@ command.OnServerEvent:Connect(function(player, action, payload)
 			sendShop(player, "Update", "Return to the cosmetics stall.")
 			return
 		end
-		task.spawn(transactSkin, player, payload)
+		task.spawn(transactSkin, player, payload, false)
+	elseif action == "Inventory" then
+		sendShop(player, "Inventory", "")
+	elseif action == "Equip" then
+		if typeof(payload) ~= "string" or #payload > 24 or not SKIN_BY_ID[payload] then return end
+		local profile = profiles[player]
+		if not profile or (payload ~= "classic" and not profile.ownedSkins[payload]) then
+			sendShop(player, "Update", "You must own a color before equipping it.")
+			return
+		end
+		task.spawn(transactSkin, player, payload, true)
+	elseif action == "UI" then
+		-- Whitelisted booleans only; clients cannot modify currency or skins.
+		if typeof(payload) ~= "table" or typeof(payload.key) ~= "string"
+			or typeof(payload.value) ~= "boolean"
+			or UI_DEFAULTS[payload.key] == nil then return end
+		local profile = profiles[player]
+		if not profile or profile.status == "loading" then return end
+		if profile.uiSettings[payload.key] ~= payload.value then
+			profile.uiSettings[payload.key] = payload.value
+			profile.uiDirty = true
+			profile.uiRevision += 1
+			local revision = profile.uiRevision
+			task.delay(4, function()
+				if profiles[player] == profile and player.Parent == Players
+					and profile.uiRevision == revision then
+					task.spawn(saveProfile, player, "ui-preferences")
+				end
+			end)
+		end
+		sendShop(player, "UIState", "")
 	elseif action == "Vote" then
 		if phase ~= "VOTE" then return end
 		local info = active[player]
@@ -2500,6 +2608,51 @@ local function finishMovePhase()
 	end
 end
 
+local function buildRoundSummary(participants, winners)
+	local victorious = {}
+	local names = {}
+	for _, winner in ipairs(winners) do
+		victorious[winner.UserId] = true
+		table.insert(names, winner.DisplayName)
+	end
+	table.sort(names)
+	local ordered = {}
+	for _, participant in ipairs(participants) do
+		if participant.Parent == Players then
+			local info = active[participant]
+			table.insert(ordered, {
+				player = participant,
+				distance = info and info.index or 0,
+				cracks = info and info.cracks or SETTINGS.MaxCracks,
+			})
+		end
+	end
+	table.sort(ordered, function(a, b)
+		if a.distance ~= b.distance then return a.distance > b.distance end
+		if a.cracks ~= b.cracks then return a.cracks < b.cracks end
+		return a.player.UserId < b.player.UserId
+	end)
+	local byUser = {}
+	local rank = 0
+	local lastDistance, lastCracks = nil, nil
+	for index, item in ipairs(ordered) do
+		if item.distance ~= lastDistance or item.cracks ~= lastCracks then
+			rank = index
+			lastDistance, lastCracks = item.distance, item.cracks
+		end
+		local winner = victorious[item.player.UserId] == true
+		byUser[item.player.UserId] = {
+			place = rank, distance = item.distance, cracks = item.cracks,
+			coins = practiceWithoutRewards and 0 or (winner and 25 or 5),
+			wins = practiceWithoutRewards and 0 or (winner and 1 or 0),
+			won = winner,
+		}
+	end
+	return {
+		serial = roundSerial, total = #ordered, winners = names, byUser = byUser,
+	}
+end
+
 local function scoreMatch(winners, participants)
 	local awarded = {}
 	for _, player in ipairs(winners) do awarded[player] = true end
@@ -2508,7 +2661,7 @@ local function scoreMatch(winners, participants)
 			awardProgress(player, awarded[player] and 1 or 0, awarded[player] and 25 or 5)
 		end
 	end
-	-- v0.29: Save match rewards immediately after a round finishes, while
+	-- v0.30: Save match rewards immediately after a round finishes, while
 	-- retaining autosave, exit and shutdown fallback attempts.
 	-- saveProfile uses stable reward-batch IDs and per-player write locks
 	-- so overlapping attempts do not double-award a completed round.
@@ -2522,6 +2675,7 @@ end
 while true do
 	phase = "JOIN"
 	practiceWithoutRewards = false
+	roundSummary = nil
 	clearBridges()
 	queue = {}
 	active = {}
@@ -2560,6 +2714,7 @@ while true do
 		print("[Mythblox MATCH] Live solo practice starting: no Wins or Coins awarded.")
 	end
 
+	roundSerial += 1
 	beginMatch(participants)
 	finishCelebrated = false
 	local winners = nil
@@ -2616,6 +2771,7 @@ while true do
 
 	phase = "RESULTS"
 	unsafe = {}
+	roundSummary = buildRoundSummary(participants, winners)
 	if #winners > 0 then finishConfetti() end
 	if practiceWithoutRewards then
 		message = #winners > 0
