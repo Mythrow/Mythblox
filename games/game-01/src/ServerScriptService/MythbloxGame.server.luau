@@ -282,17 +282,25 @@ end
 -- These are behind the spectator rails and do not alter the match.
 local islandSoil = decorative(
 	"IslandSoil", Vector3.new(125, 12, 87),
-	Vector3.new(0, 16, -59), Color3.fromRGB(153, 113, 72), Enum.Material.Ground
+	Vector3.new(0, 16, -59), Color3.fromRGB(139, 115, 91), Enum.Material.Ground
 )
 local islandStone = decorative(
 	"IslandStoneBase", Vector3.new(120, 4, 83),
-	Vector3.new(0, 8, -59), Color3.fromRGB(174, 163, 137), Enum.Material.Slate
+	Vector3.new(0, 8, -59), Color3.fromRGB(137, 143, 153), Enum.Material.Granite
 )
 local ground = decorative("HubGrassIsland", Vector3.new(130, 4, 91), Vector3.new(0, 22, -59), GRASS, Enum.Material.Grass)
-local plaza = decorative("SpawnPlaza", Vector3.new(26, 0.4, 23), Vector3.new(0, 24.2, -76), CREAM)
-local path = decorative("MainWalkPath", Vector3.new(11, 0.25, 36), Vector3.new(0, 24.14, -53), CREAM)
-local spurLeft = decorative("LeftShopPath", Vector3.new(27, 0.22, 7), Vector3.new(-19, 24.13, -48), CREAM)
-local spurRight = decorative("RightShopPath", Vector3.new(27, 0.22, 7), Vector3.new(19, 24.13, -48), CREAM)
+local plaza = decorative("SpawnPlaza", Vector3.new(26, 0.4, 23), Vector3.new(0, 24.2, -76), CREAM, Enum.Material.Marble)
+local path = decorative("MainWalkPath", Vector3.new(11, 0.25, 36), Vector3.new(0, 24.14, -53), CREAM, Enum.Material.Pavement)
+local spurLeft = decorative("LeftShopPath", Vector3.new(27, 0.22, 7), Vector3.new(-19, 24.13, -48), CREAM, Enum.Material.Pavement)
+local spurRight = decorative("RightShopPath", Vector3.new(27, 0.22, 7), Vector3.new(19, 24.13, -48), CREAM, Enum.Material.Pavement)
+
+-- Inlaid gold guide strips are thin, noncolliding and stop at the join deck.
+for _, x in ipairs({-5.05, 5.05}) do
+	detail("PromenadeInlay", Vector3.new(0.13, 0.04, 34), Vector3.new(x, 24.3, -52.5), METAL_TRIM)
+end
+for _, z in ipairs({-86, -65.5}) do
+	detail("SpawnPlazaInlay", Vector3.new(23, 0.035, 0.14), Vector3.new(0, 24.42, z), METAL_TRIM)
+end
 
 -- The platform is BOTH ready and spectator space. It persists for the whole
 -- server session; we change its message, never create a second front deck.
@@ -300,13 +308,20 @@ local sharedDeck = decorative(
 	"SharedReadyAndSpectatorDeck",
 	Vector3.new(90, 1, 24),
 	Vector3.new(0, 24.05, -22),
-	Color3.fromRGB(228, 245, 254)
+	Color3.fromRGB(222, 231, 233), Enum.Material.Marble
 )
+-- Thin perimeter binding prevents the spectator stage looking like a slab.
+for _, edge in ipairs({-1, 1}) do
+	detail("DeckSideBrassTrim", Vector3.new(0.16, 0.14, 24),
+		Vector3.new(edge * 44.85, 24.65, -22), METAL_TRIM)
+end
+detail("DeckFrontBrassTrim", Vector3.new(89.8, 0.14, 0.16),
+	Vector3.new(0, 24.65, -9.97), METAL_TRIM)
 local deckCenter = decorative(
 	"JoinAndWatchFloorMarking",
 	Vector3.new(19, 0.17, 9),
 	Vector3.new(0, 24.7, -25),
-	Color3.fromRGB(255, 207, 67)
+	Color3.fromRGB(214, 172, 91), Enum.Material.Metal
 )
 deckCenter.CanCollide = false
 local deckPrompt = Instance.new("ProximityPrompt")
@@ -337,7 +352,7 @@ local barrier = decorative(
 	"FrontSpectatorGlassBarrier",
 	Vector3.new(90, 8.5, 0.45),
 	Vector3.new(0, 28.8, -10.25),
-	Color3.fromRGB(177, 238, 252),
+	Color3.fromRGB(195, 221, 230),
 	Enum.Material.Glass
 )
 barrier.Transparency = 0.79
@@ -348,19 +363,19 @@ local function makePromenade(side)
 		side < 0 and "LeftSpectatorWalkway" or "RightSpectatorWalkway",
 		Vector3.new(9, 1, 95),
 		Vector3.new(x, 24.05, 22.5),
-		Color3.fromRGB(226, 244, 252)
+		Color3.fromRGB(219, 227, 230), Enum.Material.Marble
 	)
 	local connector = decorative(
 		side < 0 and "LeftSpectatorConnector" or "RightSpectatorConnector",
 		Vector3.new(12, 1, 15),
 		Vector3.new(side * 44, 24.05, -17.5),
-		Color3.fromRGB(226, 244, 252)
+		Color3.fromRGB(219, 227, 230), Enum.Material.Marble
 	)
 	local inner = decorative(
 		"InnerViewingSafetyGlass",
 		Vector3.new(0.45, 8.5, 79.8),
 		Vector3.new(side * 44.5, 28.8, 30.1),
-		Color3.fromRGB(177, 238, 252),
+		Color3.fromRGB(190, 224, 234),
 		Enum.Material.Glass
 	)
 	inner.Transparency = 0.78
@@ -368,17 +383,21 @@ local function makePromenade(side)
 		"OuterViewingFence",
 		Vector3.new(0.75, 7, 95),
 		Vector3.new(side * 53.5, 28.05, 22.5),
-		WOOD,
-		Enum.Material.Wood
+		DEEP_NAVY,
+		Enum.Material.Metal
 	)
 	outer.Transparency = 0.05
+	detail("ViewingFenceTopTrim", Vector3.new(0.9, 0.16, 95),
+		Vector3.new(side * 53.5, 31.6, 22.5), METAL_TRIM)
 	local endRail = decorative(
 		"ViewingEndFence",
 		Vector3.new(9, 7, 0.7),
 		Vector3.new(x, 28.05, 69.65),
-		WOOD,
-		Enum.Material.Wood
+		DEEP_NAVY,
+		Enum.Material.Metal
 	)
+	detail("ViewingEndRailTrim", Vector3.new(9, 0.15, 0.9),
+		Vector3.new(x, 31.6, 69.65), METAL_TRIM)
 	return walkway
 end
 makePromenade(-1)
