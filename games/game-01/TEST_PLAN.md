@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-22):** **v0.24** removes the full-scene warm/yellow cast seen in the owner's v0.23 screenshot while retaining Soft Earth Coast material colors, matte floors, mobile HUD and v0.23 saving logic. Code and installer are committed, but **Studio, actual-phone rendering, two-player shop/bench checks, glass-shatter elimination and cloud persistence are still pending verification**.
+**Status (2026-11-22):** **v0.25** implements fuller soft-white clouds and reduces glaring white/light platform surfaces, using muted oat/stone Concrete and Pavement on the large plaza, spectator deck, viewing walks, kiosk floors and planters. The previously approved v0.24 neutral light and core mechanics remain intact. **Studio/phone visuals, multiplayer, forbidden-step shatter, and actual DataStore persistence still require live verification.**
 
 ## Playtest log
 
@@ -38,6 +38,22 @@
 6. Repeat with 3–4 clients if the two-player flow works.
 
 
+
+## v0.25 — fuller sky, matte floors, and invisible spawn marker (visual QA pending)
+
+Check in the actual Roblox Studio engine before marking the appearance approved. A code consistency check cannot prove brightness or cloud rendering.
+
+- [ ] Stop Play; run the updated [Studio installer](INSTALL_STUDIO_COMMAND_BAR.luau) in Edit mode. Confirm `v0.25 VERIFIED` in Output and server/client `v0.25`.
+- [ ] Match the original spawn screenshot camera framing. More natural clouds should be visible overhead compared with v0.24; the blue-gray sky should remain visible behind them rather than turning into a plain white overcast dome.
+- [ ] Review the wide central plaza (`SpawnPlaza`): it should be weathered-oat matte **Concrete** with actual visible texture, not bright ivory/white or glossy Sandstone.
+- [ ] Review JOIN/spectator deck and both front-connected side promenade surfaces: they should be darker, matte shaded stone, with no white/neon-like slab appearance.
+- [ ] Look for the old rectangular pale spawn pad in the middle of the plaza. It should not be visible (fully transparent SpawnLocation), while both new joins and respawns still appear safely in the elevated lobby.
+- [ ] Verify large white ceramic planters, fountain stone, shop floor/counters, lamp bases and pergola columns have muted weathered-stone finishes instead of bright ivory.
+- [ ] Confirm the same showroom-quality aesthetic on actual phone screens, both higher and lower graphics settings. Native cloud visibility may depend on graphics level; do not falsely claim clouds always render identically.
+- [ ] Check the preserved warm accents (sage shop roof, dusty-rose cosmetics roof, terracotta details, timber benches), legible shop signs, and appropriate contrast around the glass arena.
+- [ ] Regression: join from the world pad and HUD, walk/jump at any time, sit in two-person benches, browse cosmetics, vote 1–5 privately, resolve five-number reveal and shatter/respawn on illegal glass steps.
+- [ ] Confirm v0.23 round-end saving still works in a published private server, including reconnecting and validating persistent Wins/Coins and cosmetics.
+- [ ] Send a screenshot from the original spawn angle and a phone view. Consider another material pass if any horizontal surface remains glaring.
 
 ## v0.24 — natural coastal daylight / no yellow screen tint (visual QA pending)
 
