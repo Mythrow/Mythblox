@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-22):** **v0.25** implements fuller soft-white clouds and reduces glaring white/light platform surfaces, using muted oat/stone Concrete and Pavement on the large plaza, spectator deck, viewing walks, kiosk floors and planters. The previously approved v0.24 neutral light and core mechanics remain intact. **Studio/phone visuals, multiplayer, forbidden-step shatter, and actual DataStore persistence still require live verification.**
+**Status (2026-11-22):** **v0.26** adjusts the oversized blank scoreboard back, moves the lamp pair that intersects leaderboard/rewards displays, and removes same-plane paving junction overlaps identified after the owner's v0.25 screenshot. This is a layout/collision visual patch, not a new mechanic. Real Studio, phone, multiplayer, and saving checks are still required.
 
 ## Playtest log
 
@@ -38,6 +38,17 @@
 6. Repeat with 3–4 clients if the two-player flow works.
 
 
+
+## v0.26 — lobby display overlap and paving seam QA
+
+- [ ] **Install current build:** Stop Play; run the [latest command-bar installer](INSTALL_STUDIO_COMMAND_BAR.luau) in Edit mode. Verify `v0.26 VERIFIED` and matching server/client/HUD versions.
+- [ ] **Compare screenshot angle:** The very large plain-brown board obstructing the plaza in the user's v0.25 image should now be a compact, readable leaderboard from **either side**.
+- [ ] **Physical separation:** Walk between the leaderboard, its supporting wood post, and relocated lamp at x=47/z=-79; none should intersect. Check the rewards podium and relocated lamp at x=-47/z=-79 as well.
+- [ ] **Shop path junctions:** Walk both left/right shop approaches and confirm the paving touches the center path without crossing textured surfaces or leaving gaps.
+- [ ] **Lounge T-junctions:** Check both side-lounge cross paths and return paths; no flickering, duplicate pavement textures or narrow gaps where the pieces meet.
+- [ ] **No new invisible obstacles:** Collision/physics of lamps and benches remain intentional; the revised scoreboard does not obstruct the arrival plaza, camera, rewards or passage to JOIN.
+- [ ] **Gameplay regression:** Join, vote, freely move/jump, test forbidden glass shatter/elimination, shop/bench interactions and progress saving across rejoin.
+- [ ] **Phone and desktop views:** Validate both closer side views and the wide plaza overview for neat shop displays, text legibility and no obstructive boards. Report additional exact locations/screenshots of intersections.
 
 ## v0.25 — fuller sky, matte floors, and invisible spawn marker (visual QA pending)
 
