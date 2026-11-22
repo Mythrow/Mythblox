@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-22):** **v0.29** removes manual joining in favor of the entire front deck automatically admitting only players who remain until zero. It removes both long side spectator promenades, wraps the island with visible physical fences, makes major sign/rail structures solid and adds a standalone Coins/Wins HUD to phone and PC. **Engine and two-player live tests remain pending; do not mark these tests passed from source-only checks.**
+**Status (2026-11-22):** **v0.30** adds all seven approved UI experiences on top of v0.29: profile-aware first-time tutorial, race progress, verified round recap, spectator follow controls, owned inventory, saved accessibility/audio/effects preferences, and restrained reward toasts. Static source/installer checks have been run, but **phone/Studio rendering, multiuser gameplay, buying/equipping and cloud persistence require live validation**.
 
 ## Playtest log
 
@@ -38,6 +38,23 @@
 6. Repeat with 3–4 clients if the two-player flow works.
 
 
+
+## v0.30 — seven UI features: integration and regression acceptance
+
+Use **Studio Device Emulator** in portrait and landscape, then test in the *published private Roblox app*. Test solo and with 2–8 users. An installer consistency check is not proof of runtime correctness.
+
+- [ ] **Install and identify:** Stop Play, run the current [installer](INSTALL_STUDIO_COMMAND_BAR.luau) in Edit mode and check `v0.30 VERIFIED`; run Play and check matching server/client `v0.30`. Republish private place and retest on Roblox phone app.
+- [ ] **Returning/new onboarding:** On a test profile without `uiSettings`, the four-step tutorial appears in the lobby; NEXT, SKIP, DONE all work, the player can still walk/jump, and the guide does not reappear after a successful profile save/rejoin. A known returning account with `tutorialSeen=true` must not see it automatically; tapping **?** can reopen it intentionally.
+- [ ] **Race HUD:** Join by standing on the whole front row. During VOTE, check private 1–5 buttons and tile/cracks; during MOVE verify GO x / WAIT with remaining seconds. When eliminated, no live racer progress panel is shown; during REVEAL on phone it must disappear so the five card avatars and counts are unobstructed.
+- [ ] **Result summary correctness:** At RESULTS verify the server-selected winner(s), own rank among entrants, highest reached tile, solo-practice `0 Coins/0 Wins`, competitive winner `+25 Coins/+1 Win` and other entrant `+5 Coins/+0 Wins`. Repeated countdown snapshots must **not** replay the same reward notification. After rejoin verify actual totals independently.
+- [ ] **Spectator follow:** Join too late / stand outside zone, then follow a live racer with < / >. Test next racer, dead/disconnected target, EXIT, own respawn and automatically returning to own camera when JOIN/RESULTS begins. Following must never reposition a character, vote, or grant Coins.
+- [ ] **Bag and secure equipment:** Open BAG anywhere in JOIN/RESULTS. Verify Classic plus all actual purchased colors, correct owned/equipped state, server-confirmed EQUIP anywhere, and that a client cannot equip an **unowned** color by calling the Equip remote. A new color can only be **purchased at COSMETICS** with sufficient saved Coins; after purchase it appears in BAG and the purchase toast displays.
+- [ ] **Settings in lobby:** SOUND ON/OFF mutes and restores current game SFX; REDUCE EFFECTS suppresses/restores particle trails locally; LARGER TEXT increases key HUD and reveal labels without clipping; EXTRA SAFE/BLOCKED CUES adds X/+ text cues independently of color. MUSIC toggle controls the music group but **no music track exists yet**. No new touch obstruction is allowed.
+- [ ] **Settings persistence:** Toggle values and tutorialSeen, wait for save, leave/join fresh published server; confirm preferences reload. Try immediately exiting during a pending save and confirm leave/shutdown backups. With Studio API Services disabled, show session-only behavior without overwriting stored progress.
+- [ ] **Toasts:** Check transient award toast only once per scored match, and toast for confirmed purchase/equip; no toast should obstruct the five-card reveal. Results close when next JOIN starts.
+- [ ] **Small-screen layout:** 320px-wide portrait and short landscape phones: wallet, 43px phase bar, BAG/SETTINGS/? and tutorial are tappable, with menu hidden during race and scrolling settings/inventory. Verify native Roblox controls stay usable. Solo and two-player core gameplay still works.
+- [ ] **Core regression:** 90×24 whole-row auto-join at countdown zero; leaving before zero unqueues; fences block escapes; walking/jumping unimpeded; forbidden glass shatters and respawns; 1–5 votes remain private until REVEAL; all 20 panels and three-crack elimination remain intact.
+- [ ] **No runtime errors:** Inspect Roblox Studio Output/console, especially missing `MythbloxGame01` remotes, LocalScript exceptions, DataStore errors and Client/server version mismatch. Report real device screenshots before marking QA passed.
 
 ## v0.29 — auto-join front row, continuous fences and visible wallet
 
