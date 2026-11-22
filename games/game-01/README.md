@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-22):** The owner reports v0.15 joining, movement and cosmetics work, and v0.13 coins persist. After feedback that the v0.16 avatar reveal was too brief and its large bottom MOVE warning unnecessary, **v0.17 now extends REVEAL to 5 seconds, removes the bottom movement banner and adds a winner dance**. Source and installer are committed; **v0.17 has not been tested in Studio**. Saved wins, skin persistence after restarting and private-server/mobile QA remain open. This is still an **unreleased prototype** requiring major feature and visual development before launch.  
+**Status (2026-11-22):** Owner reports that joining, movement and cosmetics work in earlier Studio builds and coins persist across Play restarts. **v0.18 is implemented in source and installer, pending Studio verification:** walking and jumping remain enabled throughout matches, glass no longer reveals safe/blocked steps through full-tile colors, the environment has a major built-in-material/lighting polish pass, and victory-dance IDs are configurable. The five-second avatar reveal remains. Further feature development, true custom art, multiplayer/mobile QA and private-server persistence checks are still needed before public release.  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -9,13 +9,13 @@
 Every player chooses a number from a fixed row of **1–5**. The most popular choice (if selected by at least two players) is blocked. If two choices are tied for the highest count of two or more, **both are blocked**. If everyone chooses different numbers, everyone is safe.
 
 - **Safe number:** manually walk **1–N glass tiles** during the six-second movement window, where N is the selected number.
-- **Blocked number:** gain one crack and **stay on your current panel**. Your next panel is red; attempting to move onto it shatters it and makes you fall.
+- **Blocked number:** gain one crack and **do not advance to another panel**. The glass stays its neutral cosmetic color; attempting a forbidden forward step still shatters glass and eliminates you.
 - **No vote:** receive a crack and stay.
 - **Failed to move:** if your choice was safe but you remain on your old tile when the movement window closes, that tile shatters and you fall.
 - **Three cracks:** your glass shatters and you are eliminated.
 - **Winner:** first player to reach tile 20, or last surviving player. If all are eliminated, draw. On a turn limit, the surviving player farthest ahead wins (shared win if tied).
 
-**Movement is never automatic.** The next eligible panels glow green. Glass behind an advancing player disappears after the movement window.
+**Movement is never automatic.** You may **walk and jump at all times**, including VOTE and REVEAL. Your next tiles **do not glow green/red**: infer your allowed distance from the number reveal and the compact GO/NO ADVANCE HUD. Advancing across bridge panels is still legal **only during MOVE** and must respect your safe chosen number. Glass behind advancing players disappears after MOVE.
 
 ## Initial settings
 
@@ -25,7 +25,7 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 | Match player cap | 8 |
 | Minimum live players | 2 (single-player practice allowed only in Studio) |
 | Vote window | 5 seconds |
-| Reveal | 2 seconds |
+| Reveal | 5 seconds |
 | Walk/stay window | 6 seconds |
 | Number buttons | Always 1–5 |
 | Length of each personal bridge | 20 advanceable panels |
@@ -34,6 +34,19 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 | Reward | Win +25 coins, participation +5 coins |
 
 **Progress storage:** Wins and coins were session-only through v0.12. **v0.13 introduces DataStore persistence**, pending Roblox Studio and published-server verification. v0.14 adds a coin-only cosmetics stall (no Robux or paid items). Do not publicly launch or monetize before testing data recovery and purchases.
+
+## v0.18 — free movement, neutral glass and premium coastal materials (Studio test pending)
+
+**Latest owner-requested change**. All source code and the one-paste installer are committed, **not tested in Roblox Studio yet**.
+
+- **Walking and jumping are never disabled as part of the match phases.** The old `WalkSpeed = 0`, `JumpPower = 0` and Jumping-disabled server code has been removed. Normal controls remain available in VOTE, REVEAL, MOVE and RESULTS. The server **still applies the existing illegal-advance rule**: you may roam your current tile, but proceeding to the next tile before MOVE or beyond your safe allowance still causes elimination. This keeps the voting race meaningful without freezing players.
+- **No full-tile hint painting.** Glass always keeps its neutral/purchased color; previously entire next legal panels were painted green and forbidden panels red, which revealed exact routes. That code has been removed. Cracks appear as surface cracks and particles, and broken panels fade/shatter instead of flashing fully red. Five **result cards** still use green/red after the secret vote is revealed.
+- **Premium art pass with built-in Roblox textured materials:** warm marble and paved paths, granite island base, polished-metal spectator fencing and bridge rails, subtle brass architectural trims, redesigned marble-and-metal stalls with warm canopy lights, organic foliage, gold-accented finish arch, gently reflective ocean glints and textured **CrackedLava/Basalt** around the hazard. Sunlight, atmospheric haze, soft bloom and color grading now make the environment look more cohesive. The UI uses a subtle pearl gradient.
+- Built-in materials use Roblox engine textures. **Custom PBR texture maps, hand-made meshes, bespoke art and further approved features are still future work**, not claimed as finished. This pass adds decor without changing the underlying island/bridge play geometry or adding collision obstacles; check performance with 8 players.
+- **The winner dance is configurable.** In `src/ServerScriptService/MythbloxGame.server.luau`, the `SETTINGS.VictoryDanceR15` and `SETTINGS.VictoryDanceR6` animation IDs replace the default dance. A custom animation must be compatible with its rig and accessible to the experience (right creator ownership/permissions). Send the desired IDs to update source and installer together. There is no in-game dance selection shop yet.
+- **Timings:** 10s JOIN, 5s VOTE, **5s REVEAL**, 6s MOVE, 5s RESULTS. The 1–5 vote rules, three cracks, awards, DataStore names and cosmetics prices remain unchanged.
+
+**Install:** Stop Studio Play, copy [the latest installer](INSTALL_STUDIO_COMMAND_BAR.luau) via GitHub **Raw**, run in Edit-mode Command Bar, and confirm `v0.18 VERIFIED` and HUD `v0.18`. Follow [TEST_PLAN.md](TEST_PLAN.md) before considering the new movement and graphics verified.
 
 ## v0.17 — longer reveal, cleaner screen and winner dance (Studio test pending)
 
@@ -324,6 +337,6 @@ See the [pre-launch roadmap](PRELAUNCH_ROADMAP.md). Cosmetic stall, sound effect
 
 ## Next step
 
-**Test v0.17**: watch the five-avatar-group result cards for the full five seconds, verify the bottom GO/STAY warning is gone, and check whether winners visibly dance during the results phase. Continue v0.15 multiplayer, persistence, private-server and mobile reliability testing. Major feature development and a visual overhaul are still required before public launch. The 1–5 voting, cracks, movement and reward rules remain unchanged.
+**Test v0.18**: confirm free walking/jumping during VOTE and REVEAL, no red/green spoilers on the bridge, the premium lighting/material changes, and the winner dance. Validate that illegal forward movement still fails, and test graphics/performance in 2–8-player and mobile scenarios. Then continue the substantial new-feature and custom-art roadmap before public launch.
 
 See [the Mythblox game-design memo](../../docs/FIRST_GAME_GLASS_BRIDGE_CONCEPT.md) for earlier alternatives, including the spinner idea that was explicitly deferred.
