@@ -1188,7 +1188,11 @@ end
 -- coins. UpdateAsync checks ownership and balance atomically; no client prices.
 -- It also commits any pending match rewards in the same write.
 local function transactSkin(player, skinId)
-	if player.Parent ~= Players or not nearCosmetics(player) then return end
+	if player.Parent ~= Players then return end
+	if not nearCosmetics(player) then
+		sendShop(player, "Update", "Return to the cosmetics stall.")
+		return
+	end
 	local item = SKIN_BY_ID[skinId]
 	if not item then return end
 	local profile = profiles[player]
@@ -1200,7 +1204,10 @@ local function transactSkin(player, skinId)
 		sendShop(player, "Update", "Saving in progress. Try again.")
 		return
 	end
-	if os.clock() - (profile.lastShopAction or 0) < 0.65 then return end
+	if os.clock() - (profile.lastShopAction or 0) < 0.65 then
+		sendShop(player, "Update", "Try again in a moment.")
+		return
+	end
 	profile.lastShopAction = os.clock()
 	local alreadyOwned = skinId == "classic" or profile.ownedSkins[skinId] == true
 	if not alreadyOwned and profile.baseCoins + profile.pendingCoins < item.price then
@@ -1282,7 +1289,7 @@ local function transactSkin(player, skinId)
 			sendShop(player, "Update", "Not enough coins.")
 		else
 			player:SetAttribute("MythbloxDataStatus", "SAVE_ERROR")
-			sendShop(player, "Update", "Purchase failed. No coins were deducted.")
+			sendShop(player, "Update", "Purchase not confirmed. Check saved coins before retrying.")
 		end
 	end
 	warn("[Mythblox SHOP] Transaction failed for " .. player.Name .. ": " .. tostring(lastError))
@@ -1408,7 +1415,10 @@ command.OnServerEvent:Connect(function(player, action, payload)
 		joinQueue(player)
 	elseif action == "Shop" then
 		if typeof(payload) ~= "string" or #payload > 24 or not SKIN_BY_ID[payload] then return end
-		if not nearCosmetics(player) then return end
+		if not nearCosmetics(player) then
+			sendShop(player, "Update", "Return to the cosmetics stall.")
+			return
+		end
 		task.spawn(transactSkin, player, payload)
 	elseif action == "Vote" then
 		if phase ~= "VOTE" then return end
