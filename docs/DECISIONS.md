@@ -55,6 +55,8 @@ Use this file to separate **confirmed project rules** from **ideas not yet appro
 
 - **2026-11-22:** Development resumed after the v0.12 checkpoint. **v0.13 persistent Wins/Coins implemented** in the authoritative Game 01 server, using Roblox DataStoreService, guarded GetAsync loads, idempotent UpdateAsync increment saves, 150-second jittered autosaves, exit/shutdown final saves, and failure modes that refuse to overwrite real data with zeros. Studio uses a **separate test data store**. No spending, cosmetics purchase, map or game-rule changes. New [persistence guide](../games/game-01/PERSISTENCE_TEST_GUIDE.md) documents private publication and Studio API Services setup. **Persistence not yet tested in Roblox Studio; do not claim the saves are verified.**
 
+- **2026-11-22:** Owner confirms **v0.13 Coins persist** after restarting Roblox Studio Play, providing a successful in-Studio persistence checkpoint. **Wins persistence and private published-server storage are not yet separately verified.** Studio Output included a `GameSettingsPlugin.SecurityController` 'Failed to parse secrets: Can't parse JSON' warning; the successful coins test suggests it is unrelated to Game 01 DataStore writes. No code change needed based on this warning alone.
+
 ## Open decisions
 
 | Question | Options | Status |
