@@ -8,7 +8,8 @@
 
 - **v0.14** — Owner confirms the cosmetics stall works in Studio. v0.13 saved coins across restarting Studio Play. **Individual win persistence, purchased cosmetic retention, private published-server DataStore persistence, 2–8-client stress testing and mobile usability are not all confirmed.**
 - **v0.15** — Reliability source pass and detailed QA checklist. Owner reports joining, movement and cosmetics working; broader multiplayer/mobile and saving tests still pending.
-- **v0.16** — Owner-approved reveal-only five-number result cards with selecting players' headshots, per-number pick counts, green SAFE / red BLOCKED. Private VOTE still hides other selections. **GitHub code and installer prepared; Studio test pending.**
+- **v0.16** — Owner-approved five-number avatar reveal; owner noted the original two-second display was too brief and bottom MOVE instructions redundant.
+- **v0.17** — Longer five-second reveal, removal of the large bottom MOVE warning, and a winner dance during RESULTS. **GitHub sources and installer prepared; Studio test pending.**
 - No Robux purchases, paid power-ups or public launch are authorized.
 
 ## Ordered future stages — versions and features are not yet approved
