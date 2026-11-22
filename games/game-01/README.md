@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-22):** **v0.25** applies the owner-approved extra clouds and matte platform pass: noticeably fuller cloud coverage, deeper weathered-oat stone on the main plaza and spectator decks, subdued planters/stone supports, and a hidden bright spawn marker. The v0.24 neutral daylight, 49px mobile HUD, voting, free movement, glass shatter, shop, and v0.23 reward saving remain unchanged. **Roblox Studio and actual-phone visual QA still pending. Not launch-ready.**  
+**Status (2026-11-22):** **v0.26** corrects layout clashes visible in the owner's lobby screenshot: an oversized blank leaderboard back overlapped a lamp and blocked the view, nearby display lamps intersected reward/scoreboard structures, and some paving parts overlapped at the same height. The leaderboard is now smaller, double-sided and moved fully off the plaza; lamps and adjacent paths have been realigned. **v0.25 clouds/matte materials, v0.24 neutral lighting, core gameplay and saving remain intact. Roblox Studio and phone verification pending; not launch-ready.**  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -34,6 +34,16 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 | Reward | Win +25 coins, participation +5 coins |
 
 **Progress storage:** Wins and coins were session-only through v0.12. **v0.13 introduces DataStore persistence**, pending Roblox Studio and published-server verification. v0.14 adds a coin-only cosmetics stall (no Robux or paid items). Do not publicly launch or monetize before testing data recovery and purchases.
+
+## v0.26 — remove lobby object overlaps and obstructive blank boards (Studio/phone QA pending)
+
+Owner screenshot of v0.25 shows an oversized dark-brown panel obscuring the lobby, with a wood lamppost nearly intersecting it, and mismatched/overlapping pavement junctions nearby. The source confirms the leaderboard at **(33, -82)** was almost coincident with the lamp at **(34, -83)**, with a large unmarked rear panel. A similar lamp/podium conflict existed on the other side.
+
+- **Leaderboard placement and visibility:** Resize the world scoreboard from 13 × 8 studs to **10.8 × 6.4**, move it slightly outside the main plaza to x=35, and show the same live session leaderboard on **both** physical faces instead of a huge blank reverse. It remains server-owned and updates both faces together.
+- **Lamps moved out of display footprints:** Relocate the first pair of approach lamps from x=±34, z=-83 to **x=±47, z=-79**, safely away from the scoreboard and future rewards podium. Keep their materials, light brightness and solid collision.
+- **Paving intersection cleanup:** Left/right shop connector paths now touch the central path at its outer edge instead of overlapping; side-lounge return paths meet the cross path at z=-85, eliminating coplanar Pavement overdraw at the T-junction. No new holes, terrain, or gameplay obstacles are intended.
+- **Unchanged:** v0.25 clouds and weathered stone, v0.24 neutral sky, two-person benches, shops, the small mobile HUD, freely walking/jumping, secret votes, 20-tile race and v0.23 save behavior.
+- **Install/QA:** Stop Play, run the latest [Studio installer](INSTALL_STUDIO_COMMAND_BAR.luau) in Edit mode and confirm `v0.26 VERIFIED` with matching HUD. Walk around the scoreboard/rewards area on both sides, check all path intersections at low camera height, and verify no part blocks paths or clips through other props. **Live Studio/device checks are still pending.**
 
 ## v0.25 — fuller sky and anti-glare stone platforms (Studio/phone QA pending)
 
@@ -421,6 +431,6 @@ See the [pre-launch roadmap](PRELAUNCH_ROADMAP.md). Cosmetic stall, sound effect
 
 ## Next step
 
-**Test v0.25 on a phone first:** verify the oat floor is comfortably matte, the 49px top strip no longer obscures play, all five reveal cards/avatars fit, and 1–5 voting remains tappable. Publish the updated private test experience to play with a friend; test bench seating, cosmetics and most importantly illegal-step glass shatter/elimination. Report a phone screenshot or any Output errors. Major additional features and independent multiplayer/data/security QA remain required before public launch.
+**Test v0.26 on a phone first:** verify the oat floor is comfortably matte, the 49px top strip no longer obscures play, all five reveal cards/avatars fit, and 1–5 voting remains tappable. Publish the updated private test experience to play with a friend; test bench seating, cosmetics and most importantly illegal-step glass shatter/elimination. Report a phone screenshot or any Output errors. Major additional features and independent multiplayer/data/security QA remain required before public launch.
 
 See [the Mythblox game-design memo](../../docs/FIRST_GAME_GLASS_BRIDGE_CONCEPT.md) for earlier alternatives, including the spinner idea that was explicitly deferred.
