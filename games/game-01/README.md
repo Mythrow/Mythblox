@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-22):** Owner confirmed **v0.13 coin persistence in Roblox Studio**. **v0.14 adds a small coin-purchased glass-color cosmetics shop** to the previously working game; this version is committed but **has not been tested in Studio**. Saved-win and private published-server persistence still require separate verification. The game remains unnamed and not publicly released.  
+**Status (2026-11-22):** Owner confirms **v0.14 cosmetics shop works in Roblox Studio**, following the previously verified v0.13 coin-persistence test. Individual purchase/restart checks were not itemized; cosmetic ownership persistence, saved wins, private published-server behavior, and release/mobile QA still require explicit verification. The game remains unnamed and not publicly released.  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -35,7 +35,7 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 
 **Progress storage:** Wins and coins were session-only through v0.12. **v0.13 introduces DataStore persistence**, pending Roblox Studio and published-server verification. v0.14 adds a coin-only cosmetics stall (no Robux or paid items). Do not publicly launch or monetize before testing data recovery and purchases.
 
-## v0.14 — glass-color cosmetics stall (Studio test pending)
+## v0.14 — glass-color cosmetics stall (owner-confirmed working in Studio)
 
 The already-built **COSMETICS** stall on the right side of the hub is now a small interactive shop. No new always-on shop HUD button or unrelated gameplay mechanic was added.
 
@@ -45,7 +45,7 @@ The already-built **COSMETICS** stall on the right side of the hub is now a smal
 - Spending, ownership, equipped choice, and earned rewards share the **same existing v0.13 DataStore profile**—no wipe or new database. The server alone chooses prices and checks balance, player proximity, ownership, and storage readiness. A single atomic `UpdateAsync` deducts coins and records an item. Retry tokens and per-player locks guard duplicate requests.
 - When DataStore loads fail, purchasing is unavailable instead of silently granting items or overwriting saved progress. If a shop write cannot be confirmed, players must rejoin to refresh before another purchase is permitted.
 - **Test in Studio:** Install the new [Command Bar installer](INSTALL_STUDIO_COMMAND_BAR.luau) in Edit mode, start Play, look for **v0.14**, buy a color, stop Play and start again. Confirm the color stays owned/equipped and coins are deducted **exactly once**. Check the guide in [TEST_PLAN.md](TEST_PLAN.md).
-- **Still unverified:** Studio shop rendering/transactions, saved wins, mobile shop behavior, and separate private published-server data. No Robux products or game passes have been added.
+- **Owner test:** v0.14 was reported working in Roblox Studio. Individual checks of coin deductions, owned skins after restart, mobile layout, saved Wins, and private published-server persistence were not separately reported. No Robux products or game passes have been added.
 
 ## v0.13 — persistent wins and coins (coins tested in Studio)
 
