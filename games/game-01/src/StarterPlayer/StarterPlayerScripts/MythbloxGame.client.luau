@@ -695,6 +695,22 @@ local settingOrder={
 	{"highContrast","EXTRA SAFE/BLOCKED CUES"},
 }
 local toggles={}
+-- Snapshot the actual particle sizes locally so one-shot :Emit() bursts
+-- can also be hidden and later restored in low-effects mode.
+local effectOriginal = setmetatable({}, {__mode="k"})
+local function setLocalEffect(obj)
+	if not (obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam")) then return end
+	local original=effectOriginal[obj]
+	if not original then
+		original={enabled=obj.Enabled}
+		if obj:IsA("ParticleEmitter") then original.size=obj.Size end
+		effectOriginal[obj]=original
+	end
+	obj.Enabled=not prefs.lowEffects and original.enabled or false
+	if obj:IsA("ParticleEmitter") and original.size then
+		obj.Size=prefs.lowEffects and NumberSequence.new(0) or original.size
+	end
+end
 local function applyPreferences()
 	for _,sound in pairs(sounds) do
 		local base=sound:GetAttribute("BaseMythbloxVolume")
@@ -711,14 +727,7 @@ local function applyPreferences()
 	local world=workspace:FindFirstChild("MythbloxGame01")
 	if world then
 		for _,obj in ipairs(world:GetDescendants()) do
-			if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") then
-				local base=obj:GetAttribute("MythbloxOriginalEffectEnabled")
-				if base==nil then
-					base=obj.Enabled
-					obj:SetAttribute("MythbloxOriginalEffectEnabled",base)
-				end
-				obj.Enabled=not prefs.lowEffects and base or false
-			end
+			setLocalEffect(obj)
 		end
 	end
 end
@@ -729,10 +738,7 @@ workspace.DescendantAdded:Connect(function(obj)
 		(obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam")) then
 		task.defer(function()
 			if not obj.Parent or not prefs.lowEffects then return end
-			if obj:GetAttribute("MythbloxOriginalEffectEnabled")==nil then
-				obj:SetAttribute("MythbloxOriginalEffectEnabled",obj.Enabled)
-			end
-			obj.Enabled=false
+			setLocalEffect(obj)
 		end)
 	end
 end)
@@ -1031,8 +1037,12 @@ layoutForViewport = function()
 	permissionLine.TextSize=prefs.largeText and 12 or 11
 	recap.Size=UDim2.fromOffset(math.min(width-20,compact and 306 or 350),135)
 	recap.Position=UDim2.new(0.5,0,0,compact and 137 or 109)
-	toast.Size=UDim2.fromOffset(math.min(width-26,320),31)
-	toast.Position=UDim2.new(0.5,0,0,compact and 131 or 153)
+	-- Reward toast occupies free space to the LEFT of the wallet; never
+	-- overlaps the centered RESULTS recap or the top-right round HUD.
+	toast.AnchorPoint=Vector2.new(0,0)
+	toast.Size=UDim2.fromOffset(compact and math.min(172,math.max(114,width-185))
+		or 265,31)
+	toast.Position=UDim2.new(0,8,0,compact and 49 or 51)
 	spectator.Size=UDim2.fromOffset(math.min(width-24,327),43)
 	spectator.Position=UDim2.new(0.5,0,1,compact and -113 or -92)
 	local sw=spectator.Size.X.Offset
