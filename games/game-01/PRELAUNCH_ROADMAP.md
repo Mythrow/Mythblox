@@ -7,7 +7,8 @@
 ## Current checkpoint
 
 - **v0.14** — Owner confirms the cosmetics stall works in Studio. v0.13 saved coins across restarting Studio Play. **Individual win persistence, purchased cosmetic retention, private published-server DataStore persistence, 2–8-client stress testing and mobile usability are not all confirmed.**
-- **v0.15** — Reliability source pass and detailed QA checklist. Throttle abusive repeated client remote requests and repeated cosmetics prompt opens; preserve current match timing and game design. **Code prepared in GitHub; Studio test remains pending.**
+- **v0.15** — Reliability source pass and detailed QA checklist. Owner reports joining, movement and cosmetics working; broader multiplayer/mobile and saving tests still pending.
+- **v0.16** — Owner-approved reveal-only five-number result cards with selecting players' headshots, per-number pick counts, green SAFE / red BLOCKED. Private VOTE still hides other selections. **GitHub code and installer prepared; Studio test pending.**
 - No Robux purchases, paid power-ups or public launch are authorized.
 
 ## Ordered future stages — versions and features are not yet approved
