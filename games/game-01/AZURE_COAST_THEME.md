@@ -1,6 +1,6 @@
 # Soft Earth Coast — Game 01 art direction (palette v0.22; daylight v0.24; matte sky/world v0.25)
 
-**Status:** The owner approved the v0.22 Soft Earth Coast muted palette, then **v0.24 neutral daylight** to remove a yellow global tint, then **v0.25 fuller cloud cover and matte, less-white large platforms/planters** after the user identified sparse clouds and glaring surfaces. **Use warm earth colors on individual materials, never a yellow world filter or huge bright-white floor planes.** All three revisions are committed; Roblox Studio, actual phone, and multiplayer QA remain pending. This filename is historical and preserved to avoid breaking links.
+**Status:** **v0.27** preserves Soft Earth Coast colors, denser clouds, matte platform materials and v0.24 neutral daylight. The latest geometry pass corrects visibly floating join/rewards boards, bench legs, planters, lamp bases, pergola pillars/hanging lanterns and portions of the fountain/trophy assembly. The small mobile status moves to a 43px strip aligned top-right within Roblox's GUI safe area. Studio/phone visual validation is still pending.
 
 ## Creative direction
 
@@ -61,6 +61,14 @@ The following are set by the authoritative **server** script at runtime; these d
 | Reflections / bloom | EnvironmentSpecularScale 0.20; bloom disabled | Preserve soft matte feel |
 
 **Verification:** Still pending on actual Roblox Studio rendering and mobile devices. Preserve this palette while further refining the look, and never globally yellow-tint the scene to make individual materials appear warm.
+
+## v0.27 grounded detail and clearer mobile view
+
+- Keep join and rewards signboards attached to physical timber supports; avoid hovering plaques in the path's sightlines.
+- Bench legs, ceramic planter bases, lamp pedestals and pergola columns must reach the hub grass or stone without a floating air gap. Pergola lanterns need visible roof suspension stems.
+- Keep water inside the fountain basin and the crystal pedestal visibly seated on it; seat the trophy pedestal on its ground surface.
+- Mobile status uses **43px** (down from 49px), max **270px** width, right-aligned inside the Roblox safe inset to keep the central view open. Do not push content into the native Roblox buttons or hide vote/reveal controls.
+- Validate the revised heights and HUD from normal player camera height on both PC and phone. Supporting signposts are noncolliding so free walking/jumping never become restricted.
 
 ## v0.25 clouds and non-glare stone surfaces
 
