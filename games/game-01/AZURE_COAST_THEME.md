@@ -1,6 +1,6 @@
-# Soft Earth Coast — Game 01 art direction (palette v0.22; daylight v0.24)
+# Soft Earth Coast — Game 01 art direction (palette v0.22; daylight v0.24; matte sky/world v0.25)
 
-**Status:** The owner approved the v0.22 Soft Earth Coast material palette and compact mobile HUD, then approved **v0.24 neutral coastal daylight** after the v0.23 Studio screenshot showed a yellow screen-wide cast. **Keep the warm earth materials, but do not add a cream/yellow filter to the entire world.** v0.24 code is committed; phone/Studio visual retesting and friend QA remain pending. Soft Earth Coast is the art direction, not the unnamed game's final title. This file retains its older filename to preserve links.
+**Status:** The owner approved the v0.22 Soft Earth Coast muted palette, then **v0.24 neutral daylight** to remove a yellow global tint, then **v0.25 fuller cloud cover and matte, less-white large platforms/planters** after the user identified sparse clouds and glaring surfaces. **Use warm earth colors on individual materials, never a yellow world filter or huge bright-white floor planes.** All three revisions are committed; Roblox Studio, actual phone, and multiplayer QA remain pending. This filename is historical and preserved to avoid breaking links.
 
 ## Creative direction
 
@@ -62,6 +62,22 @@ The following are set by the authoritative **server** script at runtime; these d
 
 **Verification:** Still pending on actual Roblox Studio rendering and mobile devices. Preserve this palette while further refining the look, and never globally yellow-tint the scene to make individual materials appear warm.
 
+## v0.25 clouds and non-glare stone surfaces
+
+Large bright horizontal surfaces should be weathered oat or soft neutral stone, **not** near-white ivory. Keep cream for small, intentional signage/detail only. The brighter source palette values remain available for small features, not as an excuse to lighten entire paths or platforms.
+
+| World role | Color | Material | Intended effect |
+|---|---|---|---|
+| Main spawn plaza | Weathered oat `#B8AD9A` | Concrete | Large matte textured plaza rather than light sandstone glare |
+| Join/spectator deck and side walks | Shaded oat stone `#B0A796` | Concrete | Reduce large bright slabs along the glass course |
+| Narrow shop/social paths | Sandy stone `#BFB29E` | Pavement | Legible path navigation with muted color |
+| Planters, masonry, kiosk counter, fountain stone | Neutral weathered stone `#AFAB9D` | Concrete | Eliminate ivory-white blocks and avoid glossy highlights |
+| Sky | Native cloud Cover **0.72**, Density **0.54** | Terrain.Clouds | Fuller soft-neutral cloud field, without stacking fake sky objects |
+
+The main Lobby SpawnLocation is now **completely transparent**, not a visible light rectangle on the center plaza. Its world location/collision/spawning logic is preserved. This material pass does not change the original world layout, bridge tiles, physical seats, shop functionality, player movement, or coin persistence.
+
+**Visual acceptance:** Compare a Studio screenshot from the former spawn camera angle; the sky should contain substantially more natural clouds, large paving surfaces should no longer appear glaring white/neon, and the organic/wood/sage/terracotta palette should still be recognizably Soft Earth Coast. Verify on a phone too; native Clouds rendering can vary with device graphics settings.
+
 ## World zoning (coordinates, in studs)
 
 The island's enlarged grass top is **186 × 124** studs, centered at `(0, 22, -71)`, expanding the historical 130 × 91 island. The active bridge and original lobby-to-bridge flow are intentionally preserved.
@@ -83,7 +99,7 @@ The island's enlarged grass top is **186 × 124** studs, centered at `(0, 22, -7
 
 ## Sky, water and safety
 
-- Native Roblox **Clouds** under `Workspace.Terrain` with soft neutral-white daylight cover. Atmosphere favors a pale blue-gray horizon (not beige); color correction is neutral white; bloom remains disabled and sun rays stay restrained. Earth colors are properties of materials and assets, not a full-screen filter.
+- Native Roblox **Clouds** under `Workspace.Terrain` now use fuller soft neutral-white cloud cover (0.72 Cover / 0.54 Density); only one Clouds instance is used. Atmosphere favors a pale blue-gray horizon (not beige); color correction is neutral white; bloom remains disabled and sun rays stay restrained. Earth colors are properties of materials and assets, not a full-screen filter.
 - Decorative ocean and distant cliff islets are **noncollidable**; there is no playable sea floor.
 - Edit-mode installer and runtime both delete **only** the stock large, low-altitude part explicitly named `Baseplate`, when present. Existing user-authored custom scenery is not blanket-deleted.
 - A tall, invisible safety perimeter covers the back and outer side of the enlarged hub, with openings for both original side promenades. It never sets a player's speed or disables jumping.
@@ -92,7 +108,7 @@ The island's enlarged grass top is **186 × 124** studs, centered at `(0, 22, -7
 
 ## Quality bar and next checks
 
-- [ ] Front and side screenshots: oat/sand/sage/terracotta/rose/wood materials remain coherent, foliage is recognizably green, the sky is natural blue-gray and no yellow wash overlays the whole scene; environment stays rich without glare.
+- [ ] Front and side screenshots: oat/sand/sage/terracotta/rose/wood materials remain coherent, foliage is green, cloud coverage is visibly fuller, the sky is natural blue-gray and neither a global yellow wash nor giant near-white stone slabs/glowing planters dominate the frame.
 - [ ] Spawn has good sightline toward JOIN. Cosmetics E prompt, SHOP placeholder and session leaderboard remain easy to find and operate.
 - [ ] No visible stock baseplate, floating stock spawn, walkable water, under-map routes or unwanted default terrain.
 - [ ] Dynamic clouds visible on supported graphics settings; horizon has distant islands and ocean depth.
