@@ -7,6 +7,7 @@ local TweenService = game:GetService("TweenService")
 local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
 local DataStoreService = game:GetService("DataStoreService")
+local HttpService = game:GetService("HttpService")
 local BUILD_VERSION = "v0.13"
 
 local SETTINGS = {
@@ -943,6 +944,19 @@ local function safeStat(value)
 	return math.clamp(math.floor(value), 0, MAX_STAT)
 end
 
+local function validRecord(value)
+	if value == nil then return true end
+	if type(value) ~= "table" then return false end
+	if value.schema ~= nil and value.schema ~= 1 then return false end
+	for _, field in ipairs({"wins", "coins"}) do
+		local amount = value[field]
+		if amount ~= nil and (type(amount) ~= "number" or amount ~= amount or amount < 0) then
+			return false
+		end
+	end
+	return true
+end
+
 local function updateProfileView(player, profile)
 	local stats = player:FindFirstChild("leaderstats")
 	if not stats or player.Parent ~= Players then return end
@@ -968,7 +982,7 @@ local function loadProfile(player)
 			return dataStore:GetAsync(profile.key)
 		end)
 		if profiles[player] ~= profile then return end
-		if ok and (stored == nil or type(stored) == "table") then
+		if ok and validRecord(stored) then
 			profile.baseWins = stored and safeStat(stored.wins) or 0
 			profile.baseCoins = stored and safeStat(stored.coins) or 0
 			profile.status = "ready"
@@ -1020,19 +1034,36 @@ local function saveProfile(player, reason)
 	local coinsDelta = profile.pendingCoins
 	if winsDelta == 0 and coinsDelta == 0 then return true end
 	profile.saving = true
+	-- If the cloud commits an operation but the response is lost, the same
+	-- operation ID prevents a retry from applying its rewards a second time.
+	local operationId = HttpService:GenerateGUID(false)
 
 	local lastError
 	for attempt = 1, 3 do
 		local ok, result = pcall(function()
 			return dataStore:UpdateAsync(profile.key, function(stored)
 				-- Callback may be rerun by Roblox: no yields, no side effects.
-				if stored ~= nil and type(stored) ~= "table" then return nil end
+				if not validRecord(stored) then return nil end
+				local recent = {}
+				if stored and type(stored.recentSaves) == "table" then
+					for _, token in ipairs(stored.recentSaves) do
+						if type(token) == "string" then
+							if token == operationId then return stored end
+							table.insert(recent, token)
+						end
+					end
+				end
+				-- Bound storage size; 20 recent transaction IDs suffice for
+				-- retry protection without unbounded profile growth.
+				while #recent >= 20 do table.remove(recent, 1) end
+				table.insert(recent, operationId)
 				local oldWins = stored and safeStat(stored.wins) or 0
 				local oldCoins = stored and safeStat(stored.coins) or 0
 				return {
 					schema = 1,
 					wins = safeStat(oldWins + winsDelta),
 					coins = safeStat(oldCoins + coinsDelta),
+					recentSaves = recent,
 				}
 			end)
 		end)
