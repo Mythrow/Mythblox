@@ -1,42 +1,50 @@
-# Azure Coast Resort — Game 01 art direction (v0.21)
+# Soft Earth Coast — Game 01 art direction (v0.22)
 
-**Status:** Azure Coast Resort is an approved **environment theme, not the final public title**. v0.20 was visually tested by the owner, who identified non-solid nature/lights, benches that couldn't be sat on, and incomplete unstaffed kiosks. **v0.21 adds real props, functional two-player benches and staffed storefronts; owner/friend Studio QA pending.**
+**Status:** The owner superseded the v0.20 vivid Azure Coast Resort palette after seeing overly bright floors and a mobile top bar that covered too much of the screen. **v0.22 Soft Earth Coast** retains the coastal social-lobby concept and v0.21 physical props but adopts a cute muted earthy style with matte lighting and a much smaller mobile HUD. **Soft Earth Coast is an art direction, not the unnamed game's final title.** Real phone and multiplayer QA pending. This file retains its older filename to keep existing GitHub links working.
 
 ## Creative direction
 
-A sunlit, elevated **coastal resort island** above an ocean and a dangerous glass course. Refined stylized Roblox materials, softened architecture, resort furniture, shade, natural greenery and warm metal details. Bright, polished and readable rather than dark neon, rainbow toy colors or photorealistic mismatched textures.
+A cozy sunlit **coastal garden resort** above a calm ocean and a dangerous glass course. Friendly, cute earthy Roblox materials: warm oat stone, cream, sandy paths, soft sage foliage, terracotta, dusty rose, muted wood and soft brown. Matte, textured and pleasantly bright—not glossy white, harsh teal, neon or overly saturated. Keep existing social-lobby geometry and believable seating, trees, shops and staff.
 
-**Theme rule:** Reuse these colors across **world, signage, lobby props, shops, fences, finish gate and HUD**; do not introduce arbitrary purple, electric blue or saturated pink into the architecture. The player's **purchased glass skins** remain personal colors, and voting **green SAFE / red BLOCKED** remain functional indicators in result cards, not bridge-tile spoilers. Lava stays orange as an obvious hazard.
+**Theme rule:** Reuse muted earth tones across **world, signage, paths, shop roofs, seating, fences, finish gate and HUD**. No glaring white floors, vivid blue-teal dominance, shiny metallic gold, neon yellow/green or electric purple architecture. **Exceptions:** player-purchased glass colors, green SAFE/red BLOCKED number-result cards (only during REVEAL), orange lava and finish checkerboard are functional and stay distinguishable.
 
-## Locked visual palette
+## Locked v0.22 soft earthy palette
 
 | Role | Color | RGB / Hex | Primary application |
 |---|---|---|---|
-| Main light | Ivory | 243, 235, 216 · `#F3EBD8` | Plaza, UI backgrounds, sign type |
-| Architecture | Limestone | 221, 209, 182 · `#DDD1B6` | Fountain, borders, planters, pavilion columns |
-| Soft masonry | Sandstone | 193, 177, 146 · `#C1B192` | Island soil, path transitions |
-| Primary accent | Ocean teal | 33, 116, 125 · `#21747D` | Shop roofs, select controls, ocean accents |
-| Dark neutral | Deep teal | 20, 65, 79 · `#14414F` | Metal fences, posts, signboards, text |
-| Metal detail | Champagne brass | 198, 160, 92 · `#C6A05C` | Inlays, architectural trim, lanterns, winner details |
-| Nature | Evergreen | 66, 130, 98 · `#428262` | Trees, planters and island vegetation |
-| Glass/sky | Seafoam | 199, 235, 232 · `#C7EBE8` | Water highlights, lantern glass, fountain |
-| Secondary accent | Soft coral | 207, 129, 109 · `#CF816D` | Cosmetics stall roof and limited decorative highlights |
-| Foundation | Coastal stone | 123, 134, 139 · `#7B868B` | Rock faces, distant cliffs, foundation |
+| Warm cream | Cream | 239, 230, 214 · `#EFE6D6` | Cards, soft signage, restrained accents |
+| Main floor | Oat beige | 217, 200, 174 · `#D9C8AE` | **Matte textured spawn plaza**, shop floors, walls |
+| Walkways | Soft sand | 201, 179, 148 · `#C9B394` | **Pavement/Sandstone paths** and masonry |
+| Main soft accent | Sage | 168, 179, 157 · `#A8B39D` | SHOP roof, gentle foliage details |
+| Warm accent | Terracotta | 185, 137, 115 · `#B98973` | Selection highlights and warm touches |
+| Cute accent | Dusty rose | 199, 159, 154 · `#C79F9A` | Cosmetics stall roof, small trim |
+| Furniture and trim | Light wood | 181, 142, 108 · `#B58E6C` | Benches, wooden frames and matte trim |
+| Legible dark | Soft brown | 110, 90, 75 · `#6E5A4B` | Titles, shop signboards, dark posts |
+| Vegetation | Gentle evergreen | 128, 151, 123 | Trees, planters and landscaping |
+| Ocean | Muted coastal gray-green | 123, 157, 153 | Calm non-walkable sea |
+| Foundation | Soft gray stone | 153, 149, 137 | Island base and distant cliffs |
 
-**Color exceptions:** The four existing purchasable glass tints, SAFE/BLOCKED green/red results, hazard orange/lava and finish checkerboard are functional features and are not recolored simply to match the lobby.
+**Functional exceptions:** four existing glass shop colors, SAFE/BLOCKED green/red reveal cards, orange hazard and finish checkers; none is a signal to paint the next bridge tile green/red.
 
 ## Material and texture system
 
 Use built-in Roblox material textures before adding imported art:
 
-- **Limestone / Marble / Pavement:** polished walkable plaza, fountain, shop floors, paths, gallery and spectator deck.
-- **Metal:** matte deep-teal structural posts, teal storefront roofs and satin brass details.
+- **Sandstone / Limestone / Pavement:** gently textured **oat-beige plaza**, sandy paths, fountain, shop floors and social deck—never glossy white marble.
+- **SmoothPlastic / Metal:** low-reflectance sage/dusty-rose shop roofs, soft brown posts and tan architectural accents instead of vivid teal/gold.
 - **Glass:** neutral purchasable bridge glass, fountain pool, lightweight accent lanterns and guard panels. Do **not** paint safe/unsafe bridge panels red or green.
 - **Rock / Ground / Grass / LeafyGrass:** island mass, weathered cliffs, tree canopy, hedges and distant vegetation.
 - **Wood / WoodPlanks:** restrained warm teak for benches and structural detail.
 - **Basalt / CrackedLava:** course hazard only, not general lobby materials.
 
 The first version is constructed in Luau from Roblox primitives with textured built-in materials. It does **not** include imported custom PBR SurfaceAppearance maps, bespoke mesh models, premium external texture packs or authored clouds/skybox image assets. Those are possible later art-production stages if approved and licensed.
+
+## Mobile UI and lighting rules
+
+- Phone top status is **49px** in both portrait (width < 760px) and short landscape (height < 540px), excluding the native Roblox safe-area inset. Two rows show phase/countdown and brief personal guidance plus Wins/Coins; long details and progress bar remain desktop-only.
+- Five REVEAL result cards retain avatars, counts and red/green SAFE/BLOCKED indicators for the **full five-second reveal**. The mobile tray is roughly **156–172px tall** rather than a 228px desktop-height card. Private 1–5 vote buttons remain large and tappable.
+- Environmental **BloomEffect is disabled**; warm light brightness is ~1.85, specular response lowered, color correction gently desaturated, glass/metal/roof/ocean reflection minimized, cloud color softened and lamps dimmed. Preserve daylight and readable glass silhouettes without mobile glare.
+- Do not add additional floating HUD blocks or neon highlights to 'improve' quality. Favor actual textured surfaces, coherent materials, delicate furnishings and space for the player to see the world.
 
 ## World zoning (coordinates, in studs)
 
