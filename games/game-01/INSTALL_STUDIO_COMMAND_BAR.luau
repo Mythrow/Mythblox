@@ -5,7 +5,7 @@
 assert(not game:GetService("RunService"):IsRunning(), "Stop the test session before installing.")
 
 local SERVER_SOURCE = [====[
--- Mythblox game-01: glass bridge race v0.16 (server)
+-- Mythblox game-01: glass bridge race v0.17 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -15,13 +15,13 @@ local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
 local DataStoreService = game:GetService("DataStoreService")
 local HttpService = game:GetService("HttpService")
-local BUILD_VERSION = "v0.16"
+local BUILD_VERSION = "v0.17"
 
 local SETTINGS = {
 	MaxPlayers = 8,
 	JoinSeconds = 10,
 	VoteSeconds = 5,
-	RevealSeconds = 2,
+	RevealSeconds = 5,
 	MoveSeconds = 6,
 	ResultsSeconds = 5,
 	BridgeLength = 20,
@@ -769,6 +769,55 @@ local function finishConfetti()
 	emitter.Parent = finishCenter
 	emitter:Emit(60)
 	Debris:AddItem(emitter, 3)
+end
+
+-- v0.17: winners dance during RESULTS only, visible to all players.
+-- The IDs are Roblox's built-in character dance animations, selected by rig.
+-- This is presentation only; no teleport, extra reward or new match outcome.
+local function startWinnerDances(winners)
+	local tracks = {}
+	for _, winner in ipairs(winners) do
+		if winner.Parent == Players then
+			local character = winner.Character
+			local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+			if humanoid and humanoid.Health > 0 then
+				local animator = humanoid:FindFirstChildOfClass("Animator")
+				if not animator then
+					animator = Instance.new("Animator")
+					animator.Parent = humanoid
+				end
+				local animation = Instance.new("Animation")
+				animation.Name = "MythbloxVictoryDance"
+				animation.AnimationId = humanoid.RigType == Enum.HumanoidRigType.R15
+					and "rbxassetid://507771019" or "rbxassetid://182435998"
+				local ok, trackOrError = pcall(function()
+					local track = animator:LoadAnimation(animation)
+					track.Priority = Enum.AnimationPriority.Action
+					track.Looped = true
+					track:Play(0.2)
+					return track
+				end)
+				if ok then
+					table.insert(tracks, {track = trackOrError, animation = animation})
+				else
+					warn("[Mythblox] Victory dance unavailable for "
+						.. winner.Name .. ": " .. tostring(trackOrError))
+					animation:Destroy() -- Confetti and winner text still work.
+				end
+			end
+		end
+	end
+	return tracks
+end
+
+local function stopWinnerDances(tracks)
+	for _, entry in ipairs(tracks) do
+		pcall(function()
+			entry.track:Stop(0.2)
+			entry.track:Destroy()
+			entry.animation:Destroy()
+		end)
+	end
 end
 
 local function showCrackLines(tile, count)
@@ -1749,7 +1798,7 @@ while true do
 		if winners then break end
 
 		phase = "MOVE"
-		message = "GREEN = walk forward up to your number. RED = STAY!"
+		message = "MOVE · GREEN = GO · RED = STAY"
 		for player, info in pairs(active) do
 			if info.alive then
 				-- Players who must STAY may still walk; stepping onto red glass is the joke.
@@ -1785,7 +1834,9 @@ while true do
 		message = "TIE! " .. #winners .. " players share the win (+25 each)."
 	end
 	scoreMatch(winners, participants)
+	local winnerDances = startWinnerDances(winners)
 	countdown(SETTINGS.ResultsSeconds, false)
+	stopWinnerDances(winnerDances)
 	for _, player in ipairs(participants) do
 		if player.Parent == Players then player:LoadCharacter() end
 	end
@@ -1794,13 +1845,13 @@ end
 ]====]
 
 local CLIENT_SOURCE = [====[
--- Mythblox Game 01 · five-column secret vote reveal v0.16
+-- Mythblox Game 01 · longer reveal and winner dance v0.17
 -- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
-local BUILD_VERSION = "v0.16"
+local BUILD_VERSION = "v0.17"
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local network = ReplicatedStorage:WaitForChild("MythbloxGame01")
@@ -2053,17 +2104,14 @@ for n = 1, 5 do
 	choiceButtons[n] = b
 end
 
--- Movement warning: big enough to read but kept near the bottom.
-local movement = panel("MovementPanel")
-movement.AnchorPoint = Vector2.new(0.5, 1)
-local movementText = label(movement, "MovementText", "", 14, 8, -28, 50, 16, COLOR.Text, true)
-movementText.TextXAlignment = Enum.TextXAlignment.Center
+-- The large bottom GO/STAY banner was redundant with the bridge colors and
+-- compact top status. Removing it keeps the arena and touch controls clear.
 
 -- Results appear in the compact top status strip instead of a centered
 -- modal. The arena and other players remain visible when a match ends.
 
--- v0.16: Secret selections are never displayed to others while voting.
--- ONLY during the two-second REVEAL do five non-clickable results cards
+-- v0.17: Secret selections are never displayed to others while voting.
+-- ONLY during the five-second REVEAL do five non-clickable results cards
 -- show every numbered choice, picking players' avatars, totals, and safety.
 -- The existing blue voting buttons remain PRIVATE selection controls.
 local reveal = panel("RevealPanel")
@@ -2329,9 +2377,6 @@ local function layoutForViewport()
 
 	join.Size = UDim2.fromOffset(math.min(width - 28, 345), 58)
 	join.Position = UDim2.new(0.5, 0, 1, -26)
-	movement.Size = UDim2.fromOffset(math.min(width - 18, 545), 66)
-	movement.Position = UDim2.new(0.5, 0, 1, -26)
-	movementText.TextSize = compact and 14 or 17
 
 	local shopW = math.min(width - 20, 350)
 	shop.Size = UDim2.fromOffset(shopW, math.max(218, math.min(358, height - 118)))
@@ -2432,7 +2477,7 @@ local function update(state)
 	if phase == "JOIN" or phase == "VOTE" then
 		lastTurnRendered = -1
 	end
-	phaseText.Text = ("v0.16 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
+	phaseText.Text = ("v0.17 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
 	clockText.Text = tostring(state.time or 0) .. "s"
 	clockText.TextColor3 = phase == "VOTE" and (state.time or 0) <= 2 and COLOR.Red or COLOR.Purple
 	description.Text = state.message or ""
@@ -2440,10 +2485,9 @@ local function update(state)
 	join.Visible = phase == "JOIN" and state.queued ~= true and (state.ready or 0) < (state.capacity or 8)
 	voting.Visible = phase == "VOTE" and mine ~= nil and mine.alive == true
 	if voting.Visible then shop.Visible = false end
-	movement.Visible = phase == "MOVE" and mine ~= nil and mine.alive == true
 
 	if phase == "JOIN" then
-		phaseText.Text = "v0.16 · NEXT MATCH"
+		phaseText.Text = "v0.17 · NEXT MATCH"
 		description.Text = state.queued and "You're queued for the next race."
 			or "Join at the gold pad or use the button below."
 		ownStats.Text = ("%d/%d PLAYERS READY"):format(state.ready or 0, state.capacity or 8)
@@ -2462,7 +2506,7 @@ local function update(state)
 	if phase == "RESULTS" then
 		-- Server sends winner/draw text in state.message; show it only in
 		-- the small status panel and avoid blocking the camera.
-		phaseText.Text = "v0.16 · ROUND OVER"
+		phaseText.Text = "v0.17 · ROUND OVER"
 		ownStats.Text = "NEXT MATCH STARTS SOON"
 	end
 
@@ -2480,31 +2524,18 @@ local function update(state)
 			or "Most picked numbers crack · choose before time ends!"
 	end
 
-	if movement.Visible and mine then
-		local blocked = {}
-		for n = 1, 5 do
-			if state.unsafe and state.unsafe[n] then table.insert(blocked, tostring(n)) end
-		end
-		description.Text = #blocked > 0
-			and ("BLOCKED: " .. table.concat(blocked, ", ") .. "  ·  Watch your next tile")
-			or "NO BLOCKED NUMBERS · Watch your next tile"
+	-- Keep the essential permission in the compact HUD, not a separate banner.
+	if phase == "MOVE" and mine and mine.alive then
 		local allowed = mine.allowed or 0
-		if allowed > 0 then
-			movement.BackgroundColor3 = Color3.fromRGB(220, 252, 231)
-			movementText.TextColor3 = Color3.fromRGB(22, 128, 72)
-			movementText.Text = ("GO! Walk 1–%d GREEN tiles. Leave your old tile!"):format(allowed)
-		else
-			movement.BackgroundColor3 = Color3.fromRGB(255, 229, 230)
-			movementText.TextColor3 = Color3.fromRGB(198, 47, 68)
-			movementText.Text = "STAY! Your next tile is unsafe. Do not walk forward."
-		end
+		description.Text = allowed > 0 and ("GO · WALK 1–%d GREEN TILES"):format(allowed)
+			or "STAY · THIS TURN"
 	end
 
-	-- The five non-interactive number cards appear ONLY in the two-second reveal.
+	-- The five non-interactive number cards appear ONLY in the five-second reveal.
 	-- Never show aggregates, avatars or the previous turn's choices in VOTE/MOVE.
 	reveal.Visible = phase == "REVEAL"
 	if reveal.Visible then
-		-- The reveal is the only foreground feedback during these two seconds.
+		-- The reveal is the only foreground feedback during these five seconds.
 		-- Hide earlier vote chips and any open stall panel rather than overlap it.
 		shop.Visible = false
 		feedback.Visible = false
@@ -2519,13 +2550,12 @@ join.Visible = false
 shop.Visible = false
 feedback.Visible = false
 voting.Visible = false
-movement.Visible = false
 reveal.Visible = false
 stateEvent.OnClientEvent:Connect(update)
 command:FireServer("Sync")
 ]====]
 
--- Diagnostic/cleanup installer: v0.16
+-- Diagnostic/cleanup installer: v0.17
 -- Remove known legacy copies from services used by previous Mythblox builds.
 -- This intentionally does NOT remove scripts belonging to other games.
 -- Permanently remove the UNUSED default Roblox Baseplate spawn while in
@@ -2611,12 +2641,12 @@ for _, child in ipairs(game:GetDescendants()) do
 	end
 end
 
-print("[Mythblox INSTALL] v0.16 VERIFIED: 2 scripts installed and Source checked.")
-print("[Mythblox INSTALL] Server: " .. liveServer:GetFullName() .. " | Build v0.16")
-print("[Mythblox INSTALL] Client: " .. liveClient:GetFullName() .. " | Build v0.16")
+print("[Mythblox INSTALL] v0.17 VERIFIED: 2 scripts installed and Source checked.")
+print("[Mythblox INSTALL] Server: " .. liveServer:GetFullName() .. " | Build v0.17")
+print("[Mythblox INSTALL] Client: " .. liveClient:GetFullName() .. " | Build v0.17")
 print("[Mythblox INSTALL] Cleaned " .. #removed .. " previous Mythblox script/UI objects.")
 print("[Mythblox INSTALL] Disabled " .. #disabledLegacy .. " other old game scripts found by source signature.")
 if #suspicious > 0 then
 	warn("[Mythblox INSTALL] Other Mythblox scripts still exist: " .. table.concat(suspicious, "; "))
 end
-print("[Mythblox INSTALL] NOW START A FRESH PLAY SESSION. Confirm the top HUD visibly says v0.16, and check Output for SERVER RUNNING v0.16 and CLIENT RUNNING v0.16.")
+print("[Mythblox INSTALL] NOW START A FRESH PLAY SESSION. Confirm the top HUD visibly says v0.17, and check Output for SERVER RUNNING v0.17 and CLIENT RUNNING v0.17.")
