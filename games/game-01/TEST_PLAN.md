@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-22):** **v0.23** adds post-round reward save attempts and compact session-only/save-error status messages. Actual Studio/phone/data-store tests are still pending. Continue all prior v0.22 Soft Earth Coast glare/HUD checks, v0.21 lobby interaction checks and v0.19 forbidden-step shatter/elimination regression checks.
+**Status (2026-11-22):** **v0.24** removes the full-scene warm/yellow cast seen in the owner's v0.23 screenshot while retaining Soft Earth Coast material colors, matte floors, mobile HUD and v0.23 saving logic. Code and installer are committed, but **Studio, actual-phone rendering, two-player shop/bench checks, glass-shatter elimination and cloud persistence are still pending verification**.
 
 ## Playtest log
 
@@ -38,6 +38,20 @@
 6. Repeat with 3–4 clients if the two-player flow works.
 
 
+
+## v0.24 — natural coastal daylight / no yellow screen tint (visual QA pending)
+
+**Source-level lighting patch only.** Run the newest installer and validate the look in the actual Roblox renderer; a matching installer is not evidence of final appearance.
+
+- [ ] Stop Play and run the [latest installer](INSTALL_STUDIO_COMMAND_BAR.luau) in Studio Edit mode. Output must show `v0.24 VERIFIED` and server/client `v0.24`; the top HUD's version confirms the client update.
+- [ ] Stand on the main plaza in the same framing as the owner's v0.23 reference screenshot. Compare sky, paths, shop roofs, tree canopies, character and water. All should be **free of a whole-screen beige/yellow cast**; warm oat/wood/terracotta **objects** should still be visibly warm.
+- [ ] Inspect the distant horizon and sky. It should look like soft neutral blue-gray daylight, not beige fog or extreme cyan; clouds should appear gently white.
+- [ ] Compare grass, evergreen trees and planters. They should be clearly green, not yellow-brown, while maintaining the original muted sage/evergreen palette.
+- [ ] Inspect the cream/oat plaza on desktop and a real phone (low/high graphics settings if available). Texture remains visible, with no white-hot highlight or reflective/glossy glare. Bloom remains off.
+- [ ] Check daytime lighting and shadows around both staffed kiosks, benches, pergolas, the fountain, join platform and glass course. Ensure legibility and good contrast; no excessive darkness or over-saturation.
+- [ ] Confirm the unchanged 49px mobile top HUD, five avatar reveal cards, all five vote buttons, Wins/Coins warnings, and working player movement/jumping.
+- [ ] Run two-player regression of illegal-step shattering and respawn, paid-with-coins cosmetic equip, independent bench seating and round-end data saving. Lighting changes must not alter these systems.
+- [ ] Report a matching Studio screenshot plus actual phone screenshot before marking the visual issue resolved. Roblox Studio/device render remains **unverified until owner retest**.
 
 ## v0.23 — completed-round saving and status warnings (live QA required)
 
