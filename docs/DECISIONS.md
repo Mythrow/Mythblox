@@ -64,6 +64,8 @@ Use this file to separate **confirmed project rules** from **ideas not yet appro
 - **2026-11-22:** Owner approves v0.15 reliability/multiplayer/mobile groundwork **but explicitly rejects treating the current visual quality and feature depth as launch-ready**. A substantial approved feature expansion and **major graphical/environment/UI overhaul** must happen before public release; technical QA now is only a stable foundation, not a final launch gate. New [pre-launch roadmap](../games/game-01/PRELAUNCH_ROADMAP.md) records this mandatory sequence. Proposed extra mechanics/content are not yet approved.
 - **2026-11-22:** v0.15 scripts and installer committed with conservative remote command throttles and cosmetic prompt-spam protection. No game mechanics, shop pricing, visuals or reward rules changed. **Roblox Studio testing pending**; saved Wins, ownership across restarts and private published-server persistence remain unverified.
 
+- **2026-11-22:** User confirms v0.15 joining, movement and cosmetics work; requests vote-reveal presentation change, then **clarifies and approves v0.16**: do not show the five **result** number cards or avatars/counts during VOTE. Private 1–5 selection stays as before. During **only the 2-second REVEAL**, display five disabled result cards showing avatars of players who picked each number, each pick total, GREEN safe and RED blocked. Hide cards in MOVE; retain 5-second voting, majority/tie/crack/movement rules. **v0.16 source scripts/installer committed, Studio visual testing pending**. The substantial pre-launch feature and graphical upgrade requirement remains in force.
+
 ## Open decisions
 
 | Question | Options | Status |
