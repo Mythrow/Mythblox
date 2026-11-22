@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-22):** Owner confirms **v0.14 cosmetics shop works in Roblox Studio** and earlier v0.13 coins persisted. **v0.15 reliability hardening is committed, not yet tested in Studio**. The owner explicitly states the current prototype is **not pretty or feature-rich enough to launch**; a substantial feature expansion and major art overhaul must follow reliability testing, before any public release. The game is unnamed and private.  
+**Status (2026-11-22):** The owner reports **v0.15 joining, movement and cosmetics work in Roblox Studio**; v0.13 coin persistence was previously confirmed. **v0.16 reveal-only player-avatar vote results are committed but not yet tested in Studio.** Remaining v0.15 reliability cases, saved wins and cosmetics after restart, private-server data and mobile QA are not fully verified. The game remains an **unreleased prototype**, with significant features and a visual overhaul required before any public launch.  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -34,6 +34,19 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 | Reward | Win +25 coins, participation +5 coins |
 
 **Progress storage:** Wins and coins were session-only through v0.12. **v0.13 introduces DataStore persistence**, pending Roblox Studio and published-server verification. v0.14 adds a coin-only cosmetics stall (no Robux or paid items). Do not publicly launch or monetize before testing data recovery and purchases.
+
+## v0.16 — reveal-only five-number avatar results (Studio test pending)
+
+**Explicit owner-approved UI behavior:** Voting stays secret. During the **5-second VOTE**, active racers use the existing private 1–5 selection buttons; **no public number-result cards, other players' selections, avatars or vote totals** are visible. At the start of the **2-second REVEAL**, the selection buttons disappear and five **non-clickable** result cards appear together, only for that phase.
+
+- Each result card shows circular **Roblox avatar headshots of every player who selected that number at the top**, the selected number in the middle and a **1 PICK / N PICKS / 0 PICKS** tally underneath.
+- **GREEN = safe**, **RED = blocked** (the tied-top-with-at-least-two rule is unchanged). Both a zero-vote number and a uniquely chosen number remain green because neither is blocked. Result cards also have a small SAFE/BLOCKED label for clarity.
+- Supports up to 8 avatar headshots arranged in a compact grid per number; adapts tile sizes to phone/tablet/desktop viewport widths. The local player's avatar has a gold outline. Empty number groups show zero and no avatars.
+- Uses the existing server-authoritative `voteCounts`, `unsafe` and `voteOutcomes` payload that already includes the selecting players' UserIds. Roblox's native `rbxthumb` headshots work without uploading new art or adding another data API.
+- **MOVE (6 seconds):** All five result cards vanish immediately; the existing green/red bridge permissions and GO/STAY warning continue. Spectators also see the reveal **only** during REVEAL.
+- The existing 10-second join, 5-second vote, 2-second reveal, 6-second move, 20 glass tiles, majority/tie rules, three cracks, rewards, purchases and map remain unchanged.
+
+**Install:** Stop Play, run [INSTALL_STUDIO_COMMAND_BAR.luau](INSTALL_STUDIO_COMMAND_BAR.luau) from Raw GitHub content in Studio Edit-mode Command Bar, then confirm `v0.16 VERIFIED` and a `v0.16` HUD. **This UI change has not yet been tested in Roblox Studio.**
 
 ## v0.15 — reliability checkpoint, NOT a launch candidate
 
@@ -299,6 +312,6 @@ See the [pre-launch roadmap](PRELAUNCH_ROADMAP.md). Cosmetic stall, sound effect
 
 ## Next step
 
-**Test v0.15's reliability fixes in Roblox Studio** using [TEST_PLAN.md](TEST_PLAN.md), then agree on the next expanded feature set and visual direction. The current prototype is **not launch-ready** and is not to be released merely because tests pass. The baseline 1–5 glass-bridge voting game rules remain unchanged.
+**Test v0.16's reveal-only five-avatar-group result UI in Roblox Studio** using [TEST_PLAN.md](TEST_PLAN.md). Also finish v0.15 multiplayer, persistence, private-server and mobile reliability checks. Then move on to additional approved game features and a substantial visual redesign before any launch. The 1–5 voting and movement rules remain unchanged.
 
 See [the Mythblox game-design memo](../../docs/FIRST_GAME_GLASS_BRIDGE_CONCEPT.md) for earlier alternatives, including the spinner idea that was explicitly deferred.
