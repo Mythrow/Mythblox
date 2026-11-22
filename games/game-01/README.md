@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-22):** **v0.30** implements all seven owner-approved UI features: first-time skippable tutorial (profile-saved), compact tile/crack/GO-WAIT progress, server-authored placement/winner/Coins results, spectator follow camera, owned glass-color inventory and secure equipping, profile-saved accessibility/audio/effects settings, and short reward/purchase notifications. The v0.29 full-row auto-join and enclosed lobby, v0.23 reward persistence, and unchanged voting/movement rules remain. **Source and installer committed; Roblox Studio, phone, server persistence and multiplayer QA are still pending. Not ready for public launch.**  
+**Status (2026-11-22):** **v0.31** applies a screenshot-driven geometry cleanup: removed the large block under the rewards sign, anchored its posts directly to the ground, relocated lamps intersecting the plaza/join deck, removed perimeter/end glass in favor of open solid fences with tall hidden jump barriers, simplified doubled paving/roof trims and aligned kiosk side walls/windows to remove visible clipping. The central spectator window remains transparent. **v0.30's seven UI modules, v0.29 auto-join and all gameplay/saving remain unchanged. Studio/phone verification pending; not launch-ready.**  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -34,6 +34,18 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 | Reward | Win +25 coins, participation +5 coins |
 
 **Progress storage:** Wins and coins were session-only through v0.12. **v0.13 introduces DataStore persistence**, pending Roblox Studio and published-server verification. v0.14 adds a coin-only cosmetics stall (no Robux or paid items). Do not publicly launch or monetize before testing data recovery and purchases.
+
+## v0.31 — grounded rewards, open end fences, clean seams (Studio/mobile QA pending)
+
+The owner supplied four close-up screenshots of v0.30 showing an oversized block beneath REWARDS, a lamp straddling the JOIN deck/lawn, translucent perimeter glass where an open fence was desired, uneven decorative edge strips and shop-corner texture glitches.
+
+- **Rewards sign:** Remove the 12 × 10-stud `FutureRewardsPodium` metal slab entirely. The existing REWARDS world board now rests on **two sturdy wood posts** running from hub grass **Y=24** to the underside of the board. There is no raised platform blocking the plaza.
+- **Lamp locations:** Shift formerly half-buried posts at **(±12,-34)** and **(±12,-64)** to **(±16,-39)** and **(±38,-63)**, avoiding overlap with the join deck, path borders and adjoining planters. Do not change lamp lights or player collisions.
+- **Open perimeter fence:** Remove the long side/rear and front-end glass panels. The west/east, rear and front side ends now have **two matte timber rail levels and joined stone posts**. Preserve the **central front spectator glass pane** for viewing the glass race.
+- **No jumping out:** Four continuous, **22-stud-tall invisible collidable safety walls** sit just outside the visible rails and meet at their corners. The front safety wall spans the entire 184-stud width, behind both open end fences and the center window. Nothing changes player walking, jumping, voting or the bridge race.
+- **Cleaner paving:** Delete doubled champagne/gold deck outlines and premature path inlays that previously floated, overlapped or disappeared beneath the raised plaza. Keep a single subtle embedded side inlay on the plaza and a simple three-sided join marking (the fence forms the fourth edge).
+- **Cleaner kiosks:** Use matte textured wood for each back wall, extend it to the roof, align lower stone side wall and upper glass at their shared Y=28.2 seam, end both at the back wall and remove intersecting roof-side cornice pieces. The kiosk counter, real shopkeeper, prompt, products and shop functionality remain unchanged.
+- **Test:** Reinstall the [latest one-paste Studio installer](INSTALL_STUDIO_COMMAND_BAR.luau) in Edit mode with Play stopped; verify `v0.31 VERIFIED` and matching server/client `v0.31`, then publish the private place. Check the exact four screenshot camera angles and walk/jump against every fence corner. **Code checks have not yet verified Roblox physics or real-device rendering.**
 
 ## v0.30 — seven approved mobile-first UI features (engine/device QA pending)
 
@@ -477,6 +489,6 @@ See the [pre-launch roadmap](PRELAUNCH_ROADMAP.md). Cosmetic stall, sound effect
 
 ## Next step
 
-**Test v0.30 on a phone first:** verify the oat floor is comfortably matte, the 49px top strip no longer obscures play, all five reveal cards/avatars fit, and 1–5 voting remains tappable. Publish the updated private test experience to play with a friend; test bench seating, cosmetics and most importantly illegal-step glass shatter/elimination. Report a phone screenshot or any Output errors. Major additional features and independent multiplayer/data/security QA remain required before public launch.
+**Test v0.31 on a phone first:** verify the oat floor is comfortably matte, the 49px top strip no longer obscures play, all five reveal cards/avatars fit, and 1–5 voting remains tappable. Publish the updated private test experience to play with a friend; test bench seating, cosmetics and most importantly illegal-step glass shatter/elimination. Report a phone screenshot or any Output errors. Major additional features and independent multiplayer/data/security QA remain required before public launch.
 
 See [the Mythblox game-design memo](../../docs/FIRST_GAME_GLASS_BRIDGE_CONCEPT.md) for earlier alternatives, including the spinner idea that was explicitly deferred.
