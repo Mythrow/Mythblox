@@ -1,4 +1,4 @@
--- Mythblox game-01: Soft Earth Coast v0.22 (server)
+-- Mythblox game-01: Soft Earth Coast v0.23 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -8,7 +8,7 @@ local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
 local DataStoreService = game:GetService("DataStoreService")
 local HttpService = game:GetService("HttpService")
-local BUILD_VERSION = "v0.22"
+local BUILD_VERSION = "v0.23"
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -2446,6 +2446,15 @@ local function scoreMatch(winners, participants)
 	for _, player in ipairs(participants) do
 		if player.Parent == Players then
 			awardProgress(player, awarded[player] and 1 or 0, awarded[player] and 25 or 5)
+		end
+	end
+	-- v0.23: Save match rewards immediately after a round finishes, while
+	-- retaining autosave, exit and shutdown fallback attempts.
+	-- saveProfile uses stable reward-batch IDs and per-player write locks
+	-- so overlapping attempts do not double-award a completed round.
+	for _, player in ipairs(participants) do
+		if player.Parent == Players then
+			task.spawn(saveProfile, player, "round-end")
 		end
 	end
 end
