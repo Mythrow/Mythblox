@@ -908,7 +908,7 @@ local sparkle = Instance.new("PointLight")
 sparkle.Name = "FountainGlow"
 sparkle.Color = THEME.Foam
 sparkle.Range = 13
-sparkle.Brightness = 0.32
+sparkle.Brightness = 0.14
 sparkle.Shadows = false
 sparkle.Parent = crystal
 for _, side in ipairs({-1, 1}) do
@@ -1053,7 +1053,7 @@ solidDetail("PhotoArchHeader", Vector3.new(14.2, 1.25, 1.6),
 	Vector3.new(photoX, 35.3, photoZ), THEME.Wood)
 local photoAnchor = detail("CoastPhotoSpotSignAnchor", Vector3.new(0.5, 0.5, 0.5),
 	Vector3.new(photoX, 32.4, photoZ - 1), THEME.Brown)
-textSign(photoAnchor, "PHOTO SPOT | AZURE COAST", 1.0, 210)
+textSign(photoAnchor, "PHOTO SPOT | SOFT EARTH COAST", 1.0, 210)
 
 local trophyX, trophyZ = -67, -110
 local trophyStand = horizontalCylinder(solidDetail("AzureTrophyPedestal",
@@ -1210,7 +1210,7 @@ local function buildBridges(count)
 				bridgeModel
 			)
 			tile.Transparency = 0.25
-			tile.Reflectance = 0.095
+			tile.Reflectance = 0.025
 			lanes[lane].tiles[index] = tile
 			-- Tiny, uniform brushed-metal corner brackets on every tile.
 			-- All panels receive the same trim: no valid steps are disclosed.
@@ -1233,7 +1233,7 @@ local function buildBridges(count)
 			rail.CanCollide = false
 			rail.CanTouch = false
 			rail.Transparency = 0.23
-			rail.Reflectance = 0.1
+			rail.Reflectance = 0.015
 		end
 	end
 
@@ -1512,7 +1512,7 @@ local function showCrackLines(tile, count)
 		line.Position = UDim2.fromScale(0.5 + ((index % 2) * 0.13 - 0.06), 0.5)
 		line.Size = UDim2.fromScale(0.012, 0.78)
 		line.Rotation = ({33, -48, 73})[index] or 20
-		line.BackgroundColor3 = Color3.fromRGB(40, 102, 149)
+		line.BackgroundColor3 = THEME.Brown
 		line.BorderSizePixel = 0
 		line.Parent = overlay
 	end
