@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-22):** User reports the lobby floor is **too bright on a real phone** and the top HUD occupies too much screen space. **v0.22 Soft Earth Coast** is implemented in GitHub source and the one-paste installer: cream/oat/sand/sage/rose/wood palette, matte stone floors, softer sunlight and no bloom; compact 49px two-row phone HUD with phase, countdown, short status and Wins/Coins; shorter five-card mobile REVEAL. **Real-phone playtest pending.** v0.21 staffed kiosks, solid props, bench seating and existing voting/race/data logic remain in place. The v0.19 illegal-step shatter/respawn fix still requires explicit owner confirmation. The game is not launch-ready.  
+**Status (2026-11-22):** **v0.23** adds round-end reward save attempts and clear session-only/save-error warnings inside the existing compact HUD. The approved **v0.22 Soft Earth Coast** matte oat/sage/rose theme, 49px phone HUD, social hub and game rules remain unchanged. Real Roblox Studio, mobile and live DataStore testing is still required, including the illegal-step shatter regression. **Not launch-ready.**  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -34,6 +34,13 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 | Reward | Win +25 coins, participation +5 coins |
 
 **Progress storage:** Wins and coins were session-only through v0.12. **v0.13 introduces DataStore persistence**, pending Roblox Studio and published-server verification. v0.14 adds a coin-only cosmetics stall (no Robux or paid items). Do not publicly launch or monetize before testing data recovery and purchases.
+
+## v0.23 — round-end reward saving and unobtrusive persistence warnings (QA pending)
+
+- After each completed match, the server promptly schedules a save for every participating player's earned rewards rather than waiting for the ~150-second autosave or player exit. Existing save locks, idempotent reward batch IDs, retries, autosave, leave and shutdown saves remain in place.
+- During JOIN and RESULTS only, the existing second HUD line reports `SESSION ONLY · NO PROGRESS SAVED` or `SAVE ERROR · REJOIN TO VERIFY` when the server-owned profile status requires it. The 49px phone bar stays unchanged and GO/WAIT, votes and reveal remain unobstructed.
+- All original rules, prices, DataStore names, free movement/jumping, safe/forbidden glass, graphics and the staffed social hub are unchanged.
+- **Test:** Reinstall the [latest raw one-paste installer](INSTALL_STUDIO_COMMAND_BAR.luau) with Play stopped; confirm `v0.23 VERIFIED` and matching server/client version logs. Complete a match and verify `[Mythblox DATA] Saved` for `round-end`, then rejoin a new published private server and confirm Wins, Coins and equipped/owned cosmetics. Save attempts are not proof of persistence until independently reloaded.
 
 ## v0.22 — Soft Earth Coast mobile readability and matte materials (phone test pending)
 
@@ -393,6 +400,6 @@ See the [pre-launch roadmap](PRELAUNCH_ROADMAP.md). Cosmetic stall, sound effect
 
 ## Next step
 
-**Test v0.22 on a phone first:** verify the oat floor is comfortably matte, the 49px top strip no longer obscures play, all five reveal cards/avatars fit, and 1–5 voting remains tappable. Publish the updated private test experience to play with a friend; test bench seating, cosmetics and most importantly illegal-step glass shatter/elimination. Report a phone screenshot or any Output errors. Major additional features and independent multiplayer/data/security QA remain required before public launch.
+**Test v0.23 on a phone first:** verify the oat floor is comfortably matte, the 49px top strip no longer obscures play, all five reveal cards/avatars fit, and 1–5 voting remains tappable. Publish the updated private test experience to play with a friend; test bench seating, cosmetics and most importantly illegal-step glass shatter/elimination. Report a phone screenshot or any Output errors. Major additional features and independent multiplayer/data/security QA remain required before public launch.
 
 See [the Mythblox game-design memo](../../docs/FIRST_GAME_GLASS_BRIDGE_CONCEPT.md) for earlier alternatives, including the spinner idea that was explicitly deferred.
