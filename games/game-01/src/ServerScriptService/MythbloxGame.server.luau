@@ -1791,7 +1791,7 @@ while true do
 		if winners then break end
 
 		phase = "MOVE"
-		message = "GREEN = walk forward up to your number. RED = STAY!"
+		message = "MOVE · GREEN = GO · RED = STAY"
 		for player, info in pairs(active) do
 			if info.alive then
 				-- Players who must STAY may still walk; stepping onto red glass is the joke.
