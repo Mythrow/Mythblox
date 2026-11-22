@@ -1,6 +1,6 @@
 # Soft Earth Coast — Game 01 art direction (palette v0.22; daylight v0.24; matte sky/world v0.25)
 
-**Status:** **v0.27** preserves Soft Earth Coast colors, denser clouds, matte platform materials and v0.24 neutral daylight. The latest geometry pass corrects visibly floating join/rewards boards, bench legs, planters, lamp bases, pergola pillars/hanging lanterns and portions of the fountain/trophy assembly. The small mobile status moves to a 43px strip aligned top-right within Roblox's GUI safe area. Studio/phone visual validation is still pending.
+**Status:** **v0.29** keeps the soft-earth materials, neutral daylight and cloud density while converting the **entire short front deck** into a stand-to-join zone. Removed long parallel-to-bridge spectator catwalks, installed a continuous translucent physical front/side/rear fence, strengthened major collision props and added a small separate Coins/Wins wallet. Future styling changes must preserve the clear central viewing corridor and prevent edge bypass. Studio and phone QA pending.
 
 ## Creative direction
 
@@ -101,7 +101,7 @@ The island's enlarged grass top is **186 × 124** studs, centered at `(0, 22, -7
 | Existing SHOP placeholder | `(-25, 24, -49)` | Same role and location, recolored in theme |
 | Existing COSMETICS shop | `(25, 24, -49)` | **Functional** existing earned-coin shop, unchanged access and prices |
 | JOIN/spectator deck | `(0, 24, -22)` | Preserved shared platform with unchanged join interaction |
-| Side promenade | `x=±49, z≈-25..70` | Preserved spectator viewing walks |
+| Side promenades | Removed in v0.29 | No spectator runways parallel to the race |
 
 **v0.21 physical interaction rule:** Players must encounter tangible tree trunks/low canopies, planter bodies and foliage, lamp bases/posts, pergola columns/roofs, fountain/trophy structure and storefront walls/counters. Do **not** apply collision to tiny gold strips, decorative elevated lanterns, non-walkable ocean/islands or other objects that would impede the race. Each bench uses **two real Roblox Seats** with Sit prompts, and shops use solid counters with customer access from the front.
 
@@ -110,7 +110,7 @@ The island's enlarged grass top is **186 × 124** studs, centered at `(0, 22, -7
 - Native Roblox **Clouds** under `Workspace.Terrain` now use fuller soft neutral-white cloud cover (0.72 Cover / 0.54 Density); only one Clouds instance is used. Atmosphere favors a pale blue-gray horizon (not beige); color correction is neutral white; bloom remains disabled and sun rays stay restrained. Earth colors are properties of materials and assets, not a full-screen filter.
 - Decorative ocean and distant cliff islets are **noncollidable**; there is no playable sea floor.
 - Edit-mode installer and runtime both delete **only** the stock large, low-altitude part explicitly named `Baseplate`, when present. Existing user-authored custom scenery is not blanket-deleted.
-- A tall, invisible safety perimeter covers the back and outer side of the enlarged hub, with openings for both original side promenades. It never sets a player's speed or disables jumping.
+- A continuous visible solid-glass perimeter fence encloses the back, west/east and front edges; tall invisible safety limits are tucked behind the visible fence. There are no openings for former side promenades. Neither speed nor jumping is disabled.
 - An invisible fall reset and independent server root-height check cause players who fall below the island/bridge to die/respawn rather than wander underneath the map.
 - Active glass-race advancement, spectator separation, server validation and 2–8-player rules remain authoritative.
 
@@ -120,7 +120,7 @@ The island's enlarged grass top is **186 × 124** studs, centered at `(0, 22, -7
 - [ ] Spawn has good sightline toward JOIN. Cosmetics E prompt, SHOP placeholder and session leaderboard remain easy to find and operate.
 - [ ] No visible stock baseplate, floating stock spawn, walkable water, under-map routes or unwanted default terrain.
 - [ ] Dynamic clouds visible on supported graphics settings; horizon has distant islands and ocean depth.
-- [ ] No invisible wall blocks the left/right spectator connections.
+- [ ] No former left/right spectator walkway remains; all island fence corners physically and visually connect.
 - [ ] Collision is present on meaningful props (trees, lamp poles, planters, kiosks, roofs), without blocking intended footpaths. Both players can sit on a bench, and each shopkeeper appears behind a front counter.
 - [ ] Movement/jumping and **v0.19's forbidden-tile shatter/elimination fix** still work.
 - [ ] Cosmetics ownership/Wins/Coins unchanged; private-server and mobile tests still pending.
