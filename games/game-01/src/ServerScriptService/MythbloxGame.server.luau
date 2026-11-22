@@ -1,4 +1,4 @@
--- Mythblox game-01: glass bridge race v0.13 (server)
+-- Mythblox game-01: glass bridge race v0.14 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -8,7 +8,7 @@ local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
 local DataStoreService = game:GetService("DataStoreService")
 local HttpService = game:GetService("HttpService")
-local BUILD_VERSION = "v0.13"
+local BUILD_VERSION = "v0.14"
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -31,6 +31,20 @@ local SETTINGS = {
 local GREEN = Color3.fromRGB(51, 220, 105)
 local RED = Color3.fromRGB(255, 87, 87)
 local GLASS = Color3.fromRGB(138, 222, 248)
+-- Purely visual glass tints: these never replace the GREEN/RED hazard signals.
+local SKIN_CATALOG = {
+	{ id = "classic", title = "Classic Blue", price = 0, color = GLASS },
+	{ id = "rose", title = "Candy Pink", price = 20, color = Color3.fromRGB(252, 164, 220) },
+	{ id = "mint", title = "Mint Pop", price = 40, color = Color3.fromRGB(149, 238, 201) },
+	{ id = "violet", title = "Soft Violet", price = 60, color = Color3.fromRGB(193, 172, 250) },
+}
+local SKIN_BY_ID = {}
+for _, item in ipairs(SKIN_CATALOG) do SKIN_BY_ID[item.id] = item end
+local equippedSkins = {}
+local function glassColorFor(player)
+	local skin = SKIN_BY_ID[equippedSkins[player] or "classic"]
+	return skin and skin.color or GLASS
+end
 local AMBER = Color3.fromRGB(255, 206, 75)
 local VIOLET = Color3.fromRGB(65, 173, 253) -- sky-blue accent, variable kept for compat.
 
@@ -80,6 +94,9 @@ command.Parent = network
 local stateEvent = Instance.new("RemoteEvent")
 stateEvent.Name = "State"
 stateEvent.Parent = network
+local shopEvent = Instance.new("RemoteEvent")
+shopEvent.Name = "Shop"
+shopEvent.Parent = network
 local buildTag = Instance.new("StringValue")
 buildTag.Name = "BuildVersion"
 buildTag.Value = BUILD_VERSION
@@ -330,9 +347,20 @@ local function makeStall(name, x, z, roofColor, line1, line2)
 	header.Transparency = 1
 	header.CanCollide = false
 	textSign(header, line1 .. " | " .. line2, 2, 210)
+	return group
 end
 makeStall("LeftShopComingSoon", -25, -49, ROOF_BLUE, "SHOP", "COMING SOON")
-makeStall("RightCosmeticsComingSoon", 25, -49, ROOF_PINK, "COSMETICS", "COMING SOON")
+local cosmeticsStall = makeStall("RightCosmeticsShop", 25, -49, ROOF_PINK, "COSMETICS", "GLASS COLORS")
+local cosmeticsFloor = cosmeticsStall:FindFirstChild("DisplayFloor")
+local cosmeticsPrompt = Instance.new("ProximityPrompt")
+cosmeticsPrompt.Name = "BrowseGlassSkins"
+cosmeticsPrompt.ActionText = "Browse colors"
+cosmeticsPrompt.ObjectText = "Cosmetics"
+cosmeticsPrompt.KeyboardKeyCode = Enum.KeyCode.E
+cosmeticsPrompt.HoldDuration = 0
+cosmeticsPrompt.RequiresLineOfSight = false
+cosmeticsPrompt.MaxActivationDistance = 12
+cosmeticsPrompt.Parent = cosmeticsFloor
 
 -- Compact single-face leaderboard. Its front for arriving lobby visitors
 -- points toward +Z (Back face in Roblox part-local coordinates).
@@ -827,7 +855,7 @@ local function paintAllowedTiles()
 			local lane = lanes[info.lane]
 			local current = lane.tiles[info.index]
 			if current and current.CanCollide then
-				current.Color = info.cracks == 0 and GLASS or (info.cracks == 1 and AMBER or RED)
+				current.Color = info.cracks == 0 and glassColorFor(player) or (info.cracks == 1 and AMBER or RED)
 			end
 			if phase == "MOVE" then
 				local from = info.startIndex + 1
@@ -1327,6 +1355,13 @@ local function beginMatch(participants)
 	winnerPlayer = nil
 	turnNumber = 0
 	buildBridges(#participants)
+	-- Each lane keeps its chosen neutral color; unsafe red and permitted green
+	-- are always painted on top so skin choice cannot hide a danger cue.
+	for lane, player in ipairs(participants) do
+		for index = 0, SETTINGS.BridgeLength - 1 do
+			lanes[lane].tiles[index].Color = glassColorFor(player)
+		end
+	end
 	for lane, player in ipairs(participants) do
 		if player.Parent == Players then
 			local root = teleportToLane(player, lane)
