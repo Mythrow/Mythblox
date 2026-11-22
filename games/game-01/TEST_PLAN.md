@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-22):** Owner finds a critical v0.18 regression: they can run across the bridge without being stopped after elimination. **v0.19 fixes character removal after illegal advances and adds per-glass-tile collision checks**; source and installer are committed but **not yet tested in Roblox Studio**. Movement/jumping remain freely enabled while alive, with safe-step colors hidden. Saved Wins/skins after restart, mobile and private-server QA remain open.
+**Status (2026-11-22):** v0.19's crossing/shatter fix is still unverified in Studio. Owner approved a world/lobby theme improvement; **v0.20 Azure Coast Resort** is committed with larger island, same shop/bridge positions, Clouds, distant sea/islands and reset/edge protections. No Studio v0.20 QA has been performed. Saved Wins, cosmetics after restart, private-server persistence and mobile/multiplayer performance remain pending.
 
 ## Playtest log
 
@@ -37,6 +37,27 @@
 6. Repeat with 3–4 clients if the two-player flow works.
 
 
+
+## v0.20 — Azure Coast Resort lobby, clouds, no-template-floor and escape prevention
+
+**Code committed; not yet executed in Roblox Studio.** Create a place backup first because the **Edit-mode installer intentionally removes a stock Baseplate part** when present.
+
+- [ ] **Installer:** Stop Play, save a place backup, copy latest [Command Bar installer](INSTALL_STUDIO_COMMAND_BAR.luau) from Raw, run in Edit mode. Output reports `v0.20 VERIFIED` and count of removed stock Baseplate part(s). Start Play and confirm `v0.20` in both runtime logs and HUD.
+- [ ] **Original default part removed:** check Workspace at Edit mode/Play. There must be no large low `Baseplate` or orphan stock SpawnLocation visible beyond the arena. User-created unrelated map parts must remain untouched.
+- [ ] **Lobby dimensions:** the new 186×124 island and 56×39 spawn plaza feel visibly bigger while spawn still lands at roughly x=0,z=-76. No floating or z-fighting floors, displaced shops or inaccessible deck.
+- [ ] **Theme consistency:** ivory/limestone paths, teal/deep-teal metal roofs and fences, champagne brass accents, evergreen greenery, muted coral cosmetics-roof accent. The HUD and physical world signs use the matching theme. No returning rainbow/bright neon design.
+- [ ] **Social spaces:** inspect/approach central sea-glass fountain near z=-118, both lounges at x=±68,z=-71, benches, planters, lamps, photo arch and trophy garden. Props do not trap players; movement and jumping remain normal.
+- [ ] **Clouds and atmosphere:** native drift clouds are visible on supported graphics settings; no duplicate stacked cloud layers. Ocean horizon is longer and six noncolliding cliff islands appear at a distance. No intense glare, excessively fogged camera or invisible world sign labels.
+- [ ] **Water escape:** jump off an island edge or a spectator walk (in a controlled test). Invisible perimeter should guard the island edges; a successful fall below the suspended world should automatically kill/respawn the character **before** they can walk on the ocean or beneath the island. Do not disable JumpPower.
+- [ ] **Perimeter path access:** from spawn, walk freely to cosmetics/SHOP, original single JOIN deck and both left/right spectator promenades. Invisible edge walls must **not** close the walkway connector openings or prevent legitimate jumping.
+- [ ] **Shop and board:** open the cosmetics E prompt at its original stall; purchase/equip if you have coins, then close the UI. The TOP RACERS board should show names/Wins/Coins without a giant overlay. Check the SHOP placeholder is still in its original location.
+- [ ] **Bridge regression first:** repeat the complete v0.19 checklist below. Illegal forward advancement before MOVE or beyond selected N should visibly shatter glass, eliminate the player and respawn at the lobby. The increased environment decoration must not let eliminated players run to the finish.
+- [ ] **No spoiler colors:** normal bridge panels retain classic/purchased neutral color. Red/green vote outcome colors stay on the results cards only.
+- [ ] **2–8 player stress:** test several client counts, join, spectate, walk/jump, purchase, dances and respawns. Confirm no significant framerate/memory regressions caused by clouds, PointLights, distant scenery or decorative parts.
+- [ ] **Mobile:** test narrow phone/tablet view, smaller decals/labels, thumb controls, readable signage and lobby navigation. Ensure no decorative props block movement.
+- [ ] **Persistence:** verify Coins, Wins and owned cosmetics survive Play restarts, then test separate private published-server storage.
+
+**Approval gate:** Owner must see the actual Roblox Studio environment and judge whether it meets the desired theme; a static code/installer check is not a visual test. This is not final art or launch readiness.
 
 ## v0.19 — critical crossing regression (test before anything else)
 
