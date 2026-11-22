@@ -1,10 +1,10 @@
--- Mythblox Game 01 · Soft Earth Coast mobile UI v0.31
+-- Mythblox Game 01 · Soft Earth Coast mobile UI v0.32
 -- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
-local BUILD_VERSION = "v0.31"
+local BUILD_VERSION = "v0.32"
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local network = ReplicatedStorage:WaitForChild("MythbloxGame01")
@@ -58,6 +58,11 @@ local COLOR = {
 local prefs = {tutorialSeen=false, soundOn=true, musicOn=false, lowEffects=false, largeText=false, highContrast=false}
 local prefsReady = false
 local latestState = nil
+-- ResetOnSpawn=false deliberately keeps menus/wallet persistent. A local
+-- death lock must independently hide vote/reveal UI while the server's
+-- death/respawn snapshot is in flight. Only a NEW match resets the lock.
+local localDeathLock = false
+local seenMatchSerial = nil
 local layoutForViewport
 local menuDismissedTutorial = false
 
@@ -283,6 +288,12 @@ for n = 1, 5 do
 	scale.Scale = 1
 	scale.Parent = b
 	b.MouseButton1Click:Connect(function()
+		-- A button tap already in flight must not submit a vote after the
+		-- character died or while the server has moved to another phase.
+		local state = latestState
+		if not voting.Visible or localDeathLock or not state
+			or state.phase ~= "VOTE" or not state.mine
+			or state.mine.alive ~= true then return end
 		cue("pick")
 		scale.Scale = 1.06
 		TweenService:Create(scale, TweenInfo.new(0.14), {Scale = 1}):Play()
@@ -302,7 +313,7 @@ end
 -- Results appear in the compact top status strip instead of a centered
 -- modal. The arena and other players remain visible when a match ends.
 
--- v0.31: Secret selections are never displayed to others while voting.
+-- v0.32: Secret selections are never displayed to others while voting.
 -- ONLY during the five-second REVEAL do five non-clickable results cards
 -- show every numbered choice, picking players' avatars, totals, and safety.
 -- The existing teal voting buttons remain PRIVATE selection controls.
@@ -375,7 +386,8 @@ end
 local lastTurnRendered = -1
 local function drawOutcomes(state)
 	-- Explicit guard: cannot show aggregate data while voting or moving.
-	if state.phase ~= "REVEAL" then return end
+	if state.phase ~= "REVEAL" or localDeathLock
+		or not state.mine or state.mine.alive ~= true then return end
 	if lastTurnRendered == state.turn then return end
 	lastTurnRendered = state.turn
 
@@ -547,7 +559,7 @@ shopEvent.OnClientEvent:Connect(function(kind, details, message)
 	end
 end)
 
--- v0.31: Seven lightweight UI capabilities, each with independent
+-- v0.32: Seven lightweight UI capabilities, each with independent
 -- visibility and no changes to humanoid movement or bridge rules.
 local lobbyMenu = Instance.new("Frame")
 lobbyMenu.Name = "LobbyMenu"
@@ -872,6 +884,52 @@ player.CharacterAdded:Connect(function(character)
 	end
 end)
 
+-- This ScreenGui persists across respawn. Immediately remove old vote
+-- controls on *local* death/removal instead of waiting up to one second for
+-- the next server countdown update; server snapshots enforce it as well.
+local function inActiveRace()
+	local phase = latestState and latestState.phase
+	return phase == "VOTE" or phase == "REVEAL" or phase == "MOVE"
+end
+local function clearVotePanels()
+	voting.Visible = false
+	reveal.Visible = false
+	raceHud.Visible = false
+	feedback.Visible = false
+	feedbackGeneration += 1
+	lastTurnRendered = -1
+	voteHint.Text = "Most picked numbers crack · choose before time ends!"
+	-- Existing five avatar cards are reused, but clear the last revealed
+	-- users so a stale thumbnail never survives an elimination.
+	for _, card in ipairs(resultCards) do
+		for _, child in ipairs(card.avatars:GetChildren()) do
+			if child:IsA("ImageLabel") then child:Destroy() end
+		end
+	end
+end
+local function markLocalDeath()
+	if not inActiveRace() then return end
+	localDeathLock = true
+	clearVotePanels()
+	phaseText.Text = "ELIMINATED"
+	ownStats.Text = "SPECTATING · WAIT FOR NEXT MATCH"
+end
+local function watchCharacterDeath(character)
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+		or character:WaitForChild("Humanoid", 5)
+	if not humanoid then return end
+	humanoid.Died:Connect(markLocalDeath)
+	if humanoid.Health <= 0 then markLocalDeath() end
+end
+player.CharacterRemoving:Connect(markLocalDeath)
+player.CharacterAdded:Connect(function(character)
+	-- A newly spawned character while the same race is active is not
+	-- automatically a new contestant.
+	if inActiveRace() then markLocalDeath() end
+	task.spawn(watchCharacterDeath, character)
+end)
+if player.Character then task.spawn(watchCharacterDeath, player.Character) end
+
 bagButton.MouseButton1Click:Connect(function()
 	inventory.Visible=not inventory.Visible
 	if inventory.Visible then
@@ -922,7 +980,7 @@ layoutForViewport = function()
 	if compact then feedback.Visible = false end
 	local shortScreen = height < 570
 
-	-- v0.31: phone status is smaller, at the TOP RIGHT of the core-UI safe
+	-- v0.32: phone status is smaller, at the TOP RIGHT of the core-UI safe
 	-- area rather than a wide center banner obscuring the avatar/camera.
 	-- Never put it above Roblox's native safe-area inset.
 	local topW = compact and math.min(270, math.max(180, width - 110))
@@ -978,7 +1036,7 @@ layoutForViewport = function()
 	shop.AnchorPoint = compact and Vector2.new(0.5, 0.5) or Vector2.new(1, 0.5)
 	shop.Position = compact and UDim2.new(0.5, 0, 0.56, 0) or UDim2.new(1, -18, 0.54, 0)
 
-	-- v0.31: Omit the unnecessary red/green legend and reclaim its 16–18px.
+	-- v0.32: Omit the unnecessary red/green legend and reclaim its 16–18px.
 	-- Avatar grids, vote totals, numbered SAFE/BLOCKED cards and five-second
 	-- server reveal duration are unchanged. The phone tray obscures less play.
 	local revealW = math.min(width - 18, compact and 560 or 780)
@@ -1094,30 +1152,43 @@ local function update(state)
 	latestState = state
 	local phase = state.phase or "JOIN"
 	local mine = state.mine
+	-- New round => reset local death state; same-round respawn stays
+	-- eliminated. The server's alive flag remains authoritative.
+	if type(state.matchSerial) == "number"
+		and state.matchSerial ~= seenMatchSerial then
+		seenMatchSerial = state.matchSerial
+		localDeathLock = false
+	end
+	if phase == "JOIN" then localDeathLock = false end
+	if mine and mine.alive == false and phase ~= "JOIN" then
+		localDeathLock = true
+	end
+	local isLiveRacer = mine ~= nil and mine.alive == true
+		and not localDeathLock
 	local changedPhase = phase ~= previousPhase or state.turn ~= previousTurn
-	if phase == "VOTE" and mine and mine.alive and (state.time or 0) <= 3 and (state.time or 0) > 0 then
+	if phase == "VOTE" and isLiveRacer and (state.time or 0) <= 3 and (state.time or 0) > 0 then
 		local key = tostring(state.turn) .. ":" .. tostring(state.time)
 		if lastTickKey ~= key then
 			lastTickKey = key
 			cue("tick")
 		end
 	end
-	if changedPhase and phase == "REVEAL" and mine then
-		if mine.alive and (mine.allowed or 0) > 0 then
+	if changedPhase and phase == "REVEAL" and isLiveRacer then
+		if (mine.allowed or 0) > 0 then
 			cue("safe")
 			showFeedback("SAFE PICK · MOVE UP TO " .. mine.allowed .. " TILES", true)
-		elseif mine.alive then
+		else
 			cue("crack")
 			showFeedback("BLOCKED PICK · " .. mine.cracks .. "/3 CRACKS", false)
 		end
-	elseif changedPhase and phase == "MOVE" and mine and mine.alive then
+	elseif changedPhase and phase == "MOVE" and isLiveRacer then
 		if (mine.allowed or 0) > 0 then
 			showFeedback("SAFE PICK · ADVANCE NOW", true)
 		else
 			showFeedback("BLOCKED PICK · DO NOT ADVANCE", false)
 		end
 	end
-	if mine and previousAlive == true and not mine.alive then
+	if mine and previousAlive == true and not isLiveRacer then
 		cue("fall")
 		showFeedback("YOUR GLASS BROKE!", false)
 	end
@@ -1128,22 +1199,22 @@ local function update(state)
 	end
 	previousPhase = phase
 	previousTurn = state.turn
-	previousAlive = mine and mine.alive or nil
+	previousAlive = mine and isLiveRacer or nil
 	-- Turn numbers restart every match; never reuse a previous match's vote rows.
 	if phase == "JOIN" or phase == "VOTE" then
 		lastTurnRendered = -1
 	end
-	phaseText.Text = ("v0.31 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
+	phaseText.Text = ("v0.32 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
 	clockText.Text = tostring(state.time or 0) .. "s"
 	clockText.TextColor3 = phase == "VOTE" and (state.time or 0) <= 2 and COLOR.Red or COLOR.Purple
 	description.Text = state.message or ""
 
 	-- Show zone membership via server snapshots; nobody must tap JOIN.
-	voting.Visible = phase == "VOTE" and mine ~= nil and mine.alive == true
+	voting.Visible = phase == "VOTE" and isLiveRacer
 	if voting.Visible then shop.Visible = false end
 
 	if phase == "JOIN" then
-		phaseText.Text = "v0.31 · JOIN ZONE"
+		phaseText.Text = "v0.32 · JOIN ZONE"
 		description.Text = state.queued
 			and ((state.ready or 0) == 1 and state.liveSoloPractice
 				and "In zone · stay for solo practice (no rewards)."
@@ -1152,8 +1223,8 @@ local function update(state)
 		ownStats.Text = ("%d/%d IN ZONE"):format(state.ready or 0, state.capacity or 8)
 		progressFill.Size = UDim2.fromScale(0, 1)
 	elseif mine then
-		local selection = mine.vote and tostring(mine.vote) or "—"
-		local marker = mine.alive and "" or "   ·   ELIMINATED"
+		local selection = isLiveRacer and mine.vote and tostring(mine.vote) or "—"
+		local marker = isLiveRacer and "" or "   ·   ELIMINATED"
 		ownStats.Text = ("DISTANCE %d/20   ·   CRACKS %d/3   ·   PICK %s%s"):format(
 			mine.position or 0, mine.cracks or 0, selection, marker
 		)
@@ -1165,7 +1236,7 @@ local function update(state)
 	if phase == "RESULTS" then
 		-- Server sends winner/draw text in state.message; show it only in
 		-- the small status panel and avoid blocking the camera.
-		phaseText.Text = "v0.31 · ROUND OVER"
+		phaseText.Text = "v0.32 · ROUND OVER"
 		ownStats.Text = state.practiceNoRewards and "PRACTICE · NO WINS / COINS"
 			or "NEXT MATCH STARTS SOON"
 	end
@@ -1185,7 +1256,7 @@ local function update(state)
 	end
 
 	-- Keep the essential permission in the compact HUD, not a separate banner.
-	if phase == "MOVE" and mine and mine.alive then
+	if phase == "MOVE" and isLiveRacer then
 		local allowed = mine.allowed or 0
 		description.Text = allowed > 0 and ("GO · ADVANCE 1–%d PANELS"):format(allowed)
 			or "NO ADVANCE · WAIT THIS TURN"
@@ -1207,14 +1278,14 @@ local function update(state)
 		elseif phase == "RESULTS" then
 			ownStats.Text = state.practiceNoRewards and "PRACTICE · NO REWARDS"
 				or "ROUND OVER · NEXT SOON"
-		elseif mine and not mine.alive then
+		elseif mine and not isLiveRacer then
 			ownStats.Text = "ELIMINATED · SPECTATING"
-		elseif phase == "MOVE" and mine and mine.alive then
+		elseif phase == "MOVE" and isLiveRacer then
 			local allowed = mine.allowed or 0
 			ownStats.Text = allowed > 0
 				and ("GO 1–%d · TILE %d/20"):format(allowed, mine.position or 0)
 				or ("WAIT · TILE %d/20"):format(mine.position or 0)
-		elseif mine then
+		elseif isLiveRacer then
 			ownStats.Text = ("T%d/20 · %d CR · PICK %s"):format(
 				mine.position or 0, mine.cracks or 0,
 				mine.vote and tostring(mine.vote) or "—")
@@ -1242,6 +1313,13 @@ local function update(state)
 	refreshWallet()
 	wallet.Visible = not (isCompact and phase == "REVEAL")
 	local inRace = phase == "VOTE" or phase == "REVEAL" or phase == "MOVE"
+	if inRace and not isLiveRacer then
+		-- The global match may still be voting/revealing after this player
+		-- dies, but the respawned player's HUD must say SPECTATING.
+		phaseText.Text = mine and "ELIMINATED" or "SPECTATING"
+		ownStats.Text = "WAIT FOR NEXT MATCH"
+		description.Text = "You are out of this race."
+	end
 	lobbyMenu.Visible = phase == "JOIN" or phase == "RESULTS"
 	if inRace then
 		inventory.Visible=false
@@ -1249,7 +1327,7 @@ local function update(state)
 		tutorial.Visible=false
 		shop.Visible=false
 	end
-	raceHud.Visible = inRace and mine ~= nil and mine.alive == true
+	raceHud.Visible = inRace and isLiveRacer
 	if raceHud.Visible then
 		raceLine.Text = ("TILE %d/20 · CRACKS %d/3"):format(
 			mine.position or 0,mine.cracks or 0)
@@ -1272,7 +1350,7 @@ local function update(state)
 	-- gameplay tray; hide the race strip until MOVE.
 	if isCompact and phase == "REVEAL" then raceHud.Visible=false end
 
-	local isSpectator = inRace and (mine == nil or not mine.alive)
+	local isSpectator = inRace and not isLiveRacer
 	spectator.Visible = isSpectator
 	if not isSpectator then
 		if isFollowing then ownCamera() end
@@ -1341,7 +1419,12 @@ local function update(state)
 	if phase == "REVEAL" then toast.Visible=false end
 	-- The five non-interactive number cards appear ONLY in the five-second reveal.
 	-- Never show aggregates, avatars or the previous turn's choices in VOTE/MOVE.
-	reveal.Visible = phase == "REVEAL"
+	reveal.Visible = phase == "REVEAL" and isLiveRacer
+	if not isLiveRacer then
+		-- Clear old numbered vote results while spectating/respawned;
+		-- they will only be repopulated for a new live REVEAL.
+		if lastTurnRendered ~= -1 then clearVotePanels() end
+	end
 	if reveal.Visible then
 		-- The reveal is the only foreground feedback during these five seconds.
 		-- Hide earlier vote chips and any open stall panel rather than overlap it.
