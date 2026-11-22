@@ -1,10 +1,10 @@
--- Mythblox Game 01 · reliability review v0.15
+-- Mythblox Game 01 · five-column secret vote reveal v0.16
 -- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
-local BUILD_VERSION = "v0.15"
+local BUILD_VERSION = "v0.16"
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local network = ReplicatedStorage:WaitForChild("MythbloxGame01")
@@ -266,115 +266,126 @@ movementText.TextXAlignment = Enum.TextXAlignment.Center
 -- Results appear in the compact top status strip instead of a centered
 -- modal. The arena and other players remain visible when a match ends.
 
--- Reveal panel displays every player's number, risk and permitted movement.
--- No one can see choices during secret voting; the server only publishes after.
+-- v0.16: Secret selections are never displayed to others while voting.
+-- ONLY during the two-second REVEAL do five non-clickable results cards
+-- show every numbered choice, picking players' avatars, totals, and safety.
+-- The existing blue voting buttons remain PRIVATE selection controls.
 local reveal = panel("RevealPanel")
-local revealHeader = label(reveal, "Heading", "NUMBER REVEAL", 13, 7, -26, 26, 16, COLOR.Purple, true)
-local revealSubtitle = label(reveal, "Rule", "MOST PICKED = CRACK", 13, 34, -26, 25, 13, COLOR.Muted)
-local countsRow = Instance.new("Frame")
-countsRow.Name = "CountRow"
-countsRow.BackgroundTransparency = 1
-countsRow.Position = UDim2.new(0, 12, 0, 67)
-countsRow.Size = UDim2.new(1, -24, 0, 54)
-countsRow.Parent = reveal
-local countLayout = Instance.new("UIListLayout")
-countLayout.FillDirection = Enum.FillDirection.Horizontal
-countLayout.SortOrder = Enum.SortOrder.LayoutOrder
-countLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-countLayout.Padding = UDim.new(0.01, 0)
-countLayout.Parent = countsRow
-local countCards = {}
-for n = 1, 5 do
-	local card = Instance.new("Frame")
-	card.Name = "Number" .. n
-	card.LayoutOrder = n
-	card.Size = UDim2.new(0.19, 0, 0, 52)
-	card.BackgroundColor3 = COLOR.InkBright
-	card.BorderSizePixel = 0
-	card.Parent = countsRow
-	addCorner(card, 7)
-	local numberLabel = label(card, "Number", tostring(n), 0, 2, 0, 24, 18, COLOR.Text, true)
-	numberLabel.Size = UDim2.fromScale(1, 0.51)
-	numberLabel.TextXAlignment = Enum.TextXAlignment.Center
-	local countLabel = label(card, "Votes", "0 votes", 0, 28, 0, 19, 12, COLOR.Muted, true)
-	countLabel.Size = UDim2.new(1, 0, 0, 19)
-	countLabel.TextXAlignment = Enum.TextXAlignment.Center
-	countCards[n] = {frame = card, number = numberLabel, votes = countLabel}
-end
+reveal.AnchorPoint = Vector2.new(0.5, 0)
+reveal.Position = UDim2.new(0.5, 0, 0, 103)
+reveal.Visible = false
 
-local revealList = Instance.new("ScrollingFrame")
-revealList.Name = "PlayerOutcomes"
-revealList.BackgroundTransparency = 1
-revealList.BorderSizePixel = 0
-revealList.Position = UDim2.new(0, 12, 0, 132)
-revealList.Size = UDim2.new(1, -24, 1, -143)
-revealList.ScrollBarThickness = 3
-revealList.ScrollingDirection = Enum.ScrollingDirection.Y
-revealList.CanvasSize = UDim2.fromOffset(0, 0)
-revealList.Parent = reveal
-local outcomesLayout = Instance.new("UIListLayout")
-outcomesLayout.FillDirection = Enum.FillDirection.Vertical
-outcomesLayout.SortOrder = Enum.SortOrder.LayoutOrder
-outcomesLayout.Padding = UDim.new(0, 4)
-outcomesLayout.Parent = revealList
+local revealHeader = label(reveal, "Heading", "VOTES REVEALED", 13, 7, -26, 27, 19, COLOR.Purple, true)
+revealHeader.TextXAlignment = Enum.TextXAlignment.Center
+local revealSubtitle = label(reveal, "Legend", "GREEN = SAFE      RED = BLOCKED", 13, 34, -26, 20, 13, COLOR.Muted, true)
+revealSubtitle.TextXAlignment = Enum.TextXAlignment.Center
+
+local resultRow = Instance.new("Frame")
+resultRow.Name = "LockedNumberResults"
+resultRow.Position = UDim2.new(0, 10, 0, 60)
+resultRow.Size = UDim2.new(1, -20, 1, -72)
+resultRow.BackgroundTransparency = 1
+resultRow.Parent = reveal
+local resultLayout = Instance.new("UIListLayout")
+resultLayout.FillDirection = Enum.FillDirection.Horizontal
+resultLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+resultLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+resultLayout.SortOrder = Enum.SortOrder.LayoutOrder
+resultLayout.Padding = UDim.new(0.012, 0)
+resultLayout.Parent = resultRow
+
+local resultCards = {}
+for number = 1, 5 do
+	local card = Instance.new("Frame") -- Not a button: voting is locked during REVEAL.
+	card.Name = "NumberResult_" .. number
+	card.LayoutOrder = number
+	card.Size = UDim2.new(0.19, 0, 1, 0)
+	card.BackgroundColor3 = Color3.fromRGB(219, 248, 231)
+	card.BorderSizePixel = 0
+	card.Parent = resultRow
+	addCorner(card, 10)
+	local outline = addStroke(card, COLOR.Green, 2)
+
+	local avatarBox = Instance.new("Frame")
+	avatarBox.Name = "Voters"
+	avatarBox.BackgroundTransparency = 1
+	avatarBox.Position = UDim2.new(0, 4, 0, 7)
+	avatarBox.Size = UDim2.new(1, -8, 0, 55)
+	avatarBox.Parent = card
+	local grid = Instance.new("UIGridLayout")
+	grid.Name = "AvatarGrid"
+	grid.SortOrder = Enum.SortOrder.LayoutOrder
+	grid.FillDirection = Enum.FillDirection.Horizontal
+	grid.FillDirectionMaxCells = 4
+	grid.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	grid.VerticalAlignment = Enum.VerticalAlignment.Center
+	grid.CellSize = UDim2.fromOffset(24, 24)
+	grid.CellPadding = UDim2.fromOffset(2, 2)
+	grid.Parent = avatarBox
+
+	local numberLabel = label(card, "Number", tostring(number), 0, 62, 0, 42, 38, COLOR.Green, true)
+	numberLabel.TextXAlignment = Enum.TextXAlignment.Center
+	local votesLabel = label(card, "Picks", "0 PICKS", 0, 108, 0, 23, 13, COLOR.Text, true)
+	votesLabel.TextXAlignment = Enum.TextXAlignment.Center
+	local status = label(card, "Status", "SAFE", 0, 135, 0, 20, 12, COLOR.Green, true)
+	status.TextXAlignment = Enum.TextXAlignment.Center
+
+	resultCards[number] = {
+		frame = card, outline = outline, avatars = avatarBox,
+		grid = grid, number = numberLabel, votes = votesLabel, status = status,
+	}
+end
 
 local lastTurnRendered = -1
 local function drawOutcomes(state)
-	local counts = state.voteCounts or {}
-	local blocked = {}
-	for n = 1, 5 do
-		local hit = state.unsafe and state.unsafe[n] == true
-		local card = countCards[n]
-		card.frame.BackgroundColor3 = hit and Color3.fromRGB(255, 225, 226) or COLOR.InkBright
-		card.number.TextColor3 = hit and COLOR.Red or COLOR.Text
-		card.votes.Text = tostring(counts[n] or 0) .. " picked"
-		if hit then table.insert(blocked, tostring(n)) end
-	end
-	revealSubtitle.Text = #blocked > 0
-		and ("BLOCKED: " .. table.concat(blocked, ", ") .. "  ·  SAME PICK = CRACK")
-		or "NO COLLISION · EVERYONE CAN WALK"
-
+	-- Explicit guard: cannot show aggregate data while voting or moving.
+	if state.phase ~= "REVEAL" then return end
 	if lastTurnRendered == state.turn then return end
 	lastTurnRendered = state.turn
-	for _, child in ipairs(revealList:GetChildren()) do
-		if child:IsA("Frame") then child:Destroy() end
-	end
-	local entries = state.voteOutcomes or {}
-	for idx, entry in ipairs(entries) do
-		local row = Instance.new("Frame")
-		row.Name = "Outcome" .. idx
-		row.Size = UDim2.new(1, -3, 0, 29)
-		row.LayoutOrder = idx
-		local isMe = entry.userId == player.UserId
-		row.BackgroundColor3 = isMe
-			and (entry.status == "GO" and Color3.fromRGB(223, 249, 231) or Color3.fromRGB(255, 234, 236))
-			or (idx % 2 == 0 and COLOR.InkBright or Color3.fromRGB(248, 252, 255))
-		row.BorderSizePixel = 0
-		row.Parent = revealList
-		addCorner(row, 7)
 
-		local safe = entry.status == "GO"
-		local number = entry.number and tostring(entry.number) or "–"
-		local entryName = isMe and "YOU" or tostring(entry.name or "Player")
-		local outcomeText
-		if safe then
-			outcomeText = "GO +" .. tostring(entry.steps or 0)
-		elseif entry.out then
-			outcomeText = "ELIMINATED"
-		elseif entry.status == "NO_VOTE" then
-			outcomeText = "NO PICK"
-		else
-			outcomeText = "CRACK " .. tostring(entry.cracks or 0) .. "/3"
+	local chosenByNumber = {{}, {}, {}, {}, {}}
+	for _, entry in ipairs(state.voteOutcomes or {}) do
+		local n = entry.number
+		local userId = entry.userId
+		if type(n) == "number" and n % 1 == 0 and n >= 1 and n <= 5
+			and type(userId) == "number" then
+			table.insert(chosenByNumber[n], userId)
 		end
-		local who = label(row, "Name", entryName .. "  [" .. number .. "]", 9, 2, -102, 25, 13, COLOR.Text, true)
-		who.TextTruncate = Enum.TextTruncate.AtEnd
-		local outcome = label(row, "Outcome", outcomeText, 0, 2, -9, 25, 12, safe and COLOR.Green or COLOR.Red, true)
-		outcome.AnchorPoint = Vector2.new(1, 0)
-		outcome.Position = UDim2.new(1, -8, 0, 2)
-		outcome.Size = UDim2.fromOffset(95, 25)
-		outcome.TextXAlignment = Enum.TextXAlignment.Right
 	end
-	revealList.CanvasSize = UDim2.fromOffset(0, #entries * 33)
+
+	for number = 1, 5 do
+		local card = resultCards[number]
+		local blocked = state.unsafe and state.unsafe[number] == true
+		local ids = chosenByNumber[number]
+		local total = (state.voteCounts and state.voteCounts[number]) or #ids
+
+		card.frame.BackgroundColor3 = blocked
+			and Color3.fromRGB(255, 222, 226) or Color3.fromRGB(218, 249, 232)
+		card.outline.Color = blocked and COLOR.Red or COLOR.Green
+		card.number.TextColor3 = blocked and COLOR.Red or COLOR.Green
+		card.status.TextColor3 = blocked and COLOR.Red or COLOR.Green
+		card.status.Text = blocked and "BLOCKED" or "SAFE"
+		card.votes.Text = tostring(total) .. (total == 1 and " PICK" or " PICKS")
+
+		for _, child in ipairs(card.avatars:GetChildren()) do
+			if child:IsA("ImageLabel") then child:Destroy() end
+		end
+		table.sort(ids)
+		for i, userId in ipairs(ids) do
+			local avatar = Instance.new("ImageLabel")
+			avatar.Name = "Voter_" .. tostring(userId)
+			avatar.LayoutOrder = i
+			avatar.Size = UDim2.fromOffset(24, 24)
+			avatar.BackgroundColor3 = COLOR.White
+			avatar.BorderSizePixel = 0
+			avatar.Image = ("rbxthumb://type=AvatarHeadShot&id=%d&w=150&h=150"):format(userId)
+			avatar.ScaleType = Enum.ScaleType.Crop
+			avatar.Parent = card.avatars
+			addCorner(avatar, 99)
+			addStroke(avatar, userId == player.UserId and COLOR.Gold or COLOR.Border,
+				userId == player.UserId and 2 or 1)
+		end
+	end
 end
 
 -- Shop opens ONLY when interacting with the cosmetics stall. No new
@@ -531,12 +542,33 @@ local function layoutForViewport()
 	shop.AnchorPoint = compact and Vector2.new(0.5, 0.5) or Vector2.new(1, 0.5)
 	shop.Position = compact and UDim2.new(0.5, 0, 0.56, 0) or UDim2.new(1, -18, 0.54, 0)
 
-	local revealW = math.min(compact and width - 16 or 322, 322)
-	local revealH = math.max(165, math.min(compact and 242 or 388, height - (compact and 156 or 171)))
+	-- A centered row of five result cards, shown for REVEAL only.
+	local revealW = math.min(width - 16, compact and 580 or 780)
+	local revealH = math.max(172, math.min(228, height - 110))
 	reveal.Size = UDim2.fromOffset(revealW, revealH)
-	reveal.Position = UDim2.fromOffset(compact and 8 or 11, compact and 103 or 107)
-	revealHeader.TextSize = compact and 14 or 16
+	reveal.Position = UDim2.new(0.5, 0, 0, 100)
+	revealHeader.TextSize = compact and 16 or 19
 	revealSubtitle.TextSize = compact and 11 or 13
+	local cardHeight = revealH - 72
+	local avatarHeight = math.min(55, math.max(39, cardHeight - 80))
+	local approximateCardWidth = (revealW - 20) * 0.19
+	local columns = approximateCardWidth < 90 and 3 or 4
+	local rows = math.ceil(8 / columns)
+	local avatarSize = math.max(11, math.min(24,
+		math.floor((approximateCardWidth - 11 - (columns - 1) * 2) / columns),
+		math.floor((avatarHeight - (rows - 1) * 2) / rows)))
+	for _, card in ipairs(resultCards) do
+		card.avatars.Size = UDim2.new(1, -8, 0, avatarHeight)
+		card.grid.FillDirectionMaxCells = columns
+		card.grid.CellSize = UDim2.fromOffset(avatarSize, avatarSize)
+		card.number.Position = UDim2.new(0, 0, 0, 8 + avatarHeight)
+		card.number.Size = UDim2.new(1, 0, 0, math.max(24, cardHeight - avatarHeight - 55))
+		card.number.TextSize = compact and 29 or 39
+		card.votes.Position = UDim2.new(0, 0, 1, -45)
+		card.votes.TextSize = compact and 10 or 13
+		card.status.Position = UDim2.new(0, 0, 1, -23)
+		card.status.TextSize = compact and 10 or 12
+	end
 end
 
 local function hookCamera(camera)
@@ -604,7 +636,7 @@ local function update(state)
 	if phase == "JOIN" or phase == "VOTE" then
 		lastTurnRendered = -1
 	end
-	phaseText.Text = ("v0.15 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
+	phaseText.Text = ("v0.16 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
 	clockText.Text = tostring(state.time or 0) .. "s"
 	clockText.TextColor3 = phase == "VOTE" and (state.time or 0) <= 2 and COLOR.Red or COLOR.Purple
 	description.Text = state.message or ""
@@ -615,7 +647,7 @@ local function update(state)
 	movement.Visible = phase == "MOVE" and mine ~= nil and mine.alive == true
 
 	if phase == "JOIN" then
-		phaseText.Text = "v0.15 · NEXT MATCH"
+		phaseText.Text = "v0.16 · NEXT MATCH"
 		description.Text = state.queued and "You're queued for the next race."
 			or "Join at the gold pad or use the button below."
 		ownStats.Text = ("%d/%d PLAYERS READY"):format(state.ready or 0, state.capacity or 8)
@@ -634,7 +666,7 @@ local function update(state)
 	if phase == "RESULTS" then
 		-- Server sends winner/draw text in state.message; show it only in
 		-- the small status panel and avoid blocking the camera.
-		phaseText.Text = "v0.15 · ROUND OVER"
+		phaseText.Text = "v0.16 · ROUND OVER"
 		ownStats.Text = "NEXT MATCH STARTS SOON"
 	end
 
@@ -672,11 +704,9 @@ local function update(state)
 		end
 	end
 
-	-- Make the full breakdown visible on desktop during walking. On mobile,
-	-- display it during REVEAL only, so controls/gameplay remain unobstructed.
-	-- Keep racers' walking camera clear, show extended results to observers.
-	local observing = mine == nil or mine.alive ~= true
-	reveal.Visible = phase == "REVEAL" or (phase == "MOVE" and observing and not isCompact)
+	-- The five non-interactive number cards appear ONLY in the two-second reveal.
+	-- Never show aggregates, avatars or the previous turn's choices in VOTE/MOVE.
+	reveal.Visible = phase == "REVEAL"
 	if reveal.Visible then drawOutcomes(state) end
 
 
