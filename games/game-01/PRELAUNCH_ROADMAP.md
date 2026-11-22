@@ -10,7 +10,8 @@
 - **v0.15** — Reliability source pass and detailed QA checklist. Owner reports joining, movement and cosmetics working; broader multiplayer/mobile and saving tests still pending.
 - **v0.16** — Owner-approved five-number avatar reveal; owner noted the original two-second display was too brief and bottom MOVE instructions redundant.
 - **v0.17** — Five-second reveal, no big bottom MOVE warning, and a winner dance (historical checkpoint).
-- **v0.18** — Free walking/jumping in every phase, no red/green safe-step glass spoilers, configurable R15/R6 dance, and richer coastal materials/lighting/decor. **GitHub scripts and installer committed; Studio visual, movement and performance checks pending.** This does not replace the mandatory later custom-art/features phase.
+- **v0.18** — Introduced free walking/jumping and visual upgrades but owner **found a severe bridge regression**: eliminated racers could continue across remaining glass.
+- **v0.19** — Corrective source and installer committed: illegal crossing breaks attempted/supporting panels and forces normal lobby respawn; per-tile touch validation supplements positional movement checks. **Owner Studio retest required before more visual/feature work.**
 - No Robux purchases, paid power-ups or public launch are authorized.
 
 ## Ordered future stages — versions and features are not yet approved
