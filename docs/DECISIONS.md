@@ -66,6 +66,8 @@ Use this file to separate **confirmed project rules** from **ideas not yet appro
 
 - **2026-11-22:** User confirms v0.15 joining, movement and cosmetics work; requests vote-reveal presentation change, then **clarifies and approves v0.16**: do not show the five **result** number cards or avatars/counts during VOTE. Private 1–5 selection stays as before. During **only the 2-second REVEAL**, display five disabled result cards showing avatars of players who picked each number, each pick total, GREEN safe and RED blocked. Hide cards in MOVE; retain 5-second voting, majority/tie/crack/movement rules. **v0.16 source scripts/installer committed, Studio visual testing pending**. The substantial pre-launch feature and graphical upgrade requirement remains in force.
 
+- **2026-11-22:** Owner requests simplifying the redundant MOVE instructions, extending the too-short number/avatars reveal and adding a visible winning dance. **v0.17 committed:** REVEAL length now 5 seconds (was 2), bottom MOVE warning panel removed while preserving a short top GO/STAY cue, and living winner(s) play Roblox default R15/R6 dance during the existing 5-second RESULTS phase. Animations are cosmetic with a guarded fallback; all voting, crack, movement, rewards, shop, persistence and map rules remain unchanged. Installer contains exact sources. **No Roblox Studio v0.17 test has been done yet.** Major feature and visual upgrades still required before launch.
+
 ## Open decisions
 
 | Question | Options | Status |
