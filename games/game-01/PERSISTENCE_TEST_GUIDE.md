@@ -1,6 +1,6 @@
 # Game 01 v0.13 — test persistent wins and coins
 
-**Status:** Source and Command Bar installer committed on 2026-11-22. Owner has not yet tested DataStore persistence in Roblox Studio or a published Roblox server.
+**Status (2026-11-22):** Owner confirms **Coins persist across restarting Play in Roblox Studio**, validating the Studio test DataStore path. Persistence of **Wins** and behavior in a private published Roblox server are still unverified. Studio Output also displayed a Game Settings SecurityController warning: `Failed to parse secrets: Can't parse JSON`, which appears independent of the successful coin-saving test.
 
 ## What is saved
 
@@ -28,6 +28,12 @@
 4. Start another **new Play session** in the same published experience. Confirm the loaded values match those from the last session.
 5. Finish a second match, stop Play, then start again. Confirm stats accumulate instead of resetting or double-counting.
 6. Test two clients if possible: only participants receive rewards and each player's progress stays separate. Studio mock-player user IDs may differ from a normal published Roblox account, so verify actual live persistence in a private published-server test before release.
+
+## Confirmed Studio test (2026-11-22)
+
+The owner reports coins retained their value after stopping and restarting Play. This is a successful v0.13 Studio DataStore persistence checkpoint. It does **not** by itself prove that Wins also save, or that data in the separate live/published DataStore survives a published-server restart.
+
+An orange Studio `GameSettingsPlugin...SecurityController` message read `Failed to parse secrets: Can't parse JSON`. The message originates from the Studio Game Settings security/secrets code, not the Mythblox server's `[Mythblox DATA]` logging. This is a separately reported Roblox Studio issue (see [Roblox Developer Forum](https://devforum.roblox.com/t/game-settings-local-secrets-warning-output/4082903)); it did not prevent the owner's Studio coin persistence test.
 
 ## If data doesn't save
 
