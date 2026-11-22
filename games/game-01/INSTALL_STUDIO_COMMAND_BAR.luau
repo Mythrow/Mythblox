@@ -5,7 +5,7 @@
 assert(not game:GetService("RunService"):IsRunning(), "Stop the test session before installing.")
 
 local SERVER_SOURCE = [====[
--- Mythblox game-01: glass bridge race v0.12 (server)
+-- Mythblox game-01: glass bridge race v0.13 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -13,7 +13,9 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
-local BUILD_VERSION = "v0.12"
+local DataStoreService = game:GetService("DataStoreService")
+local HttpService = game:GetService("HttpService")
+local BUILD_VERSION = "v0.13"
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -923,6 +925,209 @@ end
 -- Physical join pad and existing UI button call the SAME validated server path.
 deckPrompt.Triggered:Connect(joinQueue)
 
+-- v0.13: Server-owned progress, saved as one per-user DataStore record.
+-- Studio and published experiences NEVER share a store. Studio requires its
+-- own API Services permission; when unavailable, play remains session-only.
+-- Increment-based UpdateAsync prevents lost rewards on overlapping servers.
+local DATA_STORE_NAME = RunService:IsStudio()
+	and "MythbloxGame01_Progress_Studio_v1"
+	or "MythbloxGame01_Progress_v1"
+local dataStore = nil
+do
+	local ok, result = pcall(function()
+		return DataStoreService:GetDataStore(DATA_STORE_NAME)
+	end)
+	if ok then
+		dataStore = result
+	else
+		warn("[Mythblox DATA] Could not open data store: " .. tostring(result))
+	end
+end
+local profiles = {}
+local MAX_STAT = 2000000000
+
+local function safeStat(value)
+	if type(value) ~= "number" or value ~= value or value < 0 then return 0 end
+	return math.clamp(math.floor(value), 0, MAX_STAT)
+end
+
+local function validRecord(value)
+	if value == nil then return true end
+	if type(value) ~= "table" then return false end
+	if value.schema ~= nil and value.schema ~= 1 then return false end
+	for _, field in ipairs({"wins", "coins"}) do
+		local amount = value[field]
+		if amount ~= nil and (type(amount) ~= "number" or amount ~= amount or amount < 0) then
+			return false
+		end
+	end
+	return true
+end
+
+local function updateProfileView(player, profile)
+	local stats = player:FindFirstChild("leaderstats")
+	if not stats or player.Parent ~= Players then return end
+	local wins = stats:FindFirstChild("Wins")
+	local coins = stats:FindFirstChild("Coins")
+	if wins then wins.Value = safeStat(profile.baseWins + profile.pendingWins) end
+	if coins then coins.Value = safeStat(profile.baseCoins + profile.pendingCoins) end
+	refreshSessionLeaderboard()
+end
+
+local function loadProfile(player)
+	local profile = profiles[player]
+	if not profile then return end
+	if not dataStore then
+		profile.status = "unavailable"
+		if player.Parent == Players then player:SetAttribute("MythbloxDataStatus", "SESSION_ONLY") end
+		return
+	end
+
+	local lastError
+	for attempt = 1, 3 do
+		local ok, stored = pcall(function()
+			return dataStore:GetAsync(profile.key)
+		end)
+		if profiles[player] ~= profile then return end
+		if ok and validRecord(stored) then
+			profile.baseWins = stored and safeStat(stored.wins) or 0
+			profile.baseCoins = stored and safeStat(stored.coins) or 0
+			profile.status = "ready"
+			if player.Parent == Players then
+				updateProfileView(player, profile)
+				player:SetAttribute("MythbloxDataStatus", "READY")
+			end
+			print(("[Mythblox DATA] Loaded %s: %d wins, %d coins (%s)"):format(
+				player.Name, profile.baseWins, profile.baseCoins, DATA_STORE_NAME
+			))
+			return
+		end
+		lastError = ok and "invalid stored data format" or tostring(stored)
+		if ok then break end -- Do not overwrite malformed saved data.
+		if attempt < 3 then task.wait(2 ^ (attempt - 1)) end
+	end
+
+	-- Critical: NEVER overwrite persistent data with defaults after a failed load.
+	profile.status = "unavailable"
+	if player.Parent == Players then player:SetAttribute("MythbloxDataStatus", "SESSION_ONLY") end
+	warn("[Mythblox DATA] LOAD FAILED for " .. player.Name .. ": " ..
+		tostring(lastError) .. ". This session's rewards will NOT be saved.")
+end
+
+local function awardProgress(player, addedWins, addedCoins)
+	local profile = profiles[player]
+	if not profile then
+		warn("[Mythblox DATA] No profile exists for " .. player.Name)
+		return
+	end
+	profile.pendingWins += safeStat(addedWins)
+	profile.pendingCoins += safeStat(addedCoins)
+	updateProfileView(player, profile)
+end
+
+local function saveProfile(player, reason)
+	local profile = profiles[player]
+	if not profile or profile.status ~= "ready" or not dataStore then return false end
+
+	-- One save at a time per user, including overlapping autosave and shutdown.
+	local waitUntil = os.clock() + 12
+	while profile.saving and os.clock() < waitUntil do task.wait(0.1) end
+	if profile.saving then
+		warn("[Mythblox DATA] Save still busy for " .. player.Name .. " (" .. reason .. ")")
+		return false
+	end
+
+	local winsDelta = profile.pendingWins
+	local coinsDelta = profile.pendingCoins
+	if winsDelta == 0 and coinsDelta == 0 then return true end
+	profile.saving = true
+	-- If the cloud commits an operation but the response is lost, the same
+	-- operation ID prevents a retry from applying its rewards a second time.
+	local operationId = HttpService:GenerateGUID(false)
+
+	local lastError
+	for attempt = 1, 3 do
+		local ok, result = pcall(function()
+			return dataStore:UpdateAsync(profile.key, function(stored)
+				-- Callback may be rerun by Roblox: no yields, no side effects.
+				if not validRecord(stored) then return nil end
+				local recent = {}
+				if stored and type(stored.recentSaves) == "table" then
+					for _, token in ipairs(stored.recentSaves) do
+						if type(token) == "string" then
+							if token == operationId then return stored end
+							table.insert(recent, token)
+						end
+					end
+				end
+				-- Bound storage size; 20 recent transaction IDs suffice for
+				-- retry protection without unbounded profile growth.
+				while #recent >= 20 do table.remove(recent, 1) end
+				table.insert(recent, operationId)
+				local oldWins = stored and safeStat(stored.wins) or 0
+				local oldCoins = stored and safeStat(stored.coins) or 0
+				return {
+					schema = 1,
+					wins = safeStat(oldWins + winsDelta),
+					coins = safeStat(oldCoins + coinsDelta),
+					recentSaves = recent,
+				}
+			end)
+		end)
+		if ok and type(result) == "table" then
+			-- Rewards granted while the save was in flight remain pending.
+			profile.pendingWins = math.max(0, profile.pendingWins - winsDelta)
+			profile.pendingCoins = math.max(0, profile.pendingCoins - coinsDelta)
+			profile.baseWins = safeStat(result.wins)
+			profile.baseCoins = safeStat(result.coins)
+			profile.saving = false
+			updateProfileView(player, profile)
+			print(("[Mythblox DATA] Saved %s (+%dW +%dC; %s)"):format(
+				player.Name, winsDelta, coinsDelta, reason
+			))
+			return true
+		end
+		lastError = ok and "update was cancelled by invalid stored data" or tostring(result)
+		if ok then break end
+		if attempt < 3 then task.wait(2 ^ (attempt - 1)) end
+	end
+	profile.saving = false
+	warn("[Mythblox DATA] SAVE FAILED for " .. player.Name ..
+		" (" .. reason .. "): " .. tostring(lastError) ..
+		". Rewards remain pending in this server.")
+	return false
+end
+
+-- Incremental autosaves avoid excessive requests on every vote/round.
+task.spawn(function()
+	while true do
+		task.wait(150)
+		for player, profile in pairs(profiles) do
+			if player.Parent == Players and profile.status == "ready" then
+				task.spawn(saveProfile, player, "autosave")
+			end
+		end
+	end
+end)
+
+-- PlayerRemoving and BindToClose cooperate through the per-profile save lock.
+game:BindToClose(function()
+	local remaining = 0
+	for player, profile in pairs(profiles) do
+		remaining += 1
+		task.spawn(function()
+			local deadline = os.clock() + 15
+			while profile.status == "loading" and os.clock() < deadline do
+				task.wait(0.15)
+			end
+			saveProfile(player, "shutdown")
+			remaining -= 1
+		end)
+	end
+	local deadline = os.clock() + 27
+	while remaining > 0 and os.clock() < deadline do task.wait(0.15) end
+end)
+
 local function makeLeaderstats(player)
 	if player:FindFirstChild("leaderstats") then return end
 	local folder = Instance.new("Folder")
@@ -938,6 +1143,17 @@ end
 
 local function onPlayerAdded(player)
 	makeLeaderstats(player)
+	profiles[player] = {
+		key = "Player_" .. tostring(player.UserId),
+		baseWins = 0,
+		baseCoins = 0,
+		pendingWins = 0,
+		pendingCoins = 0,
+		status = "loading",
+		saving = false,
+	}
+	player:SetAttribute("MythbloxDataStatus", "LOADING")
+	task.spawn(loadProfile, player)
 	-- Override any Baseplate SpawnLocation: spawning at (0,0,0) can land
 	-- underneath the glass arena and inside its lava region.
 	player.RespawnLocation = lobby
@@ -970,6 +1186,18 @@ Players.PlayerRemoving:Connect(function(player)
 	queue[player] = nil
 	if active[player] and active[player].alive then
 		eliminate(player, "left the server", nil)
+	end
+	local profile = profiles[player]
+	if profile then
+		-- Load may still be in flight if the player leaves immediately.
+		task.spawn(function()
+			local deadline = os.clock() + 15
+			while profile.status == "loading" and os.clock() < deadline do
+				task.wait(0.15)
+			end
+			saveProfile(player, "leave")
+			if profiles[player] == profile then profiles[player] = nil end
+		end)
 	end
 end)
 
@@ -1193,13 +1421,7 @@ local function scoreMatch(winners, participants)
 	for _, player in ipairs(winners) do awarded[player] = true end
 	for _, player in ipairs(participants) do
 		if player.Parent == Players then
-			local stats = player:FindFirstChild("leaderstats")
-			if stats then
-				local wins = stats:FindFirstChild("Wins")
-				local coins = stats:FindFirstChild("Coins")
-				if coins then coins.Value += awarded[player] and 25 or 5 end
-				if wins and awarded[player] then wins.Value += 1 end
-			end
+			awardProgress(player, awarded[player] and 1 or 0, awarded[player] and 25 or 5)
 		end
 	end
 end
@@ -1305,13 +1527,13 @@ end
 ]====]
 
 local CLIENT_SOURCE = [====[
--- Mythblox Game 01 · gameplay feedback v0.12
+-- Mythblox Game 01 · gameplay feedback v0.13
 -- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
-local BUILD_VERSION = "v0.12"
+local BUILD_VERSION = "v0.13"
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local network = ReplicatedStorage:WaitForChild("MythbloxGame01")
@@ -1797,7 +2019,7 @@ local function update(state)
 	if phase == "JOIN" or phase == "VOTE" then
 		lastTurnRendered = -1
 	end
-	phaseText.Text = ("v0.12 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
+	phaseText.Text = ("v0.13 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
 	clockText.Text = tostring(state.time or 0) .. "s"
 	clockText.TextColor3 = phase == "VOTE" and (state.time or 0) <= 2 and COLOR.Red or COLOR.Purple
 	description.Text = state.message or ""
@@ -1807,7 +2029,7 @@ local function update(state)
 	movement.Visible = phase == "MOVE" and mine ~= nil and mine.alive == true
 
 	if phase == "JOIN" then
-		phaseText.Text = "v0.12 · NEXT MATCH"
+		phaseText.Text = "v0.13 · NEXT MATCH"
 		description.Text = state.queued and "You're queued for the next race."
 			or "Join at the gold pad or use the button below."
 		ownStats.Text = ("%d/%d PLAYERS READY"):format(state.ready or 0, state.capacity or 8)
@@ -1826,7 +2048,7 @@ local function update(state)
 	if phase == "RESULTS" then
 		-- Server sends winner/draw text in state.message; show it only in
 		-- the small status panel and avoid blocking the camera.
-		phaseText.Text = "v0.12 · ROUND OVER"
+		phaseText.Text = "v0.13 · ROUND OVER"
 		ownStats.Text = "NEXT MATCH STARTS SOON"
 	end
 
@@ -1883,7 +2105,7 @@ stateEvent.OnClientEvent:Connect(update)
 command:FireServer("Sync")
 ]====]
 
--- Diagnostic/cleanup installer: v0.12
+-- Diagnostic/cleanup installer: v0.13
 -- Remove known legacy copies from services used by previous Mythblox builds.
 -- This intentionally does NOT remove scripts belonging to other games.
 -- Permanently remove the UNUSED default Roblox Baseplate spawn while in
@@ -1969,12 +2191,12 @@ for _, child in ipairs(game:GetDescendants()) do
 	end
 end
 
-print("[Mythblox INSTALL] v0.12 VERIFIED: 2 scripts installed and Source checked.")
-print("[Mythblox INSTALL] Server: " .. liveServer:GetFullName() .. " | Build v0.12")
-print("[Mythblox INSTALL] Client: " .. liveClient:GetFullName() .. " | Build v0.12")
+print("[Mythblox INSTALL] v0.13 VERIFIED: 2 scripts installed and Source checked.")
+print("[Mythblox INSTALL] Server: " .. liveServer:GetFullName() .. " | Build v0.13")
+print("[Mythblox INSTALL] Client: " .. liveClient:GetFullName() .. " | Build v0.13")
 print("[Mythblox INSTALL] Cleaned " .. #removed .. " previous Mythblox script/UI objects.")
 print("[Mythblox INSTALL] Disabled " .. #disabledLegacy .. " other old game scripts found by source signature.")
 if #suspicious > 0 then
 	warn("[Mythblox INSTALL] Other Mythblox scripts still exist: " .. table.concat(suspicious, "; "))
 end
-print("[Mythblox INSTALL] NOW START A FRESH PLAY SESSION. Confirm the top HUD visibly says v0.12, and check Output for SERVER RUNNING v0.12 and CLIENT RUNNING v0.12.")
+print("[Mythblox INSTALL] NOW START A FRESH PLAY SESSION. Confirm the top HUD visibly says v0.13, and check Output for SERVER RUNNING v0.13 and CLIENT RUNNING v0.13.")
