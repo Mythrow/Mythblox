@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-22):** Owner played v0.20 and reported pass-through trees/lamps, nonfunctional benches, and unstaffed open shop booths. **v0.21** now adds physical colliders, genuine Seats, and staffed enclosed service kiosks. Source/installer committed, **not yet owner-tested**; a 2-player friend test is next. Earlier v0.19 illegal-step elimination, saved Wins/cosmetics after restart and private-server/mobile QA remain unverified.
+**Status (2026-11-22):** User reports v0.21 lobby floor too bright and mobile top panel occupying too much screen. **v0.22 Soft Earth Coast** source and installer now add a muted earthy palette, matte low-glare materials/lighting, a two-row 49px phone HUD and condensed avatar-reveal/vote trays. **Real-phone and Studio v0.22 QA pending.** Previous v0.21 seats/shop collision and v0.19 illegal-step shatter fix also require full friend-session verification, as do mobile performance and saved purchase/win persistence.
 
 ## Playtest log
 
@@ -38,6 +38,25 @@
 6. Repeat with 3–4 clients if the two-player flow works.
 
 
+
+## v0.22 — actual-phone glare, earthy theme and small HUD
+
+**GitHub code and installer prepared; Roblox phone/Studio owner QA pending.** This is a styling/responsiveness pass, not proof of release readiness.
+
+- [ ] **Reinstall/publish:** Stop Studio Play, copy the latest [one-paste installer](INSTALL_STUDIO_COMMAND_BAR.luau) using Raw into Edit-mode Command Bar, run it, check `v0.22 VERIFIED` and HUD/server/client v0.22. **Publish to Roblox** afterward if testing with your friend on the regular app, without changing private tester access.
+- [ ] **Actual portrait phone:** look at arrival plaza near spawn, SHOP and cosmetics, paths, fountain, benches, ocean, sky and bridge. No white-hot stone, mirror/glare, neon-blue architectural parts, harsh neon lighting or overexposed sun streaks.
+- [ ] **Theme across props:** oat beige plaza, sand paths, sage SHOP roof, dusty-rose COSMETICS roof, muted brown signboards/metal framing, warm wood benches/counters and restrained evergreen plants; all should feel like one soft earthy style.
+- [ ] **Matte textures:** verify textured Sandstone/Pavement/Limestone still show detail on high and low phone graphics modes without glittery reflections; built-in Bloom is off and ambient/sun glow does not wash out gameplay.
+- [ ] **Mobile top bar:** on 320px- and 390px-class portrait viewports, the status panel occupies around **49px** (not 83px), sits beneath the Roblox native safe area, and leaves the character/bridge visible. Text must not clip or overlap the countdown/Wins/Coins.
+- [ ] **Landscape phone:** rotate screen or use Device Emulator. HUD should still switch to compact based on short screen height, with no large desktop panel. On wide desktop displays, retain the fuller status and progress display.
+- [ ] **Phone status contents:** verify phase/round + seconds on top, `READY`, `GO 1–N`, `WAIT`, elimination or spectator guidance underneath. Wins and Coins chip must reflect leaderboard stats; full verbose guidance is desktop-only.
+- [ ] **Mobile voting:** all 1–5 buttons remain easily tappable and private during VOTE; vote tray fits above native thumb control area on short portrait and landscape screens. Changing a vote still works within server rules.
+- [ ] **Five-number reveal:** for five seconds, five safe/blocked result cards show the actual avatars and pick totals. All five fit across a narrow phone without overlapping text; avatar grids show up to 8 players and do not hide counts. Muted green/red are distinguishable. The display disappears in MOVE.
+- [ ] **Friend test:** load the updated private Roblox-app experience with a friend. Check that two players can sit on the same bench, collide with trees/lamps, browse the staffed COSMETICS counter, JOIN, secretly vote and finish a round.
+- [ ] **Critical gameplay regression:** try stepping early, jumping over a panel or going beyond the safe allowance. Glass **must break** and the racer must be eliminated/respawn. This v0.19 fix has not yet been individually confirmed by the owner.
+- [ ] **Data/performance:** test Coins/Wins/owned cosmetics after rejoining and inspect FPS on a lower-end phone. Report red Output errors, too-small avatar thumbnails, excessive UI overlays, over-darkened surfaces or path/collision obstructions.
+
+**Do not treat code consistency checks as a Studio or phone rendering test.** Share a phone screenshot for the next visual iteration.
 
 ## v0.21 — physical interactions and two-player friend test
 
