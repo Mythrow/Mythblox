@@ -1,4 +1,4 @@
--- Mythblox game-01: Azure Coast Resort v0.20 (server)
+-- Mythblox game-01: Azure Coast Resort v0.21 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -8,7 +8,7 @@ local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
 local DataStoreService = game:GetService("DataStoreService")
 local HttpService = game:GetService("HttpService")
-local BUILD_VERSION = "v0.20"
+local BUILD_VERSION = "v0.21"
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -323,6 +323,17 @@ local function detail(name, size, position, color, material, parent)
 	item.CanTouch = false
 	item.CanQuery = false
 	item.CastShadow = false
+	return item
+end
+
+-- Unlike little visual trim, walkable furniture and real architecture need
+-- solid physics. Keep this explicit rather than making every decorative part
+-- collidable (which would obstruct the bridge and spectator sightlines).
+local function solidDetail(name, size, position, color, material, parent)
+	local item = part(name, size, position, color, material or Enum.Material.Limestone, parent or hub)
+	item.CanCollide = true
+	item.CanTouch = false
+	item.CanQuery = true
 	return item
 end
 
@@ -687,8 +698,10 @@ textSign(rewardSign, "REWARDS | COMING SOON", 2.5, 226)
 
 -- Small cartoony trees and bushes around the EDGE, leaving sightlines open.
 local function makeTree(x, z, height)
-	local trunk = decorative("TreeTrunk", Vector3.new(2, height, 2),
+	local trunk = decorative("TreeTrunk", Vector3.new(3.1, height, 3.1),
 		Vector3.new(x, 24 + height / 2, z), WOOD, Enum.Material.Wood)
+	trunk.CanCollide = true
+	trunk.CanQuery = true
 	for dx = -1, 1 do
 		for dz = -1, 1 do
 			if dx == 0 or dz == 0 then
@@ -700,9 +713,9 @@ local function makeTree(x, z, height)
 					Enum.Material.LeafyGrass
 				)
 				leaf.Shape = Enum.PartType.Ball
-				leaf.CanCollide = false
+				leaf.CanCollide = true
 				leaf.CanTouch = false
-				leaf.CanQuery = false
+				leaf.CanQuery = true
 			end
 		end
 	end
@@ -722,9 +735,9 @@ for _, spot in ipairs({
 	local bush = decorative("CoastalFernCluster", Vector3.new(5, 3.4, 5),
 		Vector3.new(spot[1], 25.65, spot[2]), THEME.Evergreen, Enum.Material.LeafyGrass)
 	bush.Shape = Enum.PartType.Ball
-	bush.CanCollide = false
+	bush.CanCollide = true
 	bush.CanTouch = false
-	bush.CanQuery = false
+	bush.CanQuery = true
 end
 
 -- A landscaped central arrival courtyard, behind the original spawn. Its
@@ -744,10 +757,10 @@ local waterMirror = horizontalCylinder(detail("FountainStillWater",
 	THEME.Foam, Enum.Material.Glass))
 waterMirror.Transparency = 0.22
 waterMirror.Reflectance = 0.14
-local pedestal = horizontalCylinder(detail("FountainCrystalPedestal",
+local pedestal = horizontalCylinder(solidDetail("FountainCrystalPedestal",
 	Vector3.new(2.3, 4.5, 4.5), Vector3.new(0, 26.5, -118),
 	THEME.Brass, Enum.Material.Metal))
-local crystal = detail("FountainSeaGlassSculpture", Vector3.new(3.5, 5.7, 3.5),
+local crystal = solidDetail("FountainSeaGlassSculpture", Vector3.new(3.5, 5.7, 3.5),
 	Vector3.new(0, 29.3, -118), THEME.Foam, Enum.Material.Glass)
 crystal.Shape = Enum.PartType.Ball
 crystal.Transparency = 0.12
@@ -764,17 +777,56 @@ for _, side in ipairs({-1, 1}) do
 		Vector3.new(side * 13, 25.0, -118), THEME.Limestone, Enum.Material.Limestone)
 end
 
--- Lounge furniture is built from matching limestone, teak and teal rather
--- than bare multicolored primitive placeholders.
+-- Proper multiplayer-friendly Seats, rather than decorative slabs. Each
+-- bench holds TWO separate players. Touching the Seat or pressing E will
+-- attach a standard Roblox Sit weld; jumping gets you up normally.
 local function coastBench(x, z)
-	detail("ResortTeakSeat", Vector3.new(8.3, 0.55, 2.3),
-		Vector3.new(x, 25.65, z), WOOD, Enum.Material.WoodPlanks)
-	detail("ResortTeakBack", Vector3.new(8.3, 2, 0.46),
-		Vector3.new(x, 26.65, z + 1), WOOD, Enum.Material.WoodPlanks)
+	local bench = Instance.new("Model")
+	bench.Name = "CoastTwoPersonBench"
+	bench.Parent = hub
+
+	solidDetail("ResortTeakBack", Vector3.new(8.4, 2.0, 0.5),
+		Vector3.new(x, 26.75, z + 1.24),
+		WOOD, Enum.Material.WoodPlanks, bench)
 	for _, side in ipairs({-1, 1}) do
-		detail("ResortBenchLeg", Vector3.new(0.6, 1.4, 2),
-			Vector3.new(x + side * 3.4, 24.8, z),
-			THEME.DeepTeal, Enum.Material.Metal)
+		solidDetail("ResortBenchLeg", Vector3.new(0.55, 1.48, 2.2),
+			Vector3.new(x + side * 3.6, 24.98, z),
+			THEME.DeepTeal, Enum.Material.Metal, bench)
+		local seat = Instance.new("Seat")
+		seat.Name = side < 0 and "LeftSeat" or "RightSeat"
+		seat.Size = Vector3.new(3.9, 0.46, 2.25)
+		seat.Position = Vector3.new(x + side * 2.06, 25.72, z)
+		seat.Anchored = true
+		seat.CanCollide = true
+		seat.Disabled = false
+		seat.Material = Enum.Material.WoodPlanks
+		seat.Color = WOOD
+		seat.TopSurface = Enum.SurfaceType.Smooth
+		seat.BottomSurface = Enum.SurfaceType.Smooth
+		seat.Parent = bench
+
+		local sit = Instance.new("ProximityPrompt")
+		sit.Name = "SitOnBench"
+		sit.ActionText = "Sit"
+		sit.ObjectText = "Resort bench"
+		sit.KeyboardKeyCode = Enum.KeyCode.E
+		sit.HoldDuration = 0
+		sit.MaxActivationDistance = 8
+		sit.RequiresLineOfSight = false
+		sit.Parent = seat
+		seat:GetPropertyChangedSignal("Occupant"):Connect(function()
+			sit.Enabled = seat.Occupant == nil
+		end)
+		sit.Triggered:Connect(function(player)
+			if seat.Occupant or player.Parent ~= Players then return end
+			local character = player.Character
+			local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+			local root = character and character:FindFirstChild("HumanoidRootPart")
+			if humanoid and humanoid.Health > 0 and root
+				and (root.Position - seat.Position).Magnitude <= 9 then
+				seat:Sit(humanoid)
+			end
+		end)
 	end
 end
 for _, side in ipairs({-1, 1}) do
@@ -784,9 +836,9 @@ for _, side in ipairs({-1, 1}) do
 end
 
 local function planter(x, z)
-	detail("CoastCeramicPlanter", Vector3.new(4.5, 2.7, 4.5),
+	solidDetail("CoastCeramicPlanter", Vector3.new(4.5, 2.7, 4.5),
 		Vector3.new(x, 25.65, z), THEME.Ivory, Enum.Material.Limestone)
-	local foliage = detail("CoastShrub", Vector3.new(5.1, 4.2, 5.1),
+	local foliage = solidDetail("CoastShrub", Vector3.new(5.1, 4.2, 5.1),
 		Vector3.new(x, 28.15, z), THEME.Evergreen, Enum.Material.LeafyGrass)
 	foliage.Shape = Enum.PartType.Ball
 end
@@ -795,18 +847,18 @@ for _, pair in ipairs({
 	{-72, -113}, {72, -113}, {-74, -52}, {74, -52}
 }) do planter(pair[1], pair[2]) end
 
--- Miniature shaded sitting lounges flank the gallery at x=+-67; all props
--- are noncolliding to avoid changing social-lobby traversal or shopping.
+-- Shaded lounges have physical columns and roofs, leaving entrances clear.
+-- Upper hanging lanterns/slats remain decorative to avoid snagging avatars.
 for _, side in ipairs({-1, 1}) do
 	local x = side * 68
 	local z = -71
 	for _, dx in ipairs({-8, 8}) do
 		for _, dz in ipairs({-7, 7}) do
-			detail("CoastPergolaColumn", Vector3.new(0.85, 7.2, 0.85),
+			solidDetail("CoastPergolaColumn", Vector3.new(0.85, 7.2, 0.85),
 				Vector3.new(x + dx, 28.1, z + dz), THEME.Limestone, Enum.Material.Limestone)
 		end
 	end
-	detail("CoastPergolaRoof", Vector3.new(18.3, 0.55, 16),
+	solidDetail("CoastPergolaRoof", Vector3.new(18.3, 0.55, 16),
 		Vector3.new(x, 31.95, z), THEME.DeepTeal, Enum.Material.Metal)
 	for _, slatX in ipairs({-6, -3, 0, 3, 6}) do
 		detail("PergolaChampagneSlat", Vector3.new(0.2, 0.1, 15.5),
@@ -827,9 +879,9 @@ end
 -- Lamps guide players naturally from the expanded plaza to JOIN without
 -- screenspace arrows or intrusive floating titles.
 local function resortLamp(x, z)
-	detail("ResortLampPedestal", Vector3.new(2.0, 0.7, 2.0),
+	solidDetail("ResortLampPedestal", Vector3.new(2.0, 0.7, 2.0),
 		Vector3.new(x, 24.65, z), THEME.Limestone, Enum.Material.Limestone)
-	detail("ResortLampColumn", Vector3.new(0.5, 7.3, 0.5),
+	solidDetail("ResortLampColumn", Vector3.new(0.75, 7.3, 0.75),
 		Vector3.new(x, 28.4, z), THEME.DeepTeal, Enum.Material.Metal)
 	local lamp = detail("ResortLantern", Vector3.new(1.5, 1.6, 1.5),
 		Vector3.new(x, 32.8, z), THEME.Foam, Enum.Material.Glass)
@@ -854,18 +906,18 @@ for _, pair in ipairs({
 -- a photo frame facing the ocean and a compact trophy-sculpture courtyard.
 local photoX, photoZ = 70, -110
 for _, side in ipairs({-1, 1}) do
-	detail("PhotoArchColumn", Vector3.new(1.5, 11, 1.5),
+	solidDetail("PhotoArchColumn", Vector3.new(1.5, 11, 1.5),
 		Vector3.new(photoX + side * 6, 29.5, photoZ),
 		THEME.DeepTeal, Enum.Material.Metal)
 end
-detail("PhotoArchHeader", Vector3.new(14.2, 1.25, 1.6),
+solidDetail("PhotoArchHeader", Vector3.new(14.2, 1.25, 1.6),
 	Vector3.new(photoX, 35.3, photoZ), THEME.Brass)
 local photoAnchor = detail("CoastPhotoSpotSignAnchor", Vector3.new(0.5, 0.5, 0.5),
 	Vector3.new(photoX, 32.4, photoZ - 1), THEME.DeepTeal)
 textSign(photoAnchor, "PHOTO SPOT | AZURE COAST", 1.0, 210)
 
 local trophyX, trophyZ = -67, -110
-local trophyStand = horizontalCylinder(detail("AzureTrophyPedestal",
+local trophyStand = horizontalCylinder(solidDetail("AzureTrophyPedestal",
 	Vector3.new(1.6, 7, 7), Vector3.new(trophyX, 25.3, trophyZ),
 	THEME.Limestone, Enum.Material.Limestone))
 local trophy = detail("AzureTrophySculpture", Vector3.new(3.4, 6, 3.4),
