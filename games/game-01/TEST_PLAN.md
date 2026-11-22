@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-22):** Owner reports v0.15 joining/movement/cosmetics work, with further feedback on the v0.16 reveal being too brief and the large bottom MOVE warning redundant. **v0.17 implements a five-second reveal, removes the warning panel and adds a winner dance; Studio QA pending.** Stored Wins/skins after restart, published-server persistence and mobile/multiplayer QA remain open. Significant features and visual improvements remain mandatory before launch.
+**Status (2026-11-22):** Owner reports earlier joining/movement/cosmetics functionality. **v0.18 source/installer adds permanently enabled walking/jumping, removes full-panel path hints, configurable dance IDs and a premium material/lighting pass; not yet tested in Studio.** The 5-second avatar reveal remains; saved Wins/skins after restart and private-server/mobile QA remain open. Significant further features and custom visuals are still required before launch.
 
 ## Playtest log
 
@@ -37,7 +37,28 @@
 
 
 
-## v0.17 — longer results reveal, streamlined MOVE and celebration
+## v0.18 — unrestricted avatar controls, fair no-spoiler glass and upgraded environment
+
+**Latest version; owner Studio QA pending.** Stop Play, install the latest [Command Bar installer](INSTALL_STUDIO_COMMAND_BAR.luau) in Edit mode and verify `v0.18 VERIFIED`, then v0.18 HUD and both server/client Output tags.
+
+- [ ] During **JOIN**, move and jump freely around the lobby, join deck and cosmetics stall.
+- [ ] During **VOTE** and **REVEAL**, you can **walk and jump normally on your current glass panel**. WalkSpeed and JumpPower must not drop to zero; jumping is not disabled.
+- [ ] During **MOVE** and **RESULTS**, movement/jumping still work. Winners should dance during the 5-second RESULTS phase, then the character can naturally resume moving/respawn.
+- [ ] Validate **advance gating remains authoritative**: walking across to the next panel before MOVE still causes the existing early-step failure; going beyond allowed N, skipping panels, leaving the lane or stepping backwards during MOVE still fails. This is separate from the freedom to walk/jump.
+- [ ] With any safe selection, check that no entire future panel turns **green**. With a blocked selection, check that no entire next panel turns **red**. Neutral glass should retain classic or purchased tint; cracked glass has crack lines rather than whole-tile danger coloration.
+- [ ] The **five number result cards** during 5-second REVEAL still mark SAFE **green** and BLOCKED **red**; the tiles themselves stay neutral. The small MOVE HUD says `GO · ADVANCE 1–N PANELS` or `NO ADVANCE · WAIT THIS TURN` without naming colored tiles.
+- [ ] Finish gate gold tile and checkered stripes remain distinct; a shattered tile fades and no giant red panel flashes. The glass tile materials remain transparent enough to read their edges.
+- [ ] Compare island/plaza/paths/stalls/spectator walks before/after: marble, stone, pavement, warm accent trims, metal roofs/rails and leafy foliage should be clearly visible and **not block traversal** or overlap the lobby/shop prompts.
+- [ ] Check sunlight/atmosphere, bloom, CrackedLava/Basalt, ocean reflections and finish arch look cohesive at daytime without glare obscuring voting UI. No overexposed glass or unreadable signs.
+- [ ] Confirm the cosmetics prompt still opens and can purchase/reequip saved skins; changing colors only affects neutral bridge glass, not the five result cards.
+- [ ] Confirm **R15 and R6 default victory dances** in Studio. If testing a custom animation ID, validate rig compatibility, permissions, and that failures do not suppress scoring or confetti.
+- [ ] Test phone and tablet viewport: lobby, five avatar groups, movement controls and cosmetics UI should remain clear.
+- [ ] With **2, 4 and 8 players**, verify physical frame rate and server/client Output remain stable despite added decorative details and per-tile metal corner brackets.
+- [ ] Recheck Wins, Coins, ownership and equipped skin after restarting Play; then test in a private published Roblox server with its separate DataStore.
+
+**This is a graphics and controls revision, not public-launch signoff.** No Roblox Studio tests performed by the assistant.
+
+## v0.17 — historical checklist (superseded by v0.18 tile/control changes)
 
 **Not yet run in Roblox Studio.** Test with 2 clients so the reveal and winner dance are observable.
 
@@ -46,7 +67,7 @@
 - [ ] During VOTE, no public avatars, choice counts or SAFE/BLOCKED result cards appear. Local number-selection controls still work normally.
 - [ ] During REVEAL, all five green/red number cards appear with correct avatars and totals and stay visible for the full **5 seconds**. Results remain non-clickable. At MOVE start, they disappear for players and spectators.
 - [ ] During MOVE, the **large bottom warning panel is absent**. The small top text should show `GO · WALK 1–N GREEN TILES` for safe votes or `STAY · THIS TURN` for blocked votes. The old "Your next tile is unsafe" text must not appear anywhere.
-- [ ] Confirm allowed tiles still paint GREEN, blocked tiles still paint RED, jumping/skipping/backwards and no-forward-movement penalties work, and the winner rules are unchanged.
+- [ ] **Historical v0.17 behavior only:** allowed tiles were painted GREEN and blocked RED. **v0.18 removes this**; use the current v0.18 no-spoiler tests above instead. Illegal forward steps and other rule checks remain valid.
 - [ ] When a **solo Studio practice** player reaches the last tile, or a competitive player wins, confetti should appear and the winning avatar should **dance in place during RESULTS**.
 - [ ] Test a R15 winner and a R6 winner, where available. Neither victory animation may prevent scoring, interfere with the next match or persist after results/respawn.
 - [ ] Test **last-survivor** and **tied winners**: all eligible living winners should dance; eliminated players should not dance. Confetti should still be emitted once.
