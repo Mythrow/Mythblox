@@ -1,6 +1,14 @@
 # Soft Earth Coast — Game 01 art direction (palette v0.22; daylight v0.24; matte sky/world v0.25)
 
-**Status:** **v0.30** retains the muted soft-earth world and v0.29 whole-row auto-join/lobby fencing, while adding the owner-approved tutorial, race HUD, compact results, spectator camera controls, owned-color inventory, accessibility/audio preferences and reward toasts. The 43px mobile phase strip and separate Coins/Wins wallet remain. Avoid stacking permanent overlays over voting or the five-number reveal; all modal/help cards should be skippable/closable and touch movement must stay usable. Roblox device QA pending.
+**Status:** **v0.31** retains Soft Earth Coast matte stone, natural light, cloud cover, mobile UI and whole-row auto-JOIN, while cleaning visual construction. The REWARDS board is mounted straight into the grass, lamps have clear placement, side/rear/front-end island fencing uses open wood rails and stone posts backed by invisible jump barriers (not reflective glass), the central spectator window stays glass, and edge inlays/shop window joints are simplified. Real Studio/mobile QA pending.
+
+## v0.31 fine-construction rules
+
+- Build furniture and signage from **grounded supports**, not large unrelated metal blocks; REWARDS uses timber posts directly on the ground.
+- The hub perimeter and front **ends** use open two-level wood rails plus matte stone uprights, **not full-height glass sheets**. A 22-stud-high invisible physical wall just outside these rails prevents jumping out. Central front spectator glass is intentional and retained.
+- No duplicated coplanar strips around plaza and join deck. Keep simple embedded matte inlays that do not run below adjoining slabs. Do not paint very bright bands or neon accents on large floor surfaces.
+- Align wood kiosk back walls from floor to roof, stone side walls to upper windows, and roof cornice only on front (avoid multiple competing roof-corner parts).
+- Leave the 90×24 whole-row zone, join detection, gameplay, mobile HUD, saved profiles and cosmetics unchanged. Verify all four close-up screenshot viewpoints with actual Roblox rendering.
 
 ## Creative direction
 
