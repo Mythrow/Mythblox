@@ -130,8 +130,8 @@ clouds.Enabled = true
 terrain.WaterColor = THEME.Ocean
 terrain.WaterTransparency = 0.36
 terrain.WaterReflectance = 0.045
-terrain.WaterWaveSize = 0.14
-terrain.WaterWaveSpeed = 8
+terrain.WaterWaveSize = 0.08
+terrain.WaterWaveSpeed = 5
 
 -- Remove only the stock Baseplate SpawnLocation: its star icon is visible
 -- beneath the arena's lava even though our players use the elevated lobby.
@@ -235,7 +235,7 @@ local function textSign(parent, message, yOffset, width)
 	board.Position = parent.Position + Vector3.new(0, yOffset or 3, 0)
 	board.Material = Enum.Material.Metal
 	board.Color = THEME.Brown
-	board.Reflectance = 0.08
+	board.Reflectance = 0.012
 	board.Parent = parent.Parent or world
 
 	local function face(side, name)
@@ -347,16 +347,16 @@ local islandStone = decorative(
 	Vector3.new(0, 8, -71), THEME.Stone, Enum.Material.Rock
 )
 local ground = decorative("HubGrassIsland", Vector3.new(186, 4, 124), Vector3.new(0, 22, -71), GRASS, Enum.Material.Grass)
-local plaza = decorative("SpawnPlaza", Vector3.new(56, 0.4, 39), Vector3.new(0, 24.2, -83), CREAM, Enum.Material.Limestone)
-local path = decorative("MainWalkPath", Vector3.new(13, 0.25, 39), Vector3.new(0, 24.14, -51.5), CREAM, Enum.Material.Pavement)
-local spurLeft = decorative("LeftShopPath", Vector3.new(27, 0.22, 7), Vector3.new(-19, 24.13, -48), CREAM, Enum.Material.Pavement)
-local spurRight = decorative("RightShopPath", Vector3.new(27, 0.22, 7), Vector3.new(19, 24.13, -48), CREAM, Enum.Material.Pavement)
+local plaza = decorative("SpawnPlaza", Vector3.new(56, 0.4, 39), Vector3.new(0, 24.2, -83), THEME.Limestone, Enum.Material.Sandstone)
+local path = decorative("MainWalkPath", Vector3.new(13, 0.25, 39), Vector3.new(0, 24.14, -51.5), THEME.Sandstone, Enum.Material.Pavement)
+local spurLeft = decorative("LeftShopPath", Vector3.new(27, 0.22, 7), Vector3.new(-19, 24.13, -48), THEME.Sandstone, Enum.Material.Pavement)
+local spurRight = decorative("RightShopPath", Vector3.new(27, 0.22, 7), Vector3.new(19, 24.13, -48), THEME.Sandstone, Enum.Material.Pavement)
 -- Additional social/gallery paths stay behind the original game-facing deck.
 for _, side in ipairs({-1, 1}) do
 	decorative("WestEastLoungePath", Vector3.new(57, 0.20, 6),
-		Vector3.new(side * 56, 24.1, -88), CREAM, Enum.Material.Limestone)
+		Vector3.new(side * 56, 24.1, -88), THEME.Limestone, Enum.Material.Sandstone)
 	decorative("LoungeReturnPath", Vector3.new(7, 0.20, 25),
-		Vector3.new(side * 67, 24.1, -75), CREAM, Enum.Material.Limestone)
+		Vector3.new(side * 67, 24.1, -75), THEME.Limestone, Enum.Material.Sandstone)
 end
 -- Pale ocean-stone inlays divide the oversized plaza into smaller elegant bays.
 for _, x in ipairs({-27, 27}) do
@@ -615,7 +615,7 @@ local function makeStall(name, x, z, roofColor, line1, line2)
 	group.Parent = hub
 	local cosmetics = name == "RightCosmeticsShop"
 	local floor = part("DisplayFloor", Vector3.new(17, 0.6, 14),
-		Vector3.new(x, 24.4, z), THEME.Limestone, Enum.Material.Limestone, group)
+		Vector3.new(x, 24.4, z), THEME.Limestone, Enum.Material.Sandstone, group)
 	local back = part("BackWall", Vector3.new(17, 8.0, 1),
 		Vector3.new(x, 28.4, z + 6),
 		THEME.Brown, Enum.Material.Metal, group)
@@ -656,11 +656,11 @@ local function makeStall(name, x, z, roofColor, line1, line2)
 	local register = detail("CounterRegister", Vector3.new(1.55, 0.65, 1.25),
 		Vector3.new(x + 4.8, 28.15, z - 5.25), THEME.Brown,
 		Enum.Material.Metal, group)
-	register.Reflectance = 0.08
+	register.Reflectance = 0.015
 
 	local roof = part("ColorfulRoof", Vector3.new(19, 1.3, 17),
-		Vector3.new(x, 33.2, z), roofColor, Enum.Material.Metal, group)
-	roof.Reflectance = 0.13
+		Vector3.new(x, 33.2, z), roofColor, Enum.Material.SmoothPlastic, group)
+	roof.Reflectance = 0
 	detail("RoofFrontBrassCornice", Vector3.new(19.2, 0.21, 0.55),
 		Vector3.new(x, 32.6, z - 8.45), THEME.Wood, Enum.Material.Metal, group)
 	for _, side in ipairs({-1, 1}) do
@@ -672,8 +672,8 @@ local function makeStall(name, x, z, roofColor, line1, line2)
 		Vector3.new(x, 32.25, z - 5.9), THEME.Wood, Enum.Material.Metal, group)
 	local light = Instance.new("PointLight")
 	light.Name = "WarmCanopyLight"
-	light.Color = Color3.fromRGB(255, 225, 175)
-	light.Brightness = 0.25
+	light.Color = Color3.fromRGB(236, 213, 180)
+	light.Brightness = 0.12
 	light.Range = 14
 	light.Shadows = false
 	light.Parent = roof
@@ -697,7 +697,7 @@ local function makeStall(name, x, z, roofColor, line1, line2)
 			cosmetics and SKIN_CATALOG[i].color or
 				(i % 2 == 0 and THEME.Ivory or THEME.Foam),
 			cosmetics and Enum.Material.Glass or Enum.Material.Metal, group)
-		swatch.Reflectance = 0.12
+		swatch.Reflectance = 0.018
 	end
 
 	makeShopkeeper(group, x - 1.15, z - 1.65, cosmetics)
@@ -709,7 +709,7 @@ end
 for _, side in ipairs({-1, 1}) do
 	decorative("ShopFrontAccessWalk", Vector3.new(28.8, 0.22, 5.8),
 		Vector3.new(side * 21, 24.14, -59.7),
-		THEME.Limestone, Enum.Material.Limestone)
+		THEME.Sandstone, Enum.Material.Sandstone)
 end
 makeStall("LeftShopComingSoon", -25, -49, ROOF_BLUE, "SHOP", "COMING SOON")
 local cosmeticsStall = makeStall("RightCosmeticsShop", 25, -49,
@@ -740,7 +740,7 @@ local board = decorative(
 	Vector3.new(33, 32.2, -82),
 	DEEP_NAVY, Enum.Material.Metal
 )
-board.Reflectance = 0.07
+board.Reflectance = 0.012
 detail("LeaderboardGoldRim", Vector3.new(13.4, 0.24, 1.15),
 	Vector3.new(33, 36.12, -82), METAL_TRIM)
 local boardGui = Instance.new("SurfaceGui")
@@ -848,7 +848,7 @@ local function makeTree(x, z, height)
 					"TreeCanopy",
 					Vector3.new(5.5, 5.5, 5.5),
 					Vector3.new(x + dx * 3.0, 24 + height + (dx == 0 and 2.0 or 1), z + dz * 3),
-					Color3.fromRGB(67 + (dx + 1) * 8, 143 + (dz + 1) * 8, 102),
+					Color3.fromRGB(112 + (dx + 1) * 5, 142 + (dz + 1) * 4, 108),
 					Enum.Material.LeafyGrass
 				)
 				leaf.Shape = Enum.PartType.Ball
@@ -895,7 +895,7 @@ local waterMirror = horizontalCylinder(detail("FountainStillWater",
 	Vector3.new(0.13, 13, 13), Vector3.new(0, 25.36, -118),
 	THEME.Foam, Enum.Material.Glass))
 waterMirror.Transparency = 0.22
-waterMirror.Reflectance = 0.14
+waterMirror.Reflectance = 0.018
 local pedestal = horizontalCylinder(solidDetail("FountainCrystalPedestal",
 	Vector3.new(2.3, 4.5, 4.5), Vector3.new(0, 26.5, -118),
 	THEME.Wood, Enum.Material.Metal))
@@ -903,7 +903,7 @@ local crystal = solidDetail("FountainSeaGlassSculpture", Vector3.new(3.5, 5.7, 3
 	Vector3.new(0, 29.3, -118), THEME.Foam, Enum.Material.Glass)
 crystal.Shape = Enum.PartType.Ball
 crystal.Transparency = 0.12
-crystal.Reflectance = 0.18
+crystal.Reflectance = 0.018
 local sparkle = Instance.new("PointLight")
 sparkle.Name = "FountainGlow"
 sparkle.Color = THEME.Foam
@@ -1008,8 +1008,8 @@ for _, side in ipairs({-1, 1}) do
 		Vector3.new(x, 30.7, z - 4), THEME.Foam, Enum.Material.Glass)
 	local light = Instance.new("PointLight")
 	light.Name = "LoungeAmbientLight"
-	light.Color = Color3.fromRGB(255, 228, 183)
-	light.Brightness = 0.22
+	light.Color = Color3.fromRGB(235, 214, 183)
+	light.Brightness = 0.12
 	light.Range = 12
 	light.Shadows = false
 	light.Parent = lantern
@@ -1028,9 +1028,9 @@ local function resortLamp(x, z)
 		Vector3.new(x, 33.67, z), THEME.Wood)
 	local glow = Instance.new("PointLight")
 	glow.Name = "AzureCoastLampLight"
-	glow.Color = Color3.fromRGB(255, 234, 198)
-	glow.Range = 15
-	glow.Brightness = 0.23
+	glow.Color = Color3.fromRGB(235, 213, 187)
+	glow.Range = 13
+	glow.Brightness = 0.11
 	glow.Shadows = false
 	glow.Parent = lamp
 end
@@ -1062,7 +1062,7 @@ local trophyStand = horizontalCylinder(solidDetail("AzureTrophyPedestal",
 local trophy = detail("AzureTrophySculpture", Vector3.new(3.4, 6, 3.4),
 	Vector3.new(trophyX, 29.0, trophyZ), THEME.Wood)
 trophy.Shape = Enum.PartType.Ball
-trophy.Reflectance = 0.17
+trophy.Reflectance = 0.01
 local trophyAnchor = detail("TrophyCourtyardSignAnchor", Vector3.new(0.5, 0.5, 0.5),
 	Vector3.new(trophyX, 33.3, trophyZ - 1.5), THEME.Brown)
 textSign(trophyAnchor, "TROPHY GARDEN | SOCIAL PLAZA", 0.3, 230)
@@ -1071,12 +1071,12 @@ textSign(trophyAnchor, "TROPHY GARDEN | SOCIAL PLAZA", 0.3, 230)
 -- from the arena; unlike the grass island it has no collision.
 local ocean = part(
 	"OceanBackdrop", Vector3.new(1800, 1.5, 1800),
-	Vector3.new(0, 0.6, 58), Color3.fromRGB(57, 148, 157), Enum.Material.SmoothPlastic
+	Vector3.new(0, 0.6, 58), THEME.Ocean, Enum.Material.SmoothPlastic
 )
 ocean.CanCollide = false
 ocean.CanTouch = false
 ocean.CanQuery = false
-ocean.Reflectance = 0.095
+ocean.Reflectance = 0.014
 
 -- Sparse ocean glints: reflective wave texture without huge moving models.
 for i = 1, 32 do
@@ -1388,7 +1388,7 @@ local function markLane(tile, lane)
 	number.Size = UDim2.fromScale(1, 1)
 	number.BackgroundTransparency = 1
 	number.Text = tostring(lane)
-	number.TextColor3 = Color3.fromRGB(24, 87, 139)
+	number.TextColor3 = THEME.Brown
 	number.TextTransparency = 0.12
 	number.Font = Enum.Font.GothamBold
 	number.TextScaled = false
@@ -1412,7 +1412,7 @@ local function glassBurst(tile, shade, amount)
 		NumberSequenceKeypoint.new(1, 0)
 	})
 	particles.Color = ColorSequence.new(shade)
-	particles.LightEmission = 0.8
+	particles.LightEmission = 0.3
 	particles.EmissionDirection = Enum.NormalId.Top
 	particles.Parent = tile
 	particles:Emit(amount or 10)
@@ -1433,9 +1433,9 @@ local function finishConfetti()
 	emitter.Size = NumberSequence.new(0.65)
 	emitter.LightEmission = 0.25
 	emitter.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 207, 52)),
-		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(81, 209, 132)),
-		ColorSequenceKeypoint.new(1, Color3.fromRGB(74, 155, 251))
+		ColorSequenceKeypoint.new(0, THEME.Terracotta),
+		ColorSequenceKeypoint.new(0.5, THEME.Sage),
+		ColorSequenceKeypoint.new(1, THEME.Rose)
 	})
 	emitter.Parent = finishCenter
 	emitter:Emit(60)
