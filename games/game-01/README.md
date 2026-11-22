@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-22):** Owner confirmed **v0.12 gameplay works in Studio**, and requested to continue with saving wins/coins. **v0.13 coins have now been confirmed to persist across Studio Play restarts by the owner.** Win persistence and private published-server behavior still need separate verification. The game remains unnamed and not publicly released.  
+**Status (2026-11-22):** Owner confirmed **v0.13 coin persistence in Roblox Studio**. **v0.14 adds a small coin-purchased glass-color cosmetics shop** to the previously working game; this version is committed but **has not been tested in Studio**. Saved-win and private published-server persistence still require separate verification. The game remains unnamed and not publicly released.  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -33,9 +33,21 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 | Server round safety cap | 22 votes |
 | Reward | Win +25 coins, participation +5 coins |
 
-**Progress storage:** Wins and coins were session-only through v0.12. **v0.13 introduces DataStore persistence**, pending Roblox Studio and published-server verification. Shops and paid power-ups remain unimplemented. Do not publicly launch or monetize before testing data recovery and purchases.
+**Progress storage:** Wins and coins were session-only through v0.12. **v0.13 introduces DataStore persistence**, pending Roblox Studio and published-server verification. v0.14 adds a coin-only cosmetics stall (no Robux or paid items). Do not publicly launch or monetize before testing data recovery and purchases.
 
-## v0.13 — persistent wins and coins (Studio test pending)
+## v0.14 — glass-color cosmetics stall (Studio test pending)
+
+The already-built **COSMETICS** stall on the right side of the hub is now a small interactive shop. No new always-on shop HUD button or unrelated gameplay mechanic was added.
+
+- Approach the **COSMETICS / GLASS COLORS** stall, then press **E** or use the mobile proximity prompt. A compact, closable, scrollable panel displays four choices.
+- **Classic Blue:** free, available to everyone. **Candy Pink:** 20 earned coins. **Mint Pop:** 40 coins. **Soft Violet:** 60 coins. Purchases permanently unlock a color; owned colors can be equipped again without paying.
+- A skin tints only a player's **neutral personal bridge glass**. GREEN still means movement is permitted, RED still means blocked/danger, cracks still show amber/red, and the winning tile remains gold. No advantage or new player movement rules.
+- Spending, ownership, equipped choice, and earned rewards share the **same existing v0.13 DataStore profile**—no wipe or new database. The server alone chooses prices and checks balance, player proximity, ownership, and storage readiness. A single atomic `UpdateAsync` deducts coins and records an item. Retry tokens and per-player locks guard duplicate requests.
+- When DataStore loads fail, purchasing is unavailable instead of silently granting items or overwriting saved progress. If a shop write cannot be confirmed, players must rejoin to refresh before another purchase is permitted.
+- **Test in Studio:** Install the new [Command Bar installer](INSTALL_STUDIO_COMMAND_BAR.luau) in Edit mode, start Play, look for **v0.14**, buy a color, stop Play and start again. Confirm the color stays owned/equipped and coins are deducted **exactly once**. Check the guide in [TEST_PLAN.md](TEST_PLAN.md).
+- **Still unverified:** Studio shop rendering/transactions, saved wins, mobile shop behavior, and separate private published-server data. No Robux products or game passes have been added.
+
+## v0.13 — persistent wins and coins (coins tested in Studio)
 
 Wins and coins now have a dedicated server-side DataStore persistence layer, **without changing the gameplay or adding an unnecessary HUD indicator**.
 
@@ -275,6 +287,6 @@ For repeat development, clone `Mythrow/Mythblox`, install [Rojo](https://rojo.sp
 
 ## Next step
 
-Install and verify **v0.13 DataStore persistence** using the [test guide](PERSISTENCE_TEST_GUIDE.md). Confirm a match reward survives stopping/restarting Studio Play (with API Services enabled), and recheck in a private published server before public release. After saving is reliable, the next candidate milestone is cosmetics/shop design with safe currency deductions. The approved game rules and v0.11 environment remain unchanged.
+**Test v0.14 in Roblox Studio**: install it, open the cosmetics stall via E, buy and equip a glass color, confirm your balance drops once, and check ownership/equipment after restarting Play. Also separately verify that **Wins** persist and check saving in a private published-server test. Complete the [test checklist](TEST_PLAN.md) before considering public release. The original voting and movement rules remain unchanged.
 
 See [the Mythblox game-design memo](../../docs/FIRST_GAME_GLASS_BRIDGE_CONCEPT.md) for earlier alternatives, including the spinner idea that was explicitly deferred.
