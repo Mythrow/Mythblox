@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-22):** **v0.27** adds reward-free one-player live practice after JOIN, keeps competitive rewards exclusive to 2–8 ready players, waits for server JOIN acknowledgement, shrinks/repositions the mobile status card, and grounds floating props. **Live Roblox-app/Studio tests are pending**, including one-player join, two-player rewards, UI safe-area and the earlier glass-break regression.
+**Status (2026-11-22):** **v0.28** removes the redundant reveal legend and reclaims 16px of phone screen space. SAFE/BLOCKED labels, five card avatars and counts and the server's five-second reveal are unchanged. Real-phone and Studio verification is still needed.
 
 ## Playtest log
 
@@ -38,6 +38,15 @@
 6. Repeat with 3–4 clients if the two-player flow works.
 
 
+
+## v0.28 — no redundant vote-reveal legend
+
+- [ ] Reinstall the v0.28 one-paste script in Edit mode. Confirm `v0.28 VERIFIED` and matching server/client versions.
+- [ ] In Studio and the published Roblox app, enter VOTE then REVEAL. No `GREEN = SAFE / RED = BLOCKED` explanation should appear above the five result cards.
+- [ ] All five number cards must still show voters' avatars, pick totals and explicit SAFE/BLOCKED text in their existing muted green/red colors.
+- [ ] On short mobile portrait and landscape screens, the shorter **140–156px** reveal should not clip any avatar or card text; phone status still occupies its 43px top-right region.
+- [ ] After five seconds the reveal disappears, normal MOVE begins, and forbidden-step elimination works. No vote data appears to other players before REVEAL.
+- [ ] Recheck solo published-server practice and the unchanged two-player rewards separately.
 
 ## v0.27 — published mobile JOIN, safe-area card, grounded objects
 
