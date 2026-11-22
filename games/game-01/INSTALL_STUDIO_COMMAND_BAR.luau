@@ -5,7 +5,7 @@
 assert(not game:GetService("RunService"):IsRunning(), "Stop the test session before installing.")
 
 local SERVER_SOURCE = [====[
--- Mythblox game-01: glass bridge race v0.18 (server)
+-- Mythblox game-01: glass bridge race v0.19 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -15,7 +15,7 @@ local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
 local DataStoreService = game:GetService("DataStoreService")
 local HttpService = game:GetService("HttpService")
-local BUILD_VERSION = "v0.18"
+local BUILD_VERSION = "v0.19"
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -1054,13 +1054,31 @@ local function eliminate(player, reason, tileToBreak)
 	info.alive = false
 	info.elimination = reason
 	info.allowed = 0
-	keepMovementEnabled(player)
+	-- The attempted step and the last supporting glass must actually break.
+	-- Do not recolor intact glass or reveal which other panels are safe.
 	if tileToBreak then shatter(tileToBreak, true) end
-	-- Remove their supporting panel too, so an invalid step always causes a visible fall.
-	local standingTile = lanes[info.lane].tiles[info.index]
-	if standingTile ~= tileToBreak then shatter(standingTile, true) end
+	local lane = lanes[info.lane]
+	local standingTile = lane and lane.tiles[info.index]
+	if standingTile and standingTile ~= tileToBreak then
+		shatter(standingTile, true)
+	end
 	message = player.DisplayName .. " fell! (" .. reason .. ")"
+	print(("[Mythblox RACE] ELIMINATED %s: %s"):format(player.Name, reason))
 	if publish then publish() end
+
+	-- v0.18 regression fix: simply setting alive=false was not enough once
+	-- free walking/jumping was allowed. The character could keep running on
+	-- untouched panels because only alive racers are validated. Let the
+	-- shatter play briefly, then trigger the ordinary lobby respawn.
+	local character = player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if humanoid and humanoid.Health > 0 then
+		task.delay(0.2, function()
+			if player.Character == character and humanoid.Parent and humanoid.Health > 0 then
+				humanoid.Health = 0
+			end
+		end)
+	end
 end
 
 local function crack(player)
@@ -1783,6 +1801,33 @@ RunService.Heartbeat:Connect(function(dt)
 	end
 end)
 
+-- Collision safety net for normal walking and jumping. The 0.09-second
+-- Heartbeat sweep below remains authoritative even when a leap skips a tile
+-- without touching it; this catches actual contact independently.
+local function validateGlassContact(player, laneNumber, tileIndex, hit)
+	if tileIndex == 0 or phase == "JOIN" or phase == "RESULTS" then return end
+	local character = player.Character
+	if not character or hit:FindFirstAncestorOfClass("Model") ~= character then return end
+	local info = active[player]
+	if not info or not info.alive or info.lane ~= laneNumber then return end
+	if tileIndex <= info.index then return end
+	local root = character:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+	-- Limbs can brush the edge of the next tile before the avatar actually
+	-- steps onto it. Require the root to enter the panel, preventing false
+	-- elimination while walking or jumping in place on the current glass.
+	if root.Position.Z < tileIndex * SETTINGS.TileSpacing - 2.55 then return end
+	local lane = lanes[laneNumber]
+	if not lane or not lane.tiles[tileIndex] then return end
+	if tileIndex > info.index + 1 then
+		eliminate(player, "skipped a tile", lane.tiles[tileIndex])
+	elseif phase ~= "MOVE" then
+		eliminate(player, "stepped before movement", lane.tiles[tileIndex])
+	elseif tileIndex > info.startIndex + info.allowed then
+		eliminate(player, "stepped onto forbidden glass", lane.tiles[tileIndex])
+	end
+end
+
 local function beginMatch(participants)
 	initialMatchCount = #participants
 	active = {}
@@ -1811,6 +1856,17 @@ local function beginMatch(participants)
 				root = root,
 			}
 			markLane(lanes[lane].tiles[0], lane)
+			-- Each lane only tests its assigned racer's body against its
+			-- panels; touching a spectator/other lane cannot award progress.
+			for index = 1, SETTINGS.BridgeLength do
+				local tileIndex = index
+				local assignedLane = lane
+				local assignedPlayer = player
+				local tile = lanes[assignedLane].tiles[tileIndex]
+				tile.Touched:Connect(function(hit)
+					validateGlassContact(assignedPlayer, assignedLane, tileIndex, hit)
+				end)
+			end
 		end
 	end
 end
@@ -1993,13 +2049,13 @@ end
 ]====]
 
 local CLIENT_SOURCE = [====[
--- Mythblox Game 01 · premium world and free movement v0.18
+-- Mythblox Game 01 · safe free-movement validation v0.19
 -- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
-local BUILD_VERSION = "v0.18"
+local BUILD_VERSION = "v0.19"
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local network = ReplicatedStorage:WaitForChild("MythbloxGame01")
@@ -2267,7 +2323,7 @@ end
 -- Results appear in the compact top status strip instead of a centered
 -- modal. The arena and other players remain visible when a match ends.
 
--- v0.18: Secret selections are never displayed to others while voting.
+-- v0.19: Secret selections are never displayed to others while voting.
 -- ONLY during the five-second REVEAL do five non-clickable results cards
 -- show every numbered choice, picking players' avatars, totals, and safety.
 -- The existing blue voting buttons remain PRIVATE selection controls.
@@ -2634,7 +2690,7 @@ local function update(state)
 	if phase == "JOIN" or phase == "VOTE" then
 		lastTurnRendered = -1
 	end
-	phaseText.Text = ("v0.18 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
+	phaseText.Text = ("v0.19 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
 	clockText.Text = tostring(state.time or 0) .. "s"
 	clockText.TextColor3 = phase == "VOTE" and (state.time or 0) <= 2 and COLOR.Red or COLOR.Purple
 	description.Text = state.message or ""
@@ -2644,7 +2700,7 @@ local function update(state)
 	if voting.Visible then shop.Visible = false end
 
 	if phase == "JOIN" then
-		phaseText.Text = "v0.18 · NEXT MATCH"
+		phaseText.Text = "v0.19 · NEXT MATCH"
 		description.Text = state.queued and "You're queued for the next race."
 			or "Join at the gold pad or use the button below."
 		ownStats.Text = ("%d/%d PLAYERS READY"):format(state.ready or 0, state.capacity or 8)
@@ -2663,7 +2719,7 @@ local function update(state)
 	if phase == "RESULTS" then
 		-- Server sends winner/draw text in state.message; show it only in
 		-- the small status panel and avoid blocking the camera.
-		phaseText.Text = "v0.18 · ROUND OVER"
+		phaseText.Text = "v0.19 · ROUND OVER"
 		ownStats.Text = "NEXT MATCH STARTS SOON"
 	end
 
@@ -2712,7 +2768,7 @@ stateEvent.OnClientEvent:Connect(update)
 command:FireServer("Sync")
 ]====]
 
--- Diagnostic/cleanup installer: v0.18
+-- Diagnostic/cleanup installer: v0.19
 -- Remove known legacy copies from services used by previous Mythblox builds.
 -- This intentionally does NOT remove scripts belonging to other games.
 -- Permanently remove the UNUSED default Roblox Baseplate spawn while in
@@ -2798,12 +2854,12 @@ for _, child in ipairs(game:GetDescendants()) do
 	end
 end
 
-print("[Mythblox INSTALL] v0.18 VERIFIED: 2 scripts installed and Source checked.")
-print("[Mythblox INSTALL] Server: " .. liveServer:GetFullName() .. " | Build v0.18")
-print("[Mythblox INSTALL] Client: " .. liveClient:GetFullName() .. " | Build v0.18")
+print("[Mythblox INSTALL] v0.19 VERIFIED: 2 scripts installed and Source checked.")
+print("[Mythblox INSTALL] Server: " .. liveServer:GetFullName() .. " | Build v0.19")
+print("[Mythblox INSTALL] Client: " .. liveClient:GetFullName() .. " | Build v0.19")
 print("[Mythblox INSTALL] Cleaned " .. #removed .. " previous Mythblox script/UI objects.")
 print("[Mythblox INSTALL] Disabled " .. #disabledLegacy .. " other old game scripts found by source signature.")
 if #suspicious > 0 then
 	warn("[Mythblox INSTALL] Other Mythblox scripts still exist: " .. table.concat(suspicious, "; "))
 end
-print("[Mythblox INSTALL] NOW START A FRESH PLAY SESSION. Confirm the top HUD visibly says v0.18, and check Output for SERVER RUNNING v0.18 and CLIENT RUNNING v0.18.")
+print("[Mythblox INSTALL] NOW START A FRESH PLAY SESSION. Confirm the top HUD visibly says v0.19, and check Output for SERVER RUNNING v0.19 and CLIENT RUNNING v0.19.")
