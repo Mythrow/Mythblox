@@ -1,4 +1,4 @@
--- Mythblox game-01: glass bridge race v0.19 (server)
+-- Mythblox game-01: Azure Coast Resort v0.20 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -8,7 +8,7 @@ local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
 local DataStoreService = game:GetService("DataStoreService")
 local HttpService = game:GetService("HttpService")
-local BUILD_VERSION = "v0.19"
+local BUILD_VERSION = "v0.20"
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -31,8 +31,22 @@ local SETTINGS = {
 	VictoryDanceR6 = "rbxassetid://182435998",
 }
 
--- Coastal jewel-tone / brushed-metal palette. Colors are cosmetic only;
--- players' legal moves are NOT advertised by green/red bridge surfaces.
+-- AZURE COAST RESORT theme: ivory limestone, sea-glass teal, deep navy,
+-- champagne brass and coastal evergreen. One coherent art direction for
+-- paths, buildings, bridges, signs, seating, fencing and the distant world.
+-- The approved purchased glass colors remain personal and independent.
+local THEME = {
+	Ivory = Color3.fromRGB(243, 235, 216),
+	Limestone = Color3.fromRGB(221, 209, 182),
+	Sandstone = Color3.fromRGB(193, 177, 146),
+	Teal = Color3.fromRGB(33, 116, 125),
+	DeepTeal = Color3.fromRGB(20, 65, 79),
+	Brass = Color3.fromRGB(198, 160, 92),
+	Evergreen = Color3.fromRGB(66, 130, 98),
+	Foam = Color3.fromRGB(199, 235, 232),
+	Coral = Color3.fromRGB(207, 129, 109),
+	Stone = Color3.fromRGB(123, 134, 139),
+}
 local GLASS = Color3.fromRGB(142, 219, 238)
 -- Existing purchased glass colors remain exactly as saved in the catalog.
 local SKIN_CATALOG = {
@@ -52,17 +66,17 @@ local AMBER = Color3.fromRGB(255, 206, 75)
 -- Premium sunny-coastal lighting using supported Roblox lighting effects.
 -- No external or guessed PBR asset IDs: built-in 2022 materials already use
 -- high-quality engine texture/roughness detail. Add custom maps later if needed.
-Lighting.ClockTime = 14.4
-Lighting.Brightness = 2.45
+Lighting.ClockTime = 13.8
+Lighting.Brightness = 2.4
 Lighting.GlobalShadows = true
 Lighting.ShadowSoftness = 0.48
 Lighting.EnvironmentDiffuseScale = 0.7
 Lighting.EnvironmentSpecularScale = 0.82
-Lighting.Ambient = Color3.fromRGB(156, 171, 199)
-Lighting.OutdoorAmbient = Color3.fromRGB(206, 216, 236)
-Lighting.ColorShift_Top = Color3.fromRGB(255, 237, 215)
-Lighting.FogColor = Color3.fromRGB(193, 223, 238)
-Lighting.FogEnd = 1700
+Lighting.Ambient = Color3.fromRGB(160, 183, 193)
+Lighting.OutdoorAmbient = Color3.fromRGB(218, 226, 219)
+Lighting.ColorShift_Top = Color3.fromRGB(255, 241, 219)
+Lighting.FogColor = Color3.fromRGB(203, 231, 230)
+Lighting.FogEnd = 1600
 
 local function getWorldLightingEffect(className, name)
 	local effect = Lighting:FindFirstChild(name)
@@ -78,16 +92,16 @@ end
 local atmosphere = getWorldLightingEffect("Atmosphere", "MythbloxCoastalAtmosphere")
 atmosphere.Density = 0.27
 atmosphere.Offset = 0.05
-atmosphere.Color = Color3.fromRGB(218, 237, 249)
-atmosphere.Decay = Color3.fromRGB(142, 172, 203)
-atmosphere.Glare = 0.11
-atmosphere.Haze = 0.75
+atmosphere.Color = Color3.fromRGB(226, 241, 238)
+atmosphere.Decay = Color3.fromRGB(143, 184, 184)
+atmosphere.Glare = 0.08
+atmosphere.Haze = 0.82
 
 local grade = getWorldLightingEffect("ColorCorrectionEffect", "MythbloxWarmColorGrade")
 grade.Brightness = 0.01
 grade.Contrast = 0.08
 grade.Saturation = 0.09
-grade.TintColor = Color3.fromRGB(255, 249, 240)
+grade.TintColor = Color3.fromRGB(255, 252, 243)
 grade.Enabled = true
 
 local bloom = getWorldLightingEffect("BloomEffect", "MythbloxSoftBloom")
@@ -100,6 +114,25 @@ local sunRays = getWorldLightingEffect("SunRaysEffect", "MythbloxSunRays")
 sunRays.Intensity = 0.035
 sunRays.Spread = 0.85
 sunRays.Enabled = true
+
+-- Dynamic clouds belong to Workspace.Terrain (not Lighting).
+-- Reuse an existing Clouds instance instead of stacking cloud layers.
+local terrain = workspace.Terrain
+local clouds = terrain:FindFirstChildOfClass("Clouds")
+if not clouds then
+	clouds = Instance.new("Clouds")
+	clouds.Parent = terrain
+end
+clouds.Name = "MythbloxAzureCoastClouds"
+clouds.Cover = 0.37
+clouds.Density = 0.44
+clouds.Color = Color3.fromRGB(252, 250, 243)
+clouds.Enabled = true
+terrain.WaterColor = THEME.Teal
+terrain.WaterTransparency = 0.36
+terrain.WaterReflectance = 0.18
+terrain.WaterWaveSize = 0.14
+terrain.WaterWaveSpeed = 8
 
 -- Remove only the stock Baseplate SpawnLocation: its star icon is visible
 -- beneath the arena's lava even though our players use the elevated lobby.
@@ -121,6 +154,24 @@ local function removeBaseplateSpawn()
 	end
 end
 removeBaseplateSpawn()
+
+-- The template Baseplate is still visible beneath the noncolliding ocean in
+-- earlier versions. Delete ONLY the large, low, named stock Baseplate.
+local function removeTemplateBaseplate()
+	local removed = 0
+	for _, candidate in ipairs(workspace:GetChildren()) do
+		if candidate:IsA("BasePart") and string.lower(candidate.Name) == "baseplate"
+			and candidate.Size.X >= 150 and candidate.Size.Z >= 150
+			and candidate.Position.Y + candidate.Size.Y * 0.5 < SETTINGS.BridgeY - 5 then
+			candidate:Destroy()
+			removed += 1
+		end
+	end
+	if removed > 0 then
+		print("[Mythblox WORLD] Removed " .. removed .. " template Baseplate part(s).")
+	end
+end
+removeTemplateBaseplate()
 
 local oldWorld = workspace:FindFirstChild("MythbloxGame01")
 if oldWorld then oldWorld:Destroy() end
