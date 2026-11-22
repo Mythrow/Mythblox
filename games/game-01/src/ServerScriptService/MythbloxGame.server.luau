@@ -81,11 +81,9 @@ local UI_DEFAULTS = {
 local function sanitizeUI(raw)
 	local output = {}
 	for key, defaultValue in pairs(UI_DEFAULTS) do
-		output[key] = type(raw) == "table" and type(raw[key]) == "boolean"
-			and raw[key] or defaultValue
-		-- Explicit false must override a true default; the expression above
-		-- is intentionally NOT used for this case.
+		output[key] = defaultValue
 		if type(raw) == "table" and type(raw[key]) == "boolean" then
+			-- Explicit false overrides the true default for soundOn.
 			output[key] = raw[key]
 		end
 	end
@@ -2628,19 +2626,25 @@ local function buildRoundSummary(participants, winners)
 		end
 	end
 	table.sort(ordered, function(a, b)
+		-- The game's actual authoritative winners always appear first,
+		-- even if surviving elsewhere outweighed an eliminated competitor.
+		local aw = victorious[a.player.UserId] == true
+		local bw = victorious[b.player.UserId] == true
+		if aw ~= bw then return aw end
 		if a.distance ~= b.distance then return a.distance > b.distance end
 		if a.cracks ~= b.cracks then return a.cracks < b.cracks end
 		return a.player.UserId < b.player.UserId
 	end)
 	local byUser = {}
 	local rank = 0
-	local lastDistance, lastCracks = nil, nil
+	local lastDistance, lastCracks, lastWinner = nil, nil, nil
 	for index, item in ipairs(ordered) do
-		if item.distance ~= lastDistance or item.cracks ~= lastCracks then
-			rank = index
-			lastDistance, lastCracks = item.distance, item.cracks
-		end
 		local winner = victorious[item.player.UserId] == true
+		if item.distance ~= lastDistance or item.cracks ~= lastCracks
+			or lastWinner ~= winner then
+			rank = index
+			lastDistance, lastCracks, lastWinner = item.distance, item.cracks, winner
+		end
 		byUser[item.player.UserId] = {
 			place = rank, distance = item.distance, cracks = item.cracks,
 			coins = practiceWithoutRewards and 0 or (winner and 25 or 5),
