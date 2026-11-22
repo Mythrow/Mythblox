@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-22):** **v0.28** removes the redundant `GREEN = SAFE / RED = BLOCKED` subtitle from the five-card reveal, reducing the phone reveal tray by 16px without reducing card content or its five-second duration. The v0.27 published solo-practice fix, 43px status HUD, grounded props and all gameplay/rewards remain unchanged. **Code and installer updated; mobile/Studio playtest remains pending. Not launch-ready.**  
+**Status (2026-11-22):** **v0.29** turns the **entire front 90×24-stud spectator row into a server-authoritative AUTO-JOIN ZONE**: no Join Race button, no E prompt, players enter the race only if still in the zone at zero. The old long left/right spectator catwalks are removed and the front/side/back fence now forms a continuous visible, collidable perimeter. Significant world signposts/railings are no longer ghost props. A dedicated visible Coins/Wins UI is added on desktop and mobile. **Source and installer committed; actual Roblox/phone QA pending. Not ready for launch.**  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -34,6 +34,16 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 | Reward | Win +25 coins, participation +5 coins |
 
 **Progress storage:** Wins and coins were session-only through v0.12. **v0.13 introduces DataStore persistence**, pending Roblox Studio and published-server verification. v0.14 adds a coin-only cosmetics stall (no Robux or paid items). Do not publicly launch or monetize before testing data recovery and purchases.
+
+## v0.29 — entire-row auto-join zone, enclosed hub and clear Coins/Wins (live QA pending)
+
+- **Auto-join instead of a button:** The full permanent front deck (`SharedReadyAndSpectatorDeck`, **90 × 24 studs**, centered at x=0, z=-22) is the join zone. A server-owned 0.2-second check detects each living character's HumanoidRootPart inside the deck, including standing still or jumping. Players enter automatically when they step in; stepping out before the countdown reaches zero **removes them**. A final server-side scan at zero selects only players still inside. The whole row is eligible, not the former small gold marking.
+- **Join UI removed:** Removed `JOIN BRIDGE RACE` button, join-pad proximity prompt and manual Join remote option. Top status and the world sign indicate `JOIN ZONE`, player count and countdown. An entrant who is inside sees `IN ZONE · STAY`. 1-player live practice still grants no competitive Wins/Coins; 2–8 ready entrants retain the normal rewarded race.
+- **No long side catwalks:** Deleted both 95-stud spectator promenade walkways, connectors, side glass partitions, side fences and terminal rails stretching alongside the glass race. Watch from the **single shared front deck** instead.
+- **Continuous physical island fencing:** Closed former side-walk entrances. A collidable, softly tinted glass fence runs along the rear and side island edges; the entire front edge is sealed by the central spectator glass and matching left/right fence panels. Structural piers and perimeter rails are solid instead of walk-through decoration. High invisible safety limits remain behind the visible fence to prevent map escapes.
+- **Reduced ghost props:** World signboard bodies, join/rewards sign supports and the trophy sculpture now have physical collision. Very small decorative trim, decals, glass-water details and invisible reference anchors intentionally remain noncolliding; they are not physical furniture or barriers.
+- **Coins UI:** A clear always-on `COINS N · WINS N` wallet is visible on desktop and mobile, fed by server-owned replicated `leaderstats`. Live value changes update it automatically. On small phones it hides only during the five-second full-width vote reveal to avoid overlapping the cards, then returns.
+- **Test:** Run the [latest Studio installer](INSTALL_STUDIO_COMMAND_BAR.luau) in **Edit mode**, verify `v0.29 VERIFIED`, and republish your private place before testing with a friend. Join from both edges and middle of the front row, exit just before zero, check fences/collisions, wallet balances, and ensure no way around the glass course. Studio/device verification still pending.
 
 ## v0.28 — cleaner five-card vote reveal (visual QA pending)
 
@@ -449,6 +459,6 @@ See the [pre-launch roadmap](PRELAUNCH_ROADMAP.md). Cosmetic stall, sound effect
 
 ## Next step
 
-**Test v0.28 on a phone first:** verify the oat floor is comfortably matte, the 49px top strip no longer obscures play, all five reveal cards/avatars fit, and 1–5 voting remains tappable. Publish the updated private test experience to play with a friend; test bench seating, cosmetics and most importantly illegal-step glass shatter/elimination. Report a phone screenshot or any Output errors. Major additional features and independent multiplayer/data/security QA remain required before public launch.
+**Test v0.29 on a phone first:** verify the oat floor is comfortably matte, the 49px top strip no longer obscures play, all five reveal cards/avatars fit, and 1–5 voting remains tappable. Publish the updated private test experience to play with a friend; test bench seating, cosmetics and most importantly illegal-step glass shatter/elimination. Report a phone screenshot or any Output errors. Major additional features and independent multiplayer/data/security QA remain required before public launch.
 
 See [the Mythblox game-design memo](../../docs/FIRST_GAME_GLASS_BRIDGE_CONCEPT.md) for earlier alternatives, including the spinner idea that was explicitly deferred.
