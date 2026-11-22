@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-22):** Owner confirms v0.12 works in Studio. **v0.13 DataStore saving code and installer are committed, not yet verified in Roblox Studio.** Studio API Services configuration and restart tests are required; release/mobile QA remains pending.
+**Status (2026-11-22):** Owner confirms v0.12 works in Studio. **v0.13 coin persistence is owner-confirmed across restarting Studio Play.** Win persistence and a private published-server test remain unverified; release/mobile QA remains pending.
 
 ## Playtest log
 
@@ -11,6 +11,7 @@
 | 2026-11-21 | GitHub v0.2 (owner-confirmed functional) | Owner reports revised game functions work | Improve UI later; perform mobile, performance, exploit and release QA separately |
 | 2026-11-22 | Roblox Studio v0.11 (owner-reported) | User says the updated environment works | Individual v0.11 visual checks not itemized; release QA, mobile and spectator stress testing still pending |
 | 2026-11-22 | Roblox Studio v0.12 (owner-reported) | User confirms updated gameplay feedback works | Specific regressions not individually enumerated; deeper mobile, multiplayer and audio verification pending |
+| 2026-11-22 | Roblox Studio v0.13 (owner-reported) | Coins remain after stopping and restarting Play, confirming a successful Studio persistence test | Win persistence and live/private published-server persistence not separately checked; Studio Game Settings 'Failed to parse secrets: Can't parse JSON' warning noted |
 
 ### Previously addressed: v0.2 fix verification (owner reports functionality works)
 
