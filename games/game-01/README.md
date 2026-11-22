@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-22):** **v0.31** applies a screenshot-driven geometry cleanup: removed the large block under the rewards sign, anchored its posts directly to the ground, relocated lamps intersecting the plaza/join deck, removed perimeter/end glass in favor of open solid fences with tall hidden jump barriers, simplified doubled paving/roof trims and aligned kiosk side walls/windows to remove visible clipping. The central spectator window remains transparent. **v0.30's seven UI modules, v0.29 auto-join and all gameplay/saving remain unchanged. Studio/phone verification pending; not launch-ready.**  
+**Status (2026-11-22):** **v0.32** fixes a user-reported elimination/respawn UI regression: vote buttons and the five-card REVEAL stayed on screen after a racer died. Both are now hidden immediately on local death/respawn and remain hidden for that eliminated racer until a new match. Server snapshots remove dead players' private vote and five-card data; spectators instead see an ELIMINATED/SPECTATING status. Gameplay, bridge physics, cosmetics, saving, v0.30 UI and v0.31 lobby geometry are unchanged. **Code/installer committed; Roblox Studio and real-phone regression testing pending. Not launch-ready.**  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -34,6 +34,17 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 | Reward | Win +25 coins, participation +5 coins |
 
 **Progress storage:** Wins and coins were session-only through v0.12. **v0.13 introduces DataStore persistence**, pending Roblox Studio and published-server verification. v0.14 adds a coin-only cosmetics stall (no Robux or paid items). Do not publicly launch or monetize before testing data recovery and purchases.
+
+## v0.32 — stop vote/reveal UI after death and respawn (phone QA pending)
+
+The user reported choosing **1** on the first bridge tile, dying, respawning in the lobby, and still seeing voting content. The root cause was the client displaying the **five numbered REVEAL results for every player whenever the server was in REVEAL**, regardless of their own alive status. The UI persists across Roblox character respawns (`ScreenGui.ResetOnSpawn = false`), so merely respawning did not reset the old panel.
+
+- **Immediate local cleanup:** Client listens for humanoid death, character removal and respawn. During a race it hides the vote buttons, five REVEAL cards, racer HUD and old feedback, clearing prior voter-avatar thumbnails without waiting for the next one-second match snapshot.
+- **Eligibility-gated UI:** The five VOTE buttons and five-card REVEAL now require the local player to be **an alive, participating racer**, not just the global match's phase. Eliminated and nonparticipating players see **ELIMINATED/SPECTATING** instead of their old pick.
+- **Server-side defense:** Every state snapshot now includes a unique match serial. After an elimination, the server clears the eliminated player's selection and does **not send REVEAL vote details** to dead participants. The next joined match (new serial) re-enables voting; a mid-match respawn never does.
+- **Safe tap handling:** A queued/spurious tap during death, a phase transition or after respawn cannot submit another selection client-side; the existing server-side vote validation remains authoritative.
+- **Unchanged:** Voting 1–5 while alive, vote secrecy, the five-second reveal for **surviving racers**, SAFE/BLOCKED counts/avatars for those eligible racers, six-second movement window, 20 tiles, three cracks, spectator camera, free walk/jump, auto-join, earned Coins/Wins and cosmetics.
+- **Install/test:** Run [the latest one-paste installer](INSTALL_STUDIO_COMMAND_BAR.luau) in Edit mode after stopping Play. Confirm `v0.32 VERIFIED`, publish the private place, and test a first-tile selection of 1 followed by glass death/respawn **during both VOTE and REVEAL**. Neither vote buttons nor five-card results should reappear until the player enters the next match. No Roblox engine/device session has been executed by the assistant.
 
 ## v0.31 — grounded rewards, open end fences, clean seams (Studio/mobile QA pending)
 
@@ -489,6 +500,6 @@ See the [pre-launch roadmap](PRELAUNCH_ROADMAP.md). Cosmetic stall, sound effect
 
 ## Next step
 
-**Test v0.31 on a phone first:** verify the oat floor is comfortably matte, the 49px top strip no longer obscures play, all five reveal cards/avatars fit, and 1–5 voting remains tappable. Publish the updated private test experience to play with a friend; test bench seating, cosmetics and most importantly illegal-step glass shatter/elimination. Report a phone screenshot or any Output errors. Major additional features and independent multiplayer/data/security QA remain required before public launch.
+**Test v0.32 on a phone first:** verify the oat floor is comfortably matte, the 49px top strip no longer obscures play, all five reveal cards/avatars fit, and 1–5 voting remains tappable. Publish the updated private test experience to play with a friend; test bench seating, cosmetics and most importantly illegal-step glass shatter/elimination. Report a phone screenshot or any Output errors. Major additional features and independent multiplayer/data/security QA remain required before public launch.
 
 See [the Mythblox game-design memo](../../docs/FIRST_GAME_GLASS_BRIDGE_CONCEPT.md) for earlier alternatives, including the spinner idea that was explicitly deferred.
