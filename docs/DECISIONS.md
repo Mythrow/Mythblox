@@ -53,6 +53,8 @@ Use this file to separate **confirmed project rules** from **ideas not yet appro
 
 - **2026-11-22:** Owner confirms **v0.12 gameplay polish works** in Roblox Studio, and requests to save progress and resume development tomorrow. The GitHub scripts/installer are committed, but the Roblox Studio place must also be saved separately by the owner. **Next candidate phase:** permanent wins/coins and data persistence; do not start until user resumes.
 
+- **2026-11-22:** Development resumed after the v0.12 checkpoint. **v0.13 persistent Wins/Coins implemented** in the authoritative Game 01 server, using Roblox DataStoreService, guarded GetAsync loads, idempotent UpdateAsync increment saves, 150-second jittered autosaves, exit/shutdown final saves, and failure modes that refuse to overwrite real data with zeros. Studio uses a **separate test data store**. No spending, cosmetics purchase, map or game-rule changes. New [persistence guide](../games/game-01/PERSISTENCE_TEST_GUIDE.md) documents private publication and Studio API Services setup. **Persistence not yet tested in Roblox Studio; do not claim the saves are verified.**
+
 ## Open decisions
 
 | Question | Options | Status |
