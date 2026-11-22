@@ -1,6 +1,6 @@
 # Game 01 — Studio Test Plan (Prototype)
 
-**Status (2026-11-22):** **v0.30** adds all seven approved UI experiences on top of v0.29: profile-aware first-time tutorial, race progress, verified round recap, spectator follow controls, owned inventory, saved accessibility/audio/effects preferences, and restrained reward toasts. Static source/installer checks have been run, but **phone/Studio rendering, multiuser gameplay, buying/equipping and cloud persistence require live validation**.
+**Status (2026-11-22):** **v0.31** fixes screenshot-reported lobby geometry: ground-mounted REWARDS board with no podium, displaced lamp posts moved clear of paths and join deck, glass-free open fence ends with continuous tall invisible safety limits, simplified surface inlays and kiosk corner joins. v0.30 UI systems remain unchanged. **All edits require Studio and published-phone physics/visual testing; do not mark the change verified from source consistency alone.**
 
 ## Playtest log
 
@@ -38,6 +38,18 @@
 6. Repeat with 3–4 clients if the two-player flow works.
 
 
+
+## v0.31 — screenshot-directed world geometry/edge QA
+
+- [ ] **Install:** Stop Play; run latest [one-paste installer](INSTALL_STUDIO_COMMAND_BAR.luau) in Studio Edit mode. Verify `v0.31 VERIFIED`, matching Output/HUD versions, then publish your private experience for an actual phone test.
+- [ ] **Rewards base:** From the screenshot's REWARDS angle, verify the 12×10 raised metal block is completely absent; two real timber legs reach grass without air gaps, clipping or new player obstacles.
+- [ ] **Lamp vs join row:** At both formerly affected ±12,-34 locations, the lamps no longer straddle/clip the join platform. The repositioned ±16,-39 lamps leave a clear deck entrance; ±38,-63 lamps avoid plaza edges, paths, planters, shop walls and character collisions.
+- [ ] **Island side/rear/end visuals:** There should be *no sheets of transparent perimeter glass* on the west, east, rear or outer front ends. Two horizontal wood rails and grounded stone posts must visually meet at all four corners. Only the **central front spectator window** remains glass.
+- [ ] **Invisible jump safety:** Walk to the outer edges and try normal jump + edge-running at west, east, rear, and all front corners; the tall invisible walls just beyond the visible fence must stop escape without freezing normal movement inside the lobby. Check third-person camera angles for annoying hidden collision.
+- [ ] **Trim seams:** Follow the main plaza edges, the central path/plaza transition, and the auto-JOIN row border at close camera height. There must be no double overlapping brass/terracotta strips, bright floating ribbons, Z-fighting, unintentional gaps or disconnected corners.
+- [ ] **Shop corners:** Inspect both sage and dusty-rose kiosks at the shown rear/side angle. Lower masonry must meet upper window precisely, windows meet roof/back wall and wood back wall reaches the stone floor. Look for tiny texture spikes and doubled roof-cornice strips.
+- [ ] **No regressions:** Front 90×24 deck auto-joins occupants who remain until zero; leaving before zero cancels; one-player practice and competitive 2–8 remain correct; VOTE/REVEAL/MOVE, forbidden-step shatter, coins/purchases, 7 UI panels and shopkeeper interactions still work.
+- [ ] **Photos and Output:** Compare a screenshot from all four supplied viewpoints and check server/client logs in Roblox Studio. Current source-only checks do not establish that geometry, texture artifacts or collisions are resolved on mobile.
 
 ## v0.30 — seven UI features: integration and regression acceptance
 
