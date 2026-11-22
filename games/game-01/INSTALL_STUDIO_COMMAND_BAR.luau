@@ -5,7 +5,7 @@
 assert(not game:GetService("RunService"):IsRunning(), "Stop the test session before installing.")
 
 local SERVER_SOURCE = [====[
--- Mythblox game-01: glass bridge race v0.17 (server)
+-- Mythblox game-01: glass bridge race v0.18 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -15,7 +15,7 @@ local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
 local DataStoreService = game:GetService("DataStoreService")
 local HttpService = game:GetService("HttpService")
-local BUILD_VERSION = "v0.17"
+local BUILD_VERSION = "v0.18"
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -32,13 +32,18 @@ local SETTINGS = {
 	BridgeY = 24,
 	WalkSpeed = 19,
 	StudioSoloPractice = true,
+	-- Change either ID to a different animation the experience may use.
+	-- R15 and R6 animations are different assets/rig types.
+	VictoryDanceR15 = "rbxassetid://507771019",
+	VictoryDanceR6 = "rbxassetid://182435998",
 }
 
--- Bright, classic Roblox palette. Visuals do not change gameplay permissions.
+-- Coastal jewel-tone / brushed-metal palette. Colors are cosmetic only;
+-- players' legal moves are NOT advertised by green/red bridge surfaces.
 local GREEN = Color3.fromRGB(51, 220, 105)
 local RED = Color3.fromRGB(255, 87, 87)
-local GLASS = Color3.fromRGB(138, 222, 248)
--- Purely visual glass tints: these never replace the GREEN/RED hazard signals.
+local GLASS = Color3.fromRGB(142, 219, 238)
+-- Existing purchased glass colors remain exactly as saved in the catalog.
 local SKIN_CATALOG = {
 	{ id = "classic", title = "Classic Blue", price = 0, color = GLASS },
 	{ id = "rose", title = "Candy Pink", price = 20, color = Color3.fromRGB(252, 164, 220) },
@@ -55,13 +60,57 @@ end
 local AMBER = Color3.fromRGB(255, 206, 75)
 local VIOLET = Color3.fromRGB(65, 173, 253) -- sky-blue accent, variable kept for compat.
 
--- Sunny daytime instead of the previous dark neon/dusk atmosphere.
-Lighting.ClockTime = 13.5
-Lighting.Brightness = 3
-Lighting.Ambient = Color3.fromRGB(194, 211, 235)
-Lighting.OutdoorAmbient = Color3.fromRGB(216, 229, 247)
-Lighting.FogColor = Color3.fromRGB(198, 230, 255)
-Lighting.FogEnd = 1400
+-- Premium sunny-coastal lighting using supported Roblox lighting effects.
+-- No external or guessed PBR asset IDs: built-in 2022 materials already use
+-- high-quality engine texture/roughness detail. Add custom maps later if needed.
+Lighting.ClockTime = 14.4
+Lighting.Brightness = 2.45
+Lighting.GlobalShadows = true
+Lighting.ShadowSoftness = 0.48
+Lighting.EnvironmentDiffuseScale = 0.7
+Lighting.EnvironmentSpecularScale = 0.82
+Lighting.Ambient = Color3.fromRGB(156, 171, 199)
+Lighting.OutdoorAmbient = Color3.fromRGB(206, 216, 236)
+Lighting.ColorShift_Top = Color3.fromRGB(255, 237, 215)
+Lighting.FogColor = Color3.fromRGB(193, 223, 238)
+Lighting.FogEnd = 1700
+
+local function getWorldLightingEffect(className, name)
+	local effect = Lighting:FindFirstChild(name)
+	if effect and not effect:IsA(className) then effect:Destroy(); effect = nil end
+	if not effect then
+		effect = Instance.new(className)
+		effect.Name = name
+		effect.Parent = Lighting
+	end
+	return effect
+end
+
+local atmosphere = getWorldLightingEffect("Atmosphere", "MythbloxCoastalAtmosphere")
+atmosphere.Density = 0.27
+atmosphere.Offset = 0.05
+atmosphere.Color = Color3.fromRGB(218, 237, 249)
+atmosphere.Decay = Color3.fromRGB(142, 172, 203)
+atmosphere.Glare = 0.11
+atmosphere.Haze = 0.75
+
+local grade = getWorldLightingEffect("ColorCorrectionEffect", "MythbloxWarmColorGrade")
+grade.Brightness = 0.01
+grade.Contrast = 0.08
+grade.Saturation = 0.09
+grade.TintColor = Color3.fromRGB(255, 249, 240)
+grade.Enabled = true
+
+local bloom = getWorldLightingEffect("BloomEffect", "MythbloxSoftBloom")
+bloom.Intensity = 0.18
+bloom.Size = 24
+bloom.Threshold = 1.25
+bloom.Enabled = true
+
+local sunRays = getWorldLightingEffect("SunRaysEffect", "MythbloxSunRays")
+sunRays.Intensity = 0.035
+sunRays.Spread = 0.85
+sunRays.Enabled = true
 
 -- Remove only the stock Baseplate SpawnLocation: its star icon is visible
 -- beneath the arena's lava even though our players use the elevated lobby.
@@ -118,6 +167,11 @@ local function part(name, size, position, color, material, parent)
 	p.Anchored = true
 	p.Color = color
 	p.Material = material
+	if material == Enum.Material.Glass then
+		p.Reflectance = 0.065
+	elseif material == Enum.Material.Metal then
+		p.Reflectance = 0.12
+	end
 	p.TopSurface = Enum.SurfaceType.Smooth
 	p.BottomSurface = Enum.SurfaceType.Smooth
 	p.Parent = parent or world
@@ -208,32 +262,52 @@ local hub = Instance.new("Model")
 hub.Name = "HubIsland"
 hub.Parent = world
 
-local GRASS = Color3.fromRGB(101, 204, 91)
-local CREAM = Color3.fromRGB(246, 226, 171)
-local WOOD = Color3.fromRGB(170, 111, 58)
-local ROOF_BLUE = Color3.fromRGB(52, 157, 244)
-local ROOF_PINK = Color3.fromRGB(252, 107, 150)
-local WHITE = Color3.fromRGB(253, 251, 238)
+local GRASS = Color3.fromRGB(91, 174, 128)
+local CREAM = Color3.fromRGB(232, 225, 209)
+local WOOD = Color3.fromRGB(123, 89, 66)
+local ROOF_BLUE = Color3.fromRGB(53, 125, 176)
+local ROOF_PINK = Color3.fromRGB(192, 110, 160)
+local WHITE = Color3.fromRGB(248, 247, 244)
+local METAL_TRIM = Color3.fromRGB(186, 157, 103)
+local DEEP_NAVY = Color3.fromRGB(38, 77, 107)
 
 local function decorative(name, size, position, color, material)
 	return part(name, size, position, color, material or Enum.Material.SmoothPlastic, hub)
+end
+
+-- Visual-only architectural detail: non-solid, non-touching, non-queryable.
+local function detail(name, size, position, color, material, parent)
+	local item = part(name, size, position, color, material or Enum.Material.Metal, parent or hub)
+	item.CanCollide = false
+	item.CanTouch = false
+	item.CanQuery = false
+	item.CastShadow = false
+	return item
 end
 
 -- Layered terrain gives the island a proper visible edge from the bridge.
 -- These are behind the spectator rails and do not alter the match.
 local islandSoil = decorative(
 	"IslandSoil", Vector3.new(125, 12, 87),
-	Vector3.new(0, 16, -59), Color3.fromRGB(153, 113, 72), Enum.Material.Ground
+	Vector3.new(0, 16, -59), Color3.fromRGB(139, 115, 91), Enum.Material.Ground
 )
 local islandStone = decorative(
 	"IslandStoneBase", Vector3.new(120, 4, 83),
-	Vector3.new(0, 8, -59), Color3.fromRGB(174, 163, 137), Enum.Material.Slate
+	Vector3.new(0, 8, -59), Color3.fromRGB(137, 143, 153), Enum.Material.Granite
 )
 local ground = decorative("HubGrassIsland", Vector3.new(130, 4, 91), Vector3.new(0, 22, -59), GRASS, Enum.Material.Grass)
-local plaza = decorative("SpawnPlaza", Vector3.new(26, 0.4, 23), Vector3.new(0, 24.2, -76), CREAM)
-local path = decorative("MainWalkPath", Vector3.new(11, 0.25, 36), Vector3.new(0, 24.14, -53), CREAM)
-local spurLeft = decorative("LeftShopPath", Vector3.new(27, 0.22, 7), Vector3.new(-19, 24.13, -48), CREAM)
-local spurRight = decorative("RightShopPath", Vector3.new(27, 0.22, 7), Vector3.new(19, 24.13, -48), CREAM)
+local plaza = decorative("SpawnPlaza", Vector3.new(26, 0.4, 23), Vector3.new(0, 24.2, -76), CREAM, Enum.Material.Marble)
+local path = decorative("MainWalkPath", Vector3.new(11, 0.25, 36), Vector3.new(0, 24.14, -53), CREAM, Enum.Material.Pavement)
+local spurLeft = decorative("LeftShopPath", Vector3.new(27, 0.22, 7), Vector3.new(-19, 24.13, -48), CREAM, Enum.Material.Pavement)
+local spurRight = decorative("RightShopPath", Vector3.new(27, 0.22, 7), Vector3.new(19, 24.13, -48), CREAM, Enum.Material.Pavement)
+
+-- Inlaid gold guide strips are thin, noncolliding and stop at the join deck.
+for _, x in ipairs({-5.05, 5.05}) do
+	detail("PromenadeInlay", Vector3.new(0.13, 0.04, 34), Vector3.new(x, 24.3, -52.5), METAL_TRIM)
+end
+for _, z in ipairs({-86, -65.5}) do
+	detail("SpawnPlazaInlay", Vector3.new(23, 0.035, 0.14), Vector3.new(0, 24.42, z), METAL_TRIM)
+end
 
 -- The platform is BOTH ready and spectator space. It persists for the whole
 -- server session; we change its message, never create a second front deck.
@@ -241,13 +315,20 @@ local sharedDeck = decorative(
 	"SharedReadyAndSpectatorDeck",
 	Vector3.new(90, 1, 24),
 	Vector3.new(0, 24.05, -22),
-	Color3.fromRGB(228, 245, 254)
+	Color3.fromRGB(222, 231, 233), Enum.Material.Marble
 )
+-- Thin perimeter binding prevents the spectator stage looking like a slab.
+for _, edge in ipairs({-1, 1}) do
+	detail("DeckSideBrassTrim", Vector3.new(0.16, 0.14, 24),
+		Vector3.new(edge * 44.85, 24.65, -22), METAL_TRIM)
+end
+detail("DeckFrontBrassTrim", Vector3.new(89.8, 0.14, 0.16),
+	Vector3.new(0, 24.65, -9.97), METAL_TRIM)
 local deckCenter = decorative(
 	"JoinAndWatchFloorMarking",
 	Vector3.new(19, 0.17, 9),
 	Vector3.new(0, 24.7, -25),
-	Color3.fromRGB(255, 207, 67)
+	Color3.fromRGB(214, 172, 91), Enum.Material.Metal
 )
 deckCenter.CanCollide = false
 local deckPrompt = Instance.new("ProximityPrompt")
@@ -278,7 +359,7 @@ local barrier = decorative(
 	"FrontSpectatorGlassBarrier",
 	Vector3.new(90, 8.5, 0.45),
 	Vector3.new(0, 28.8, -10.25),
-	Color3.fromRGB(177, 238, 252),
+	Color3.fromRGB(195, 221, 230),
 	Enum.Material.Glass
 )
 barrier.Transparency = 0.79
@@ -289,19 +370,19 @@ local function makePromenade(side)
 		side < 0 and "LeftSpectatorWalkway" or "RightSpectatorWalkway",
 		Vector3.new(9, 1, 95),
 		Vector3.new(x, 24.05, 22.5),
-		Color3.fromRGB(226, 244, 252)
+		Color3.fromRGB(219, 227, 230), Enum.Material.Marble
 	)
 	local connector = decorative(
 		side < 0 and "LeftSpectatorConnector" or "RightSpectatorConnector",
 		Vector3.new(12, 1, 15),
 		Vector3.new(side * 44, 24.05, -17.5),
-		Color3.fromRGB(226, 244, 252)
+		Color3.fromRGB(219, 227, 230), Enum.Material.Marble
 	)
 	local inner = decorative(
 		"InnerViewingSafetyGlass",
 		Vector3.new(0.45, 8.5, 79.8),
 		Vector3.new(side * 44.5, 28.8, 30.1),
-		Color3.fromRGB(177, 238, 252),
+		Color3.fromRGB(190, 224, 234),
 		Enum.Material.Glass
 	)
 	inner.Transparency = 0.78
@@ -309,17 +390,21 @@ local function makePromenade(side)
 		"OuterViewingFence",
 		Vector3.new(0.75, 7, 95),
 		Vector3.new(side * 53.5, 28.05, 22.5),
-		WOOD,
-		Enum.Material.Wood
+		DEEP_NAVY,
+		Enum.Material.Metal
 	)
 	outer.Transparency = 0.05
+	detail("ViewingFenceTopTrim", Vector3.new(0.9, 0.16, 95),
+		Vector3.new(side * 53.5, 31.6, 22.5), METAL_TRIM)
 	local endRail = decorative(
 		"ViewingEndFence",
 		Vector3.new(9, 7, 0.7),
 		Vector3.new(x, 28.05, 69.65),
-		WOOD,
-		Enum.Material.Wood
+		DEEP_NAVY,
+		Enum.Material.Metal
 	)
+	detail("ViewingEndRailTrim", Vector3.new(9, 0.15, 0.9),
+		Vector3.new(x, 31.6, 69.65), METAL_TRIM)
 	return walkway
 end
 makePromenade(-1)
@@ -344,12 +429,37 @@ local function makeStall(name, x, z, roofColor, line1, line2)
 	local group = Instance.new("Model")
 	group.Name = name
 	group.Parent = hub
-	part("DisplayFloor", Vector3.new(17, 0.6, 14), Vector3.new(x, 24.4, z), WHITE, Enum.Material.WoodPlanks, group)
-	part("BackWall", Vector3.new(17, 8, 1), Vector3.new(x, 28.4, z + 6), WOOD, Enum.Material.WoodPlanks, group)
+	part("DisplayFloor", Vector3.new(17, 0.6, 14), Vector3.new(x, 24.4, z),
+		Color3.fromRGB(224, 217, 197), Enum.Material.Marble, group)
+	part("BackWall", Vector3.new(17, 8, 1), Vector3.new(x, 28.4, z + 6),
+		WOOD, Enum.Material.WoodPlanks, group)
+	detail("StallWallInlay", Vector3.new(13.8, 0.18, 0.11),
+		Vector3.new(x, 29.7, z + 5.43), METAL_TRIM, Enum.Material.Metal, group)
+	detail("StallCounter", Vector3.new(11.6, 0.42, 1.8),
+		Vector3.new(x, 26.7, z + 3.1), CREAM, Enum.Material.Limestone, group)
+	for _, side in ipairs({-1, 1}) do
+		detail("StallCounterSupport", Vector3.new(0.7, 2.1, 1.0),
+			Vector3.new(x + side * 5.1, 25.65, z + 3.1), WOOD, Enum.Material.WoodPlanks, group)
+	end
 	for _, side in ipairs({-1, 1}) do
 		part("CornerPost", Vector3.new(1.2, 8.5, 1.2), Vector3.new(x + side * 7.2, 28.4, z - 4.5), WOOD, Enum.Material.Wood, group)
 	end
-	local roof = part("ColorfulRoof", Vector3.new(19, 1.3, 17), Vector3.new(x, 33.2, z), roofColor, Enum.Material.SmoothPlastic, group)
+	local roof = part("ColorfulRoof", Vector3.new(19, 1.3, 17), Vector3.new(x, 33.2, z),
+		roofColor, Enum.Material.Metal, group)
+	roof.Reflectance = 0.13
+	detail("RoofFrontBrassCornice", Vector3.new(19.2, 0.21, 0.55),
+		Vector3.new(x, 32.6, z - 8.45), METAL_TRIM, Enum.Material.Metal, group)
+	for _, side in ipairs({-1, 1}) do
+		detail("RoofSideBrassCornice", Vector3.new(0.24, 0.18, 17),
+			Vector3.new(x + side * 9.5, 32.62, z), METAL_TRIM, Enum.Material.Metal, group)
+	end
+	local canopyLight = Instance.new("PointLight")
+	canopyLight.Name = "WarmCanopyLight"
+	canopyLight.Color = Color3.fromRGB(255, 225, 175)
+	canopyLight.Brightness = 0.25
+	canopyLight.Range = 14
+	canopyLight.Shadows = false
+	canopyLight.Parent = roof
 	local header = part("StallSignAnchor", Vector3.new(1, 1, 1), Vector3.new(x, 29, z - 6.5), WHITE, Enum.Material.SmoothPlastic, group)
 	header.Transparency = 1
 	header.CanCollide = false
@@ -381,8 +491,11 @@ local board = decorative(
 	"LeaderboardBoard",
 	Vector3.new(13, 8, 1.1),
 	Vector3.new(33, 32.2, -82),
-	ROOF_BLUE
+	DEEP_NAVY, Enum.Material.Metal
 )
+board.Reflectance = 0.07
+detail("LeaderboardGoldRim", Vector3.new(13.4, 0.24, 1.15),
+	Vector3.new(33, 36.12, -82), METAL_TRIM)
 local boardGui = Instance.new("SurfaceGui")
 boardGui.Name = "ServerLeaderboard"
 boardGui.Face = Enum.NormalId.Back
@@ -468,7 +581,8 @@ local function refreshSessionLeaderboard()
 		textLabel.Text = rows[i]
 	end
 end
-local rewardsBase = decorative("FutureRewardsPodium", Vector3.new(12, 1.5, 10), Vector3.new(-33, 24.75, -82), Color3.fromRGB(255, 195, 91))
+local rewardsBase = decorative("FutureRewardsPodium", Vector3.new(12, 1.5, 10),
+	Vector3.new(-33, 24.75, -82), METAL_TRIM, Enum.Material.Metal)
 local rewardSign = decorative("FutureRewardsSignAnchor", Vector3.new(1, 1, 1), Vector3.new(-33, 27, -82), WHITE)
 rewardSign.CanCollide = false
 rewardSign.Transparency = 1
@@ -476,18 +590,22 @@ textSign(rewardSign, "REWARDS | COMING SOON", 2.5, 226)
 
 -- Small cartoony trees and bushes around the EDGE, leaving sightlines open.
 local function makeTree(x, z, height)
-	local trunk = decorative("BlockyTreeTrunk", Vector3.new(2, height, 2), Vector3.new(x, 24 + height / 2, z), WOOD, Enum.Material.Wood)
+	local trunk = decorative("TreeTrunk", Vector3.new(2, height, 2),
+		Vector3.new(x, 24 + height / 2, z), WOOD, Enum.Material.Wood)
 	for dx = -1, 1 do
 		for dz = -1, 1 do
 			if dx == 0 or dz == 0 then
 				local leaf = decorative(
-					"BlockyTreeLeaves",
-					Vector3.new(5, 3, 5),
-					Vector3.new(x + dx * 3.2, 24 + height + (dx == 0 and 2.5 or 1), z + dz * 3.2),
-					Color3.fromRGB(65 + (dx + 1) * 10, 190 + (dz + 1) * 6, 80),
-					Enum.Material.Grass
+					"TreeCanopy",
+					Vector3.new(5.5, 5.5, 5.5),
+					Vector3.new(x + dx * 3.0, 24 + height + (dx == 0 and 2.0 or 1), z + dz * 3),
+					Color3.fromRGB(67 + (dx + 1) * 8, 143 + (dz + 1) * 8, 102),
+					Enum.Material.LeafyGrass
 				)
+				leaf.Shape = Enum.PartType.Ball
 				leaf.CanCollide = false
+				leaf.CanTouch = false
+				leaf.CanQuery = false
 			end
 		end
 	end
@@ -499,12 +617,19 @@ for _, spot in ipairs({
 	makeTree(spot[1], spot[2], spot[3])
 end
 for _, spot in ipairs({{-49,-92},{-43,-92},{45,-92},{50,-93},{-50,-39},{50,-39}}) do
-	local bush = decorative("HubBush", Vector3.new(5, 3, 5), Vector3.new(spot[1], 25.5, spot[2]), Color3.fromRGB(77, 198, 99), Enum.Material.Grass)
+	local bush = decorative("HubBush", Vector3.new(5, 3, 5),
+		Vector3.new(spot[1], 25.5, spot[2]), Color3.fromRGB(76, 158, 106), Enum.Material.LeafyGrass)
+	bush.Shape = Enum.PartType.Ball
 	bush.CanCollide = false
+	bush.CanTouch = false
+	bush.CanQuery = false
 end
 for _, side in ipairs({-1, 1}) do
 	for _, z in ipairs({-89, -74, -59, -44}) do
-		local post = decorative("IslandEdgeFencePost", Vector3.new(1.5, 5, 1.5), Vector3.new(side * 63, 26.5, z), WOOD, Enum.Material.Wood)
+		local post = decorative("IslandEdgeFencePost", Vector3.new(1.5, 5, 1.5),
+			Vector3.new(side * 63, 26.5, z), DEEP_NAVY, Enum.Material.Metal)
+		detail("IslandPostCap", Vector3.new(2, 0.21, 2),
+			Vector3.new(side * 63, 29.13, z), METAL_TRIM)
 	end
 end
 
@@ -512,13 +637,43 @@ end
 -- from the arena; unlike the grass island it has no collision.
 local ocean = part(
 	"OceanBackdrop", Vector3.new(820, 1.5, 820),
-	Vector3.new(0, 0.6, 58), Color3.fromRGB(72, 185, 234), Enum.Material.SmoothPlastic
+	Vector3.new(0, 0.6, 58), Color3.fromRGB(76, 163, 199), Enum.Material.SmoothPlastic
 )
 ocean.CanCollide = false
 ocean.CanTouch = false
-local lava = part("Lava", Vector3.new(105, 2, 235), Vector3.new(0, 7, 68), Color3.fromRGB(255, 105, 35), Enum.Material.Neon)
+ocean.CanQuery = false
+ocean.Reflectance = 0.095
+
+-- Sparse ocean glints: reflective wave texture without huge moving models.
+for i = 1, 32 do
+	local column = i % 4
+	local band = math.floor(i / 4)
+	local x = -145 + column * 95 + (i % 3) * 7
+	local z = -128 + band * 58
+	local shimmer = detail("OceanSunGlint", Vector3.new(10 + i % 5, 0.025, 0.3),
+		Vector3.new(x, 1.39, z), Color3.fromRGB(209, 241, 253), Enum.Material.SmoothPlastic, world)
+	shimmer.Transparency = 0.65
+end
+
+-- Roblox's built-in CrackedLava has physically textured dark crust rather
+-- than the previous solid glowing orange rectangle.
+local lava = part("Lava", Vector3.new(105, 2, 235),
+	Vector3.new(0, 7, 68), Color3.fromRGB(247, 105, 64), Enum.Material.CrackedLava)
 lava.CanCollide = false
-lava.Transparency = 0.12
+lava.Transparency = 0.03
+for _, edge in ipairs({-1, 1}) do
+	detail("VolcanicBasaltRim", Vector3.new(1.4, 1.1, 235),
+		Vector3.new(edge * 52.9, 8.05, 68), Color3.fromRGB(56, 60, 70),
+		Enum.Material.Basalt, world)
+end
+for i = 1, 16 do
+	local x = ((i * 19) % 83) - 41
+	local z = -40 + i * 13
+	local flow = detail("MoltenHighlight", Vector3.new(1.2, 0.035, 6 + i % 5),
+		Vector3.new(x, 8.02, z), Color3.fromRGB(254, 143, 76),
+		Enum.Material.Neon, world)
+	flow.Transparency = 0.28
+end
 lava.Touched:Connect(function(hit)
 	local character = hit:FindFirstAncestorOfClass("Model")
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
@@ -555,8 +710,17 @@ local function buildBridges(count)
 				Enum.Material.Glass,
 				bridgeModel
 			)
-			tile.Transparency = 0.22
+			tile.Transparency = 0.25
+			tile.Reflectance = 0.095
 			lanes[lane].tiles[index] = tile
+			-- Tiny, uniform brushed-metal corner brackets on every tile.
+			-- All panels receive the same trim: no valid steps are disclosed.
+			for _, corner in ipairs({-1, 1}) do
+				detail("GlassCornerMetal", Vector3.new(0.58, 0.07, 0.58),
+					Vector3.new(x + corner * 2.84, SETTINGS.BridgeY + 0.47,
+						index * SETTINGS.TileSpacing + 2.83),
+					Color3.fromRGB(153, 177, 188), Enum.Material.Metal, bridgeModel)
+			end
 		end
 		-- Pale-blue decorative rails sit below the glass and cannot be stood on.
 		-- Only two rails per player, keeping the world small on mobile devices.
@@ -565,11 +729,12 @@ local function buildBridges(count)
 				("Lane%02d_EdgeGlow"):format(lane),
 				Vector3.new(0.35, 0.35, SETTINGS.TileSpacing * SETTINGS.BridgeLength + 6.7),
 				Vector3.new(x + edge * (3.35 - 0.175), SETTINGS.BridgeY - 0.625, SETTINGS.BridgeLength * SETTINGS.TileSpacing / 2),
-				VIOLET, Enum.Material.SmoothPlastic, bridgeModel
+				Color3.fromRGB(139, 178, 200), Enum.Material.Metal, bridgeModel
 			)
 			rail.CanCollide = false
 			rail.CanTouch = false
-			rail.Transparency = 0.12
+			rail.Transparency = 0.23
+			rail.Reflectance = 0.1
 		end
 	end
 
@@ -582,7 +747,7 @@ local function buildBridges(count)
 		"FinishGateBeam",
 		Vector3.new(occupiedSpan + 6.2, 3.0, 1.5),
 		Vector3.new(0, SETTINGS.BridgeY + 11.6, finishZ),
-		Color3.fromRGB(249, 252, 255), Enum.Material.SmoothPlastic, bridgeModel
+		Color3.fromRGB(236, 243, 244), Enum.Material.Metal, bridgeModel
 	)
 	beam.CanCollide = false
 	beam.CanTouch = false
@@ -612,11 +777,21 @@ local function buildBridges(count)
 			"FinishGatePillar",
 			Vector3.new(2.0, 11.7, 2.5),
 			Vector3.new(side * postX, SETTINGS.BridgeY + 5.85, finishZ),
-			Color3.fromRGB(73, 171, 235), Enum.Material.SmoothPlastic, bridgeModel
+			Color3.fromRGB(94, 146, 170), Enum.Material.Metal, bridgeModel
 		)
 		column.CanCollide = false
 		column.CanTouch = false
 	end
+	-- A gold cap and thin metallic vertical highlights frame the finish sign.
+	detail("FinishGateBrassTop", Vector3.new(occupiedSpan + 6.4, 0.22, 1.55),
+		Vector3.new(0, SETTINGS.BridgeY + 13.18, finishZ), METAL_TRIM,
+		Enum.Material.Metal, bridgeModel)
+	for _, side in ipairs({-1, 1}) do
+		detail("FinishPillarAccent", Vector3.new(0.14, 10.8, 0.22),
+			Vector3.new(side * postX, SETTINGS.BridgeY + 5.86, finishZ - 1.29),
+			METAL_TRIM, Enum.Material.Metal, bridgeModel)
+	end
+
 	-- Checkered stripes belong only to the final glass tile, not across gaps
 	-- between player lanes; they cannot be walked on independently.
 	for lane = 1, count do
@@ -689,19 +864,16 @@ local function lobbyTeleport(player)
 	end
 end
 
-local function setWalking(player, canMove)
+-- Never freeze or suppress player locomotion during JOIN/VOTE/REVEAL/MOVE.
+-- The server still validates bridge advancement by tile, phase and range.
+local function keepMovementEnabled(player)
 	local character = player.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-	local root = character and character:FindFirstChild("HumanoidRootPart")
 	if humanoid then
-		humanoid.WalkSpeed = canMove and SETTINGS.WalkSpeed or 0
-		humanoid.JumpPower = 0
-		humanoid.JumpHeight = 0
-		humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
-	end
-	if not canMove and root then
-		local vel = root.AssemblyLinearVelocity
-		root.AssemblyLinearVelocity = Vector3.new(0, vel.Y, 0)
+		humanoid.WalkSpeed = SETTINGS.WalkSpeed
+		humanoid.JumpPower = 50
+		humanoid.JumpHeight = 7.2
+		humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
 	end
 end
 
@@ -789,7 +961,7 @@ local function startWinnerDances(winners)
 				local animation = Instance.new("Animation")
 				animation.Name = "MythbloxVictoryDance"
 				animation.AnimationId = humanoid.RigType == Enum.HumanoidRigType.R15
-					and "rbxassetid://507771019" or "rbxassetid://182435998"
+					and SETTINGS.VictoryDanceR15 or SETTINGS.VictoryDanceR6
 				local ok, trackOrError = pcall(function()
 					local track = animator:LoadAnimation(animation)
 					track.Priority = Enum.AnimationPriority.Action
@@ -857,7 +1029,7 @@ local function shatter(tile, dramatic)
 			local shard = Instance.new("Part")
 			shard.Name = "GlassFragment"
 			shard.Size = Vector3.new(0.45, 0.18, 0.75)
-			shard.Color = GLASS
+			shard.Color = tile.Color
 			shard.Material = Enum.Material.Glass
 			shard.Transparency = 0.18
 			shard.CanCollide = false
@@ -876,7 +1048,7 @@ local function shatter(tile, dramatic)
 	end
 	tile.CanCollide = false
 	tile.CanTouch = false
-	tile.Color = RED
+	-- Never flash a whole tile red: glass fades/shatters in its current tint.
 	TweenService:Create(tile, TweenInfo.new(0.3), {Transparency = 1}):Play()
 end
 
@@ -886,7 +1058,7 @@ local function eliminate(player, reason, tileToBreak)
 	info.alive = false
 	info.elimination = reason
 	info.allowed = 0
-	setWalking(player, false)
+	keepMovementEnabled(player)
 	if tileToBreak then shatter(tileToBreak, true) end
 	-- Remove their supporting panel too, so an invalid step always causes a visible fall.
 	local standingTile = lanes[info.lane].tiles[info.index]
@@ -904,35 +1076,16 @@ local function crack(player)
 	if info.cracks >= SETTINGS.MaxCracks then
 		eliminate(player, "three cracks", currentTile)
 	else
-		currentTile.Color = info.cracks == 1 and AMBER or RED
+		-- Damage is indicated by crack geometry and particles, not a red/green
+		-- repaint of the entire panel.
 		showCrackLines(currentTile, info.cracks)
 		glassBurst(currentTile, AMBER, 6)
 	end
 end
 
-local function paintAllowedTiles()
-	for player, info in pairs(active) do
-		if info.alive then
-			local lane = lanes[info.lane]
-			local current = lane.tiles[info.index]
-			if current and current.CanCollide then
-				current.Color = info.cracks == 0 and glassColorFor(player) or (info.cracks == 1 and AMBER or RED)
-			end
-			if phase == "MOVE" then
-				local from = info.startIndex + 1
-				for i = from, math.min(info.startIndex + info.allowed, SETTINGS.BridgeLength) do
-					if lane.tiles[i] and lane.tiles[i].CanCollide then
-						lane.tiles[i].Color = GREEN
-					end
-				end
-				local nextUnsafe = info.startIndex + info.allowed + 1
-				if nextUnsafe <= SETTINGS.BridgeLength and lane.tiles[nextUnsafe].CanCollide then
-					lane.tiles[nextUnsafe].Color = RED
-				end
-			end
-		end
-	end
-end
+-- Neutral glass never changes color to disclose the permitted step path.
+-- The compact HUD and the private result determine GO/STAY, while the
+-- server enforces legal forward movement after vote reveal.
 
 local function publicRoster()
 	local roster = {}
@@ -1545,7 +1698,7 @@ local function teleportToLane(player, lane)
 			end
 		end)
 	end
-	setWalking(player, false)
+	keepMovementEnabled(player)
 	return root
 end
 
@@ -1716,7 +1869,7 @@ end
 local function finishMovePhase()
 	for player, info in pairs(active) do
 		if info.alive then
-			setWalking(player, false)
+			keepMovementEnabled(player)
 			if info.allowed > 0 then
 				if info.index <= info.startIndex then
 					eliminate(player, "did not leave the old tile", lanes[info.lane].tiles[info.startIndex])
@@ -1780,7 +1933,7 @@ while true do
 		message = "Secretly choose 1–5 steps. Most popular picks crack!"
 		for _, info in pairs(active) do info.vote = nil end
 		for player, info in pairs(active) do
-			if info.alive then setWalking(player, false) end
+			if info.alive then keepMovementEnabled(player) end
 		end
 		countdown(SETTINGS.VoteSeconds, false)
 
@@ -1791,7 +1944,6 @@ while true do
 			for i = 1, 5 do if unsafe[i] then table.insert(s, tostring(i)) end end
 			return #s > 0 and table.concat(s, ", ") or "none"
 		end)() .. ". Watch your glass!"
-		paintAllowedTiles()
 		countdown(SETTINGS.RevealSeconds, false)
 
 		winners = finishersOrSurvivor()
@@ -1802,10 +1954,9 @@ while true do
 		for player, info in pairs(active) do
 			if info.alive then
 				-- Players who must STAY may still walk; stepping onto red glass is the joke.
-				setWalking(player, true)
+				keepMovementEnabled(player)
 			end
 		end
-		paintAllowedTiles()
 		countdown(SETTINGS.MoveSeconds, true)
 		finishMovePhase()
 		winners = finishersOrSurvivor()
@@ -1845,13 +1996,13 @@ end
 ]====]
 
 local CLIENT_SOURCE = [====[
--- Mythblox Game 01 · longer reveal and winner dance v0.17
+-- Mythblox Game 01 · premium world and free movement v0.18
 -- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
-local BUILD_VERSION = "v0.17"
+local BUILD_VERSION = "v0.18"
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local network = ReplicatedStorage:WaitForChild("MythbloxGame01")
@@ -1927,6 +2078,15 @@ local function panel(name)
 	frame.Parent = gui
 	addCorner(frame, 13)
 	addStroke(frame, COLOR.Border, 1)
+	-- A soft vertical color grade adds depth without relying on a texture ID.
+	local gradient = Instance.new("UIGradient")
+	gradient.Name = "PearlCardFinish"
+	gradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(235, 246, 253)),
+	})
+	gradient.Rotation = 90
+	gradient.Parent = frame
 	return frame
 end
 
@@ -2110,7 +2270,7 @@ end
 -- Results appear in the compact top status strip instead of a centered
 -- modal. The arena and other players remain visible when a match ends.
 
--- v0.17: Secret selections are never displayed to others while voting.
+-- v0.18: Secret selections are never displayed to others while voting.
 -- ONLY during the five-second REVEAL do five non-clickable results cards
 -- show every numbered choice, picking players' avatars, totals, and safety.
 -- The existing blue voting buttons remain PRIVATE selection controls.
@@ -2456,9 +2616,9 @@ local function update(state)
 		end
 	elseif changedPhase and phase == "MOVE" and mine and mine.alive then
 		if (mine.allowed or 0) > 0 then
-			showFeedback("GREEN TILES · WALK NOW!", true)
+			showFeedback("SAFE PICK · ADVANCE NOW", true)
 		else
-			showFeedback("RED TILES · STAY PUT!", false)
+			showFeedback("BLOCKED PICK · DO NOT ADVANCE", false)
 		end
 	end
 	if mine and previousAlive == true and not mine.alive then
@@ -2477,7 +2637,7 @@ local function update(state)
 	if phase == "JOIN" or phase == "VOTE" then
 		lastTurnRendered = -1
 	end
-	phaseText.Text = ("v0.17 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
+	phaseText.Text = ("v0.18 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
 	clockText.Text = tostring(state.time or 0) .. "s"
 	clockText.TextColor3 = phase == "VOTE" and (state.time or 0) <= 2 and COLOR.Red or COLOR.Purple
 	description.Text = state.message or ""
@@ -2487,7 +2647,7 @@ local function update(state)
 	if voting.Visible then shop.Visible = false end
 
 	if phase == "JOIN" then
-		phaseText.Text = "v0.17 · NEXT MATCH"
+		phaseText.Text = "v0.18 · NEXT MATCH"
 		description.Text = state.queued and "You're queued for the next race."
 			or "Join at the gold pad or use the button below."
 		ownStats.Text = ("%d/%d PLAYERS READY"):format(state.ready or 0, state.capacity or 8)
@@ -2506,7 +2666,7 @@ local function update(state)
 	if phase == "RESULTS" then
 		-- Server sends winner/draw text in state.message; show it only in
 		-- the small status panel and avoid blocking the camera.
-		phaseText.Text = "v0.17 · ROUND OVER"
+		phaseText.Text = "v0.18 · ROUND OVER"
 		ownStats.Text = "NEXT MATCH STARTS SOON"
 	end
 
@@ -2527,8 +2687,8 @@ local function update(state)
 	-- Keep the essential permission in the compact HUD, not a separate banner.
 	if phase == "MOVE" and mine and mine.alive then
 		local allowed = mine.allowed or 0
-		description.Text = allowed > 0 and ("GO · WALK 1–%d GREEN TILES"):format(allowed)
-			or "STAY · THIS TURN"
+		description.Text = allowed > 0 and ("GO · ADVANCE 1–%d PANELS"):format(allowed)
+			or "NO ADVANCE · WAIT THIS TURN"
 	end
 
 	-- The five non-interactive number cards appear ONLY in the five-second reveal.
@@ -2555,7 +2715,7 @@ stateEvent.OnClientEvent:Connect(update)
 command:FireServer("Sync")
 ]====]
 
--- Diagnostic/cleanup installer: v0.17
+-- Diagnostic/cleanup installer: v0.18
 -- Remove known legacy copies from services used by previous Mythblox builds.
 -- This intentionally does NOT remove scripts belonging to other games.
 -- Permanently remove the UNUSED default Roblox Baseplate spawn while in
@@ -2641,12 +2801,12 @@ for _, child in ipairs(game:GetDescendants()) do
 	end
 end
 
-print("[Mythblox INSTALL] v0.17 VERIFIED: 2 scripts installed and Source checked.")
-print("[Mythblox INSTALL] Server: " .. liveServer:GetFullName() .. " | Build v0.17")
-print("[Mythblox INSTALL] Client: " .. liveClient:GetFullName() .. " | Build v0.17")
+print("[Mythblox INSTALL] v0.18 VERIFIED: 2 scripts installed and Source checked.")
+print("[Mythblox INSTALL] Server: " .. liveServer:GetFullName() .. " | Build v0.18")
+print("[Mythblox INSTALL] Client: " .. liveClient:GetFullName() .. " | Build v0.18")
 print("[Mythblox INSTALL] Cleaned " .. #removed .. " previous Mythblox script/UI objects.")
 print("[Mythblox INSTALL] Disabled " .. #disabledLegacy .. " other old game scripts found by source signature.")
 if #suspicious > 0 then
 	warn("[Mythblox INSTALL] Other Mythblox scripts still exist: " .. table.concat(suspicious, "; "))
 end
-print("[Mythblox INSTALL] NOW START A FRESH PLAY SESSION. Confirm the top HUD visibly says v0.17, and check Output for SERVER RUNNING v0.17 and CLIENT RUNNING v0.17.")
+print("[Mythblox INSTALL] NOW START A FRESH PLAY SESSION. Confirm the top HUD visibly says v0.18, and check Output for SERVER RUNNING v0.18 and CLIENT RUNNING v0.18.")
