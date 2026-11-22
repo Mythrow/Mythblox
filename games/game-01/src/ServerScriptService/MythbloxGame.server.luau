@@ -1184,6 +1184,116 @@ local function saveProfile(player, reason)
 	return false
 end
 
+-- A cosmetic purchase/equip transaction uses the SAME stored record as earned
+-- coins. UpdateAsync checks ownership and balance atomically; no client prices.
+-- It also commits any pending match rewards in the same write.
+local function transactSkin(player, skinId)
+	if player.Parent ~= Players or not nearCosmetics(player) then return end
+	local item = SKIN_BY_ID[skinId]
+	if not item then return end
+	local profile = profiles[player]
+	if not profile or profile.status ~= "ready" or not dataStore then
+		sendShop(player, "Update", "Saving is unavailable. Please try again later.")
+		return
+	end
+	if profile.saving then
+		sendShop(player, "Update", "Saving in progress. Try again.")
+		return
+	end
+	if os.clock() - (profile.lastShopAction or 0) < 0.65 then return end
+	profile.lastShopAction = os.clock()
+	local alreadyOwned = skinId == "classic" or profile.ownedSkins[skinId] == true
+	if not alreadyOwned and profile.baseCoins + profile.pendingCoins < item.price then
+		sendShop(player, "Update", "Not enough coins.")
+		return
+	end
+	if alreadyOwned and profile.equippedSkin == skinId then
+		sendShop(player, "Update", "Already equipped.")
+		return
+	end
+
+	profile.saving = true -- lock with autosave, leave and shutdown
+	local winsDelta = profile.pendingWins
+	local coinsDelta = profile.pendingCoins
+	local operationId = HttpService:GenerateGUID(false)
+	local lastError
+	local insufficient = false
+
+	for attempt = 1, 3 do
+		insufficient = false
+		local ok, saved = pcall(function()
+			return dataStore:UpdateAsync(profile.key, function(stored)
+				if not validRecord(stored) then return nil end
+				local recent = {}
+				if stored and type(stored.recentSaves) == "table" then
+					for _, token in ipairs(stored.recentSaves) do
+						if type(token) == "string" then
+							if token == operationId then return stored end
+							table.insert(recent, token)
+						end
+					end
+				end
+				while #recent >= 20 do table.remove(recent, 1) end
+				table.insert(recent, operationId)
+
+				local owned = sanitizedOwned(stored and stored.ownedSkins)
+				local hasSkin = skinId == "classic" or owned[skinId] == true
+				local cost = hasSkin and 0 or item.price
+				local wallet = safeStat(stored and stored.coins) + coinsDelta
+				if wallet < cost then
+					insufficient = true
+					return nil -- atomic rejection: no accidental negative balance
+				end
+				if skinId ~= "classic" then owned[skinId] = true end
+				return {
+					schema = 1,
+					wins = safeStat((stored and stored.wins or 0) + winsDelta),
+					coins = safeStat(wallet - cost),
+					ownedSkins = owned,
+					equippedSkin = skinId,
+					recentSaves = recent,
+				}
+			end)
+		end)
+		if ok and type(saved) == "table" then
+			profile.pendingWins = math.max(0, profile.pendingWins - winsDelta)
+			profile.pendingCoins = math.max(0, profile.pendingCoins - coinsDelta)
+			profile.baseWins = safeStat(saved.wins)
+			profile.baseCoins = safeStat(saved.coins)
+			profile.ownedSkins = sanitizedOwned(saved.ownedSkins)
+			profile.equippedSkin = sanitizedEquipped(saved.equippedSkin, profile.ownedSkins)
+			equippedSkins[player] = profile.equippedSkin
+			profile.saving = false
+			updateProfileView(player, profile)
+			if player.Parent == Players then
+				player:SetAttribute("MythbloxDataStatus", "READY")
+				sendShop(player, "Update", item.title .. " equipped.")
+			end
+			print("[Mythblox SHOP] " .. player.Name .. " equipped " .. skinId)
+			return
+		end
+		lastError = ok and (insufficient and "Not enough coins." or "Shop purchase rejected.") or tostring(saved)
+		if ok then break end
+		if attempt < 3 then task.wait(2 ^ (attempt - 1) + math.random() * 0.5) end
+	end
+	profile.saving = false
+	if player.Parent == Players then
+		if insufficient then
+			sendShop(player, "Update", "Not enough coins.")
+		else
+			player:SetAttribute("MythbloxDataStatus", "SAVE_ERROR")
+			sendShop(player, "Update", "Purchase failed. No coins were deducted.")
+		end
+	end
+	warn("[Mythblox SHOP] Transaction failed for " .. player.Name .. ": " .. tostring(lastError))
+end
+
+cosmeticsPrompt.Triggered:Connect(function(player)
+	if player.Parent == Players and nearCosmetics(player) then
+		sendShop(player, "Open", "")
+	end
+end)
+
 -- Incremental autosaves avoid excessive requests on every vote/round.
 task.spawn(function()
 	while true do
@@ -1296,6 +1406,10 @@ command.OnServerEvent:Connect(function(player, action, payload)
 		stateEvent:FireClient(player, snapshot(player))
 	elseif action == "Join" then
 		joinQueue(player)
+	elseif action == "Shop" then
+		if typeof(payload) ~= "string" or #payload > 24 or not SKIN_BY_ID[payload] then return end
+		if not nearCosmetics(player) then return end
+		task.spawn(transactSkin, player, payload)
 	elseif action == "Vote" then
 		if phase ~= "VOTE" then return end
 		local info = active[player]
