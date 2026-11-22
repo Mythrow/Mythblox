@@ -1,4 +1,4 @@
--- Mythblox game-01: Azure Coast Resort v0.21 (server)
+-- Mythblox game-01: Soft Earth Coast v0.22 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -8,7 +8,7 @@ local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
 local DataStoreService = game:GetService("DataStoreService")
 local HttpService = game:GetService("HttpService")
-local BUILD_VERSION = "v0.21"
+local BUILD_VERSION = "v0.22"
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -31,21 +31,22 @@ local SETTINGS = {
 	VictoryDanceR6 = "rbxassetid://182435998",
 }
 
--- AZURE COAST RESORT theme: ivory limestone, sea-glass teal, deep navy,
--- champagne brass and coastal evergreen. One coherent art direction for
--- paths, buildings, bridges, signs, seating, fencing and the distant world.
--- The approved purchased glass colors remain personal and independent.
+-- SOFT EARTH COAST: cute, muted, matte earth tones in the whole lobby.
+-- Exact visual palette; purchased glass skins and SAFE/BLOCKED result signals
+-- are functional exceptions that must keep their existing behavior.
 local THEME = {
-	Ivory = Color3.fromRGB(243, 235, 216),
-	Limestone = Color3.fromRGB(221, 209, 182),
-	Sandstone = Color3.fromRGB(193, 177, 146),
-	Teal = Color3.fromRGB(33, 116, 125),
-	DeepTeal = Color3.fromRGB(20, 65, 79),
-	Brass = Color3.fromRGB(198, 160, 92),
-	Evergreen = Color3.fromRGB(66, 130, 98),
-	Foam = Color3.fromRGB(199, 235, 232),
-	Coral = Color3.fromRGB(207, 129, 109),
-	Stone = Color3.fromRGB(123, 134, 139),
+	Ivory = Color3.fromRGB(239, 230, 214),       -- #EFE6D6 warm cream
+	Limestone = Color3.fromRGB(217, 200, 174),   -- #D9C8AE oat beige
+	Sandstone = Color3.fromRGB(201, 179, 148),   -- #C9B394 soft sand
+	Sage = Color3.fromRGB(168, 179, 157),        -- #A8B39D muted sage
+	Terracotta = Color3.fromRGB(185, 137, 115), -- #B98973 soft clay
+	Rose = Color3.fromRGB(199, 159, 154),        -- #C79F9A dusty rose
+	Wood = Color3.fromRGB(181, 142, 108),        -- #B58E6C light wood
+	Brown = Color3.fromRGB(110, 90, 75),         -- #6E5A4B soft brown
+	Evergreen = Color3.fromRGB(128, 151, 123),
+	Foam = Color3.fromRGB(202, 217, 202),
+	Stone = Color3.fromRGB(153, 149, 137),
+	Ocean = Color3.fromRGB(123, 157, 153),
 }
 local GLASS = Color3.fromRGB(142, 219, 238)
 -- Existing purchased glass colors remain exactly as saved in the catalog.
@@ -63,20 +64,18 @@ local function glassColorFor(player)
 	return skin and skin.color or GLASS
 end
 local AMBER = Color3.fromRGB(255, 206, 75)
--- Premium sunny-coastal lighting using supported Roblox lighting effects.
--- No external or guessed PBR asset IDs: built-in 2022 materials already use
--- high-quality engine texture/roughness detail. Add custom maps later if needed.
-Lighting.ClockTime = 13.8
-Lighting.Brightness = 2.4
+-- Softer mobile-friendly daylight: minimize blown-out cream floor pixels.
+Lighting.ClockTime = 13.1
+Lighting.Brightness = 1.85
 Lighting.GlobalShadows = true
-Lighting.ShadowSoftness = 0.48
-Lighting.EnvironmentDiffuseScale = 0.7
-Lighting.EnvironmentSpecularScale = 0.82
-Lighting.Ambient = Color3.fromRGB(160, 183, 193)
-Lighting.OutdoorAmbient = Color3.fromRGB(218, 226, 219)
-Lighting.ColorShift_Top = Color3.fromRGB(255, 241, 219)
-Lighting.FogColor = Color3.fromRGB(203, 231, 230)
-Lighting.FogEnd = 1600
+Lighting.ShadowSoftness = 0.68
+Lighting.EnvironmentDiffuseScale = 0.46
+Lighting.EnvironmentSpecularScale = 0.20
+Lighting.Ambient = Color3.fromRGB(166, 159, 145)
+Lighting.OutdoorAmbient = Color3.fromRGB(198, 188, 167)
+Lighting.ColorShift_Top = Color3.fromRGB(240, 222, 199)
+Lighting.FogColor = Color3.fromRGB(212, 208, 188)
+Lighting.FogEnd = 1500
 
 local function getWorldLightingEffect(className, name)
 	local effect = Lighting:FindFirstChild(name)
@@ -92,27 +91,27 @@ end
 local atmosphere = getWorldLightingEffect("Atmosphere", "MythbloxCoastalAtmosphere")
 atmosphere.Density = 0.27
 atmosphere.Offset = 0.05
-atmosphere.Color = Color3.fromRGB(226, 241, 238)
-atmosphere.Decay = Color3.fromRGB(143, 184, 184)
-atmosphere.Glare = 0.08
-atmosphere.Haze = 0.82
+atmosphere.Color = Color3.fromRGB(228, 219, 199)
+atmosphere.Decay = Color3.fromRGB(172, 170, 149)
+atmosphere.Glare = 0
+atmosphere.Haze = 0.65
 
 local grade = getWorldLightingEffect("ColorCorrectionEffect", "MythbloxWarmColorGrade")
-grade.Brightness = 0.01
-grade.Contrast = 0.08
-grade.Saturation = 0.09
-grade.TintColor = Color3.fromRGB(255, 252, 243)
+grade.Brightness = -0.025
+grade.Contrast = -0.055
+grade.Saturation = -0.12
+grade.TintColor = Color3.fromRGB(247, 238, 220)
 grade.Enabled = true
 
 local bloom = getWorldLightingEffect("BloomEffect", "MythbloxSoftBloom")
-bloom.Intensity = 0.18
-bloom.Size = 24
-bloom.Threshold = 1.25
-bloom.Enabled = true
+bloom.Intensity = 0
+bloom.Size = 18
+bloom.Threshold = 2
+bloom.Enabled = false
 
 local sunRays = getWorldLightingEffect("SunRaysEffect", "MythbloxSunRays")
-sunRays.Intensity = 0.035
-sunRays.Spread = 0.85
+sunRays.Intensity = 0.012
+sunRays.Spread = 0.82
 sunRays.Enabled = true
 
 -- Dynamic clouds belong to Workspace.Terrain (not Lighting).
@@ -124,13 +123,13 @@ if not clouds then
 	clouds.Parent = terrain
 end
 clouds.Name = "MythbloxAzureCoastClouds"
-clouds.Cover = 0.37
-clouds.Density = 0.44
-clouds.Color = Color3.fromRGB(252, 250, 243)
+clouds.Cover = 0.39
+clouds.Density = 0.35
+clouds.Color = Color3.fromRGB(235, 225, 210)
 clouds.Enabled = true
-terrain.WaterColor = THEME.Teal
+terrain.WaterColor = THEME.Ocean
 terrain.WaterTransparency = 0.36
-terrain.WaterReflectance = 0.18
+terrain.WaterReflectance = 0.045
 terrain.WaterWaveSize = 0.14
 terrain.WaterWaveSpeed = 8
 
@@ -208,9 +207,9 @@ local function part(name, size, position, color, material, parent)
 	p.Color = color
 	p.Material = material
 	if material == Enum.Material.Glass then
-		p.Reflectance = 0.065
+		p.Reflectance = 0.012
 	elseif material == Enum.Material.Metal then
-		p.Reflectance = 0.12
+		p.Reflectance = 0.018
 	end
 	p.TopSurface = Enum.SurfaceType.Smooth
 	p.BottomSurface = Enum.SurfaceType.Smooth
@@ -235,7 +234,7 @@ local function textSign(parent, message, yOffset, width)
 	board.Size = Vector3.new(math.clamp((width or 220) / 21, 8, 16), 2.35, 0.45)
 	board.Position = parent.Position + Vector3.new(0, yOffset or 3, 0)
 	board.Material = Enum.Material.Metal
-	board.Color = THEME.DeepTeal
+	board.Color = THEME.Brown
 	board.Reflectance = 0.08
 	board.Parent = parent.Parent or world
 
@@ -274,7 +273,7 @@ local function textSign(parent, message, yOffset, width)
 			subtitle.Position = UDim2.fromScale(0.04, 0.64)
 			subtitle.Size = UDim2.fromScale(0.92, 0.25)
 			subtitle.BackgroundTransparency = 1
-			subtitle.TextColor3 = THEME.Brass
+			subtitle.TextColor3 = THEME.Wood
 			subtitle.TextScaled = false
 			subtitle.TextSize = 26
 			subtitle.TextWrapped = false
@@ -305,12 +304,12 @@ hub.Parent = world
 
 local GRASS = THEME.Evergreen
 local CREAM = THEME.Ivory
-local WOOD = Color3.fromRGB(143, 111, 86)
-local ROOF_BLUE = THEME.Teal
-local ROOF_PINK = THEME.Coral
+local WOOD = THEME.Wood
+local ROOF_BLUE = THEME.Sage
+local ROOF_PINK = THEME.Rose
 local WHITE = THEME.Ivory
-local METAL_TRIM = THEME.Brass
-local DEEP_NAVY = THEME.DeepTeal
+local METAL_TRIM = THEME.Wood
+local DEEP_NAVY = THEME.Brown
 
 local function decorative(name, size, position, color, material)
 	return part(name, size, position, color, material or Enum.Material.SmoothPlastic, hub)
@@ -436,7 +435,7 @@ local deckCenter = decorative(
 	"JoinAndWatchFloorMarking",
 	Vector3.new(19, 0.17, 9),
 	Vector3.new(0, 24.7, -25),
-	THEME.Brass, Enum.Material.Metal
+	THEME.Wood, Enum.Material.Metal
 )
 deckCenter.CanCollide = false
 local deckPrompt = Instance.new("ProximityPrompt")
@@ -540,9 +539,9 @@ local function makeShopkeeper(group, x, z, isCosmetics)
 	local staff = Instance.new("Model")
 	staff.Name = isCosmetics and "CosmeticsShopkeeper" or "ResortShopkeeper"
 	staff.Parent = group
-	local uniform = isCosmetics and THEME.Coral or THEME.Teal
+	local uniform = isCosmetics and THEME.Rose or THEME.Sage
 	local skin = Color3.fromRGB(232, 183, 140)
-	local pants = THEME.DeepTeal
+	local pants = THEME.Brown
 
 	-- Familiar blocky Roblox character styling. No unlicensed character IDs,
 	-- uploaded textures or marketplace assets are needed for these NPCs.
@@ -581,11 +580,11 @@ local function makeShopkeeper(group, x, z, isCosmetics)
 			and Color3.fromRGB(99, 65, 55) or Color3.fromRGB(74, 53, 46))
 	hair.Shape = Enum.PartType.Ball
 	local hat = limb("StaffCap", Vector3.new(2.4, 0.32, 2.1),
-		Vector3.new(x, 31.25, z - 0.15), THEME.DeepTeal)
+		Vector3.new(x, 31.25, z - 0.15), THEME.Brown)
 	local brim = limb("StaffCapBrim", Vector3.new(2.6, 0.16, 1.2),
-		Vector3.new(x, 31.1, z - 0.72), THEME.Brass, Enum.Material.Metal)
+		Vector3.new(x, 31.1, z - 0.72), THEME.Wood, Enum.Material.Metal)
 	local badge = limb("UniformBadge", Vector3.new(0.78, 0.45, 0.1),
-		Vector3.new(x + 0.5, 28.6, z - 0.68), THEME.Brass,
+		Vector3.new(x + 0.5, 28.6, z - 0.68), THEME.Wood,
 		Enum.Material.Metal)
 
 	-- Humanoid metadata marks this as a real named NPC, not an anonymous part
@@ -619,7 +618,7 @@ local function makeStall(name, x, z, roofColor, line1, line2)
 		Vector3.new(x, 24.4, z), THEME.Limestone, Enum.Material.Limestone, group)
 	local back = part("BackWall", Vector3.new(17, 8.0, 1),
 		Vector3.new(x, 28.4, z + 6),
-		THEME.DeepTeal, Enum.Material.Metal, group)
+		THEME.Brown, Enum.Material.Metal, group)
 	for _, side in ipairs({-1, 1}) do
 		-- Solid lower side and window glass enclose the shop without making
 		-- the kiosk opaque. Service remains through the FRONT counter only.
@@ -632,9 +631,9 @@ local function makeStall(name, x, z, roofColor, line1, line2)
 		window.Transparency = 0.35
 		part("FrontShopPost", Vector3.new(1.1, 7.7, 1.1),
 			Vector3.new(x + side * 7.7, 28.5, z - 5.75),
-			THEME.DeepTeal, Enum.Material.Metal, group)
+			THEME.Brown, Enum.Material.Metal, group)
 		detail("GlassSideWindowBrassFrame", Vector3.new(0.1, 0.18, 12.3),
-			Vector3.new(x + side * 8.1, 28.0, z), THEME.Brass,
+			Vector3.new(x + side * 8.1, 28.0, z), THEME.Wood,
 			Enum.Material.Metal, group)
 	end
 
@@ -642,20 +641,20 @@ local function makeStall(name, x, z, roofColor, line1, line2)
 	-- decoration at the back of the booth. All shopping happens from outside.
 	local deskBase = part("ServiceCounterBase", Vector3.new(15.9, 2.75, 1.25),
 		Vector3.new(x, 26.0, z - 5.5),
-		THEME.DeepTeal, Enum.Material.Metal, group)
+		THEME.Brown, Enum.Material.Metal, group)
 	local deskTop = part("ServiceCounterTop", Vector3.new(16.3, 0.46, 2.05),
 		Vector3.new(x, 27.55, z - 5.5),
 		THEME.Limestone, Enum.Material.Limestone, group)
 	detail("CounterFrontGoldLip", Vector3.new(16.4, 0.2, 0.21),
 		Vector3.new(x, 27.78, z - 6.48),
-		THEME.Brass, Enum.Material.Metal, group)
+		THEME.Wood, Enum.Material.Metal, group)
 	for _, dx in ipairs({-6.65, 6.65}) do
 		detail("CounterInlaidPanel", Vector3.new(0.24, 1.7, 0.11),
 			Vector3.new(x + dx, 26.0, z - 6.17),
-			THEME.Brass, Enum.Material.Metal, group)
+			THEME.Wood, Enum.Material.Metal, group)
 	end
 	local register = detail("CounterRegister", Vector3.new(1.55, 0.65, 1.25),
-		Vector3.new(x + 4.8, 28.15, z - 5.25), THEME.DeepTeal,
+		Vector3.new(x + 4.8, 28.15, z - 5.25), THEME.Brown,
 		Enum.Material.Metal, group)
 	register.Reflectance = 0.08
 
@@ -663,14 +662,14 @@ local function makeStall(name, x, z, roofColor, line1, line2)
 		Vector3.new(x, 33.2, z), roofColor, Enum.Material.Metal, group)
 	roof.Reflectance = 0.13
 	detail("RoofFrontBrassCornice", Vector3.new(19.2, 0.21, 0.55),
-		Vector3.new(x, 32.6, z - 8.45), THEME.Brass, Enum.Material.Metal, group)
+		Vector3.new(x, 32.6, z - 8.45), THEME.Wood, Enum.Material.Metal, group)
 	for _, side in ipairs({-1, 1}) do
 		detail("RoofSideBrassCornice", Vector3.new(0.24, 0.18, 17),
-			Vector3.new(x + side * 9.5, 32.62, z), THEME.Brass,
+			Vector3.new(x + side * 9.5, 32.62, z), THEME.Wood,
 			Enum.Material.Metal, group)
 	end
 	detail("ServiceWindowHeader", Vector3.new(15.4, 0.38, 0.45),
-		Vector3.new(x, 32.25, z - 5.9), THEME.Brass, Enum.Material.Metal, group)
+		Vector3.new(x, 32.25, z - 5.9), THEME.Wood, Enum.Material.Metal, group)
 	local light = Instance.new("PointLight")
 	light.Name = "WarmCanopyLight"
 	light.Color = Color3.fromRGB(255, 225, 175)
@@ -690,7 +689,7 @@ local function makeStall(name, x, z, roofColor, line1, line2)
 	-- Merchandise is visible behind the window, but no extra goods or coins
 	-- are for sale: only the existing saved coin cosmetics shop is functional.
 	local shelf = detail("RearDisplayShelf", Vector3.new(13.3, 0.35, 2.2),
-		Vector3.new(x, 27.7, z + 4.7), THEME.Brass, Enum.Material.Metal, group)
+		Vector3.new(x, 27.7, z + 4.7), THEME.Wood, Enum.Material.Metal, group)
 	for i = 1, 4 do
 		local swatch = detail(cosmetics and "GlassColorSample" or "ComingSoonDisplay",
 			Vector3.new(1.2, 1.65, 1.05),
@@ -771,7 +770,7 @@ local function scoreLabel(name, message, position, height, size, isBold)
 	text.Size = UDim2.new(0.89, 0, height, 0)
 	text.BackgroundTransparency = 1
 	text.Text = message
-	text.TextColor3 = THEME.DeepTeal
+	text.TextColor3 = THEME.Brown
 	text.TextSize = size
 	text.TextScaled = false
 	text.TextWrapped = false
@@ -899,7 +898,7 @@ waterMirror.Transparency = 0.22
 waterMirror.Reflectance = 0.14
 local pedestal = horizontalCylinder(solidDetail("FountainCrystalPedestal",
 	Vector3.new(2.3, 4.5, 4.5), Vector3.new(0, 26.5, -118),
-	THEME.Brass, Enum.Material.Metal))
+	THEME.Wood, Enum.Material.Metal))
 local crystal = solidDetail("FountainSeaGlassSculpture", Vector3.new(3.5, 5.7, 3.5),
 	Vector3.new(0, 29.3, -118), THEME.Foam, Enum.Material.Glass)
 crystal.Shape = Enum.PartType.Ball
@@ -931,7 +930,7 @@ local function coastBench(x, z)
 	for _, side in ipairs({-1, 1}) do
 		solidDetail("ResortBenchLeg", Vector3.new(0.55, 1.48, 2.2),
 			Vector3.new(x + side * 3.6, 24.98, z),
-			THEME.DeepTeal, Enum.Material.Metal, bench)
+			THEME.Brown, Enum.Material.Metal, bench)
 		local seat = Instance.new("Seat")
 		seat.Name = side < 0 and "LeftSeat" or "RightSeat"
 		seat.Size = Vector3.new(3.9, 0.46, 2.25)
@@ -999,10 +998,10 @@ for _, side in ipairs({-1, 1}) do
 		end
 	end
 	solidDetail("CoastPergolaRoof", Vector3.new(18.3, 0.55, 16),
-		Vector3.new(x, 31.95, z), THEME.DeepTeal, Enum.Material.Metal)
+		Vector3.new(x, 31.95, z), THEME.Brown, Enum.Material.Metal)
 	for _, slatX in ipairs({-6, -3, 0, 3, 6}) do
 		detail("PergolaChampagneSlat", Vector3.new(0.2, 0.1, 15.5),
-			Vector3.new(x + slatX, 32.27, z), THEME.Brass)
+			Vector3.new(x + slatX, 32.27, z), THEME.Wood)
 	end
 	coastBench(x, -70)
 	local lantern = detail("PergolaHangingLantern", Vector3.new(1.4, 1.4, 1.4),
@@ -1022,11 +1021,11 @@ local function resortLamp(x, z)
 	solidDetail("ResortLampPedestal", Vector3.new(2.0, 0.7, 2.0),
 		Vector3.new(x, 24.65, z), THEME.Limestone, Enum.Material.Limestone)
 	solidDetail("ResortLampColumn", Vector3.new(0.75, 7.3, 0.75),
-		Vector3.new(x, 28.4, z), THEME.DeepTeal, Enum.Material.Metal)
+		Vector3.new(x, 28.4, z), THEME.Brown, Enum.Material.Metal)
 	local lamp = detail("ResortLantern", Vector3.new(1.5, 1.6, 1.5),
 		Vector3.new(x, 32.8, z), THEME.Foam, Enum.Material.Glass)
 	detail("LanternChampagneCap", Vector3.new(1.8, 0.2, 1.8),
-		Vector3.new(x, 33.67, z), THEME.Brass)
+		Vector3.new(x, 33.67, z), THEME.Wood)
 	local glow = Instance.new("PointLight")
 	glow.Name = "AzureCoastLampLight"
 	glow.Color = Color3.fromRGB(255, 234, 198)
@@ -1048,12 +1047,12 @@ local photoX, photoZ = 70, -110
 for _, side in ipairs({-1, 1}) do
 	solidDetail("PhotoArchColumn", Vector3.new(1.5, 11, 1.5),
 		Vector3.new(photoX + side * 6, 29.5, photoZ),
-		THEME.DeepTeal, Enum.Material.Metal)
+		THEME.Brown, Enum.Material.Metal)
 end
 solidDetail("PhotoArchHeader", Vector3.new(14.2, 1.25, 1.6),
-	Vector3.new(photoX, 35.3, photoZ), THEME.Brass)
+	Vector3.new(photoX, 35.3, photoZ), THEME.Wood)
 local photoAnchor = detail("CoastPhotoSpotSignAnchor", Vector3.new(0.5, 0.5, 0.5),
-	Vector3.new(photoX, 32.4, photoZ - 1), THEME.DeepTeal)
+	Vector3.new(photoX, 32.4, photoZ - 1), THEME.Brown)
 textSign(photoAnchor, "PHOTO SPOT | AZURE COAST", 1.0, 210)
 
 local trophyX, trophyZ = -67, -110
@@ -1061,11 +1060,11 @@ local trophyStand = horizontalCylinder(solidDetail("AzureTrophyPedestal",
 	Vector3.new(1.6, 7, 7), Vector3.new(trophyX, 25.3, trophyZ),
 	THEME.Limestone, Enum.Material.Limestone))
 local trophy = detail("AzureTrophySculpture", Vector3.new(3.4, 6, 3.4),
-	Vector3.new(trophyX, 29.0, trophyZ), THEME.Brass)
+	Vector3.new(trophyX, 29.0, trophyZ), THEME.Wood)
 trophy.Shape = Enum.PartType.Ball
 trophy.Reflectance = 0.17
 local trophyAnchor = detail("TrophyCourtyardSignAnchor", Vector3.new(0.5, 0.5, 0.5),
-	Vector3.new(trophyX, 33.3, trophyZ - 1.5), THEME.DeepTeal)
+	Vector3.new(trophyX, 33.3, trophyZ - 1.5), THEME.Brown)
 textSign(trophyAnchor, "TROPHY GARDEN | SOCIAL PLAZA", 0.3, 230)
 
 -- Calm sea backdrop covers the template's empty gray baseplate when viewed
@@ -1149,7 +1148,7 @@ end)
 -- island/bridges is returned to the actual lobby spawn rather than being
 -- allowed to roam on old template parts or below the map.
 local fallReset = part("WorldFallReset", Vector3.new(1800, 1.5, 1800),
-	Vector3.new(0, 10.5, 0), THEME.DeepTeal, Enum.Material.SmoothPlastic, world)
+	Vector3.new(0, 10.5, 0), THEME.Brown, Enum.Material.SmoothPlastic, world)
 fallReset.CanCollide = false
 fallReset.CanTouch = true
 fallReset.CanQuery = false
@@ -1219,7 +1218,7 @@ local function buildBridges(count)
 				detail("GlassCornerMetal", Vector3.new(0.58, 0.07, 0.58),
 					Vector3.new(x + corner * 2.84, SETTINGS.BridgeY + 0.47,
 						index * SETTINGS.TileSpacing + 2.83),
-					THEME.Brass, Enum.Material.Metal, bridgeModel)
+					THEME.Wood, Enum.Material.Metal, bridgeModel)
 			end
 		end
 		-- Pale-blue decorative rails sit below the glass and cannot be stood on.
@@ -1229,7 +1228,7 @@ local function buildBridges(count)
 				("Lane%02d_EdgeGlow"):format(lane),
 				Vector3.new(0.35, 0.35, SETTINGS.TileSpacing * SETTINGS.BridgeLength + 6.7),
 				Vector3.new(x + edge * (3.35 - 0.175), SETTINGS.BridgeY - 0.625, SETTINGS.BridgeLength * SETTINGS.TileSpacing / 2),
-				THEME.DeepTeal, Enum.Material.Metal, bridgeModel
+				THEME.Brown, Enum.Material.Metal, bridgeModel
 			)
 			rail.CanCollide = false
 			rail.CanTouch = false
@@ -1267,7 +1266,7 @@ local function buildBridges(count)
 	name.BackgroundTransparency = 1
 	name.Font = Enum.Font.GothamBlack
 	name.Text = "FINISH"
-	name.TextColor3 = THEME.DeepTeal
+	name.TextColor3 = THEME.Brown
 	name.TextSize = 65
 	name.TextScaled = false
 	name.Parent = gateText
@@ -1277,7 +1276,7 @@ local function buildBridges(count)
 			"FinishGatePillar",
 			Vector3.new(2.0, 11.7, 2.5),
 			Vector3.new(side * postX, SETTINGS.BridgeY + 5.85, finishZ),
-			THEME.Teal, Enum.Material.Metal, bridgeModel
+			THEME.Sage, Enum.Material.Metal, bridgeModel
 		)
 		column.CanCollide = false
 		column.CanTouch = false
@@ -1301,7 +1300,7 @@ local function buildBridges(count)
 				"FinishTileChecker",
 				Vector3.new(6.7 / 6, 0.055, 1.15),
 				Vector3.new(laneX - 3.35 + (i - 0.5) * (6.7 / 6), SETTINGS.BridgeY + 0.48, finishZ - 2.1),
-				i % 2 == 0 and THEME.DeepTeal or WHITE,
+				i % 2 == 0 and THEME.Brown or WHITE,
 				Enum.Material.SmoothPlastic, bridgeModel
 			)
 			mark.CanCollide = false
