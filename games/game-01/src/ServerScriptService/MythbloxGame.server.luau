@@ -1115,13 +1115,22 @@ local function saveProfile(player, reason)
 		return false
 	end
 
-	local winsDelta = profile.pendingWins
-	local coinsDelta = profile.pendingCoins
-	if winsDelta == 0 and coinsDelta == 0 then return true end
+	-- Keep the same reward batch ID after a failed/uncertain cloud response;
+	-- a later autosave must not treat those same rewards as a new transaction.
+	local batch = profile.rewardBatch
+	if not batch then
+		if profile.pendingWins == 0 and profile.pendingCoins == 0 then return true end
+		batch = {
+			id = HttpService:GenerateGUID(false),
+			wins = profile.pendingWins,
+			coins = profile.pendingCoins,
+		}
+		profile.rewardBatch = batch
+	end
+	local winsDelta = batch.wins
+	local coinsDelta = batch.coins
+	local operationId = batch.id
 	profile.saving = true
-	-- If the cloud commits an operation but the response is lost, the same
-	-- operation ID prevents a retry from applying its rewards a second time.
-	local operationId = HttpService:GenerateGUID(false)
 
 	local lastError
 	for attempt = 1, 3 do
@@ -1159,6 +1168,7 @@ local function saveProfile(player, reason)
 			-- Rewards granted while the save was in flight remain pending.
 			profile.pendingWins = math.max(0, profile.pendingWins - winsDelta)
 			profile.pendingCoins = math.max(0, profile.pendingCoins - coinsDelta)
+			profile.rewardBatch = nil
 			profile.baseWins = safeStat(result.wins)
 			profile.baseCoins = safeStat(result.coins)
 			profile.ownedSkins = sanitizedOwned(result.ownedSkins)
@@ -1202,6 +1212,11 @@ local function transactSkin(player, skinId)
 	end
 	if profile.saving then
 		sendShop(player, "Update", "Saving in progress. Try again.")
+		return
+	end
+	if profile.rewardBatch then
+		sendShop(player, "Update", "Saving recent winnings. Try again shortly.")
+		task.spawn(saveProfile, player, "pre-purchase")
 		return
 	end
 	if os.clock() - (profile.lastShopAction or 0) < 0.65 then
@@ -1284,12 +1299,18 @@ local function transactSkin(player, skinId)
 		if attempt < 3 then task.wait(2 ^ (attempt - 1) + math.random() * 0.5) end
 	end
 	profile.saving = false
+	if not insufficient then
+		-- The transaction could have reached Roblox even without a response.
+		-- Do not spend or save another pending batch in this session; a fresh
+		-- login will recover the real stored balance/ownership.
+		profile.status = "unavailable"
+	end
 	if player.Parent == Players then
 		if insufficient then
 			sendShop(player, "Update", "Not enough coins.")
 		else
 			player:SetAttribute("MythbloxDataStatus", "SAVE_ERROR")
-			sendShop(player, "Update", "Purchase not confirmed. Check saved coins before retrying.")
+			sendShop(player, "Update", "Shop save unconfirmed. Rejoin to refresh your progress.")
 		end
 	end
 	warn("[Mythblox SHOP] Transaction failed for " .. player.Name .. ": " .. tostring(lastError))
