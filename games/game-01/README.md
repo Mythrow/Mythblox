@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-22):** **v0.29** turns the **entire front 90×24-stud spectator row into a server-authoritative AUTO-JOIN ZONE**: no Join Race button, no E prompt, players enter the race only if still in the zone at zero. The old long left/right spectator catwalks are removed and the front/side/back fence now forms a continuous visible, collidable perimeter. Significant world signposts/railings are no longer ghost props. A dedicated visible Coins/Wins UI is added on desktop and mobile. **Source and installer committed; actual Roblox/phone QA pending. Not ready for launch.**  
+**Status (2026-11-22):** **v0.30** implements all seven owner-approved UI features: first-time skippable tutorial (profile-saved), compact tile/crack/GO-WAIT progress, server-authored placement/winner/Coins results, spectator follow camera, owned glass-color inventory and secure equipping, profile-saved accessibility/audio/effects settings, and short reward/purchase notifications. The v0.29 full-row auto-join and enclosed lobby, v0.23 reward persistence, and unchanged voting/movement rules remain. **Source and installer committed; Roblox Studio, phone, server persistence and multiplayer QA are still pending. Not ready for public launch.**  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -34,6 +34,24 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 | Reward | Win +25 coins, participation +5 coins |
 
 **Progress storage:** Wins and coins were session-only through v0.12. **v0.13 introduces DataStore persistence**, pending Roblox Studio and published-server verification. v0.14 adds a coin-only cosmetics stall (no Robux or paid items). Do not publicly launch or monetize before testing data recovery and purchases.
+
+## v0.30 — seven approved mobile-first UI features (engine/device QA pending)
+
+All seven UI features are built in the existing Client LocalScript with server-authoritative data. No new paid power-ups, Robux purchases, private-vote leaks or movement locks.
+
+1. **First-time guide:** Four short screens explain the entire front-row auto-join zone, private number voting, manual GO/WAIT movement and Coins/Colors. **SKIP**, **NEXT** and **DONE** work; the choice to finish/skip is saved as `tutorialSeen` in the existing player record when DataStore is available. A **?** button in the JOIN/RESULTS toolbar reopens the tutorial.
+2. **Race status:** The separate, small `RaceStatus` strip displays current tile (out of 20), cracks (out of 3), phase-specific vote reminder and GO/WAIT with remaining seconds. It appears only for living racers and is hidden during the five-second reveal on small phones.
+3. **Round results:** During RESULTS a concise `RoundRecap` shows winner(s), personal placement, progress, Coins/Wins awarded by the **server**, and time until the next countdown. Server sends a unique round serial, so reward toasts cannot be replayed on each second's state update. Solo published practice reports no rewards.
+4. **Spectator camera:** Late spectators and eliminated players get previous/next-follow and EXIT controls, which locally change only `CameraSubject` to living racers. Server movement and privacy remain unchanged; exit and phase changes return the camera to the local character.
+5. **Owned color inventory:** JOIN/RESULTS toolbar `BAG` opens a scrollable owned-color list with swatches and equip buttons. The server validates owned colors, and only **purchases at the existing cosmetics kiosk** may spend Coins. Equipment is saved in the original profile record; there are no client-authoritative prices or Robux items.
+6. **Settings:** `SETTINGS` offers functional sound-effects toggle, reduce-particle-effects mode, larger UI text and additional safe/blocked text symbols. A **music toggle is prepared**, but the build **does not yet ship a music track**; the settings UI says so instead of pretending music plays. Preferences save with the existing DataStore when available; without cloud access they are session-only.
+7. **Reward notifications:** Compact temporary toasts display real server-confirmed match Coins/Wins and confirmed cosmetic purchases/equips. The five-card reveal never shares screen space with a lingering toast.
+
+**Mobile composition:** The v0.29 43px right-aligned round strip and separate Coins/Wins wallet stay. BAG/SETTINGS/? appear beneath the wallet **only in JOIN/RESULTS**; race controls and reveal get priority. Tutorial, bag and settings do not freeze walking/jumping. On short screens, owned items and settings scroll; recap is limited to RESULTS and spectator controls sit above touch movement buttons.
+
+**Data safety:** `uiSettings` is an optional backward-compatible field in the same schema-1 progress record. Existing Wins, Coins, owned/equipped skins, operation-id protections, separate Studio/published stores and shop-distance validations are maintained. Only whitelisted boolean `UI` preferences can be changed by clients.
+
+**Install:** Stop Studio Play; execute the [latest one-paste installer](INSTALL_STUDIO_COMMAND_BAR.luau) in Edit mode. Confirm `v0.30 VERIFIED` and matching server/client stamps; **republish the private place** before phone testing. The assistant has not executed a real Roblox Studio or phone session.
 
 ## v0.29 — entire-row auto-join zone, enclosed hub and clear Coins/Wins (live QA pending)
 
@@ -459,6 +477,6 @@ See the [pre-launch roadmap](PRELAUNCH_ROADMAP.md). Cosmetic stall, sound effect
 
 ## Next step
 
-**Test v0.29 on a phone first:** verify the oat floor is comfortably matte, the 49px top strip no longer obscures play, all five reveal cards/avatars fit, and 1–5 voting remains tappable. Publish the updated private test experience to play with a friend; test bench seating, cosmetics and most importantly illegal-step glass shatter/elimination. Report a phone screenshot or any Output errors. Major additional features and independent multiplayer/data/security QA remain required before public launch.
+**Test v0.30 on a phone first:** verify the oat floor is comfortably matte, the 49px top strip no longer obscures play, all five reveal cards/avatars fit, and 1–5 voting remains tappable. Publish the updated private test experience to play with a friend; test bench seating, cosmetics and most importantly illegal-step glass shatter/elimination. Report a phone screenshot or any Output errors. Major additional features and independent multiplayer/data/security QA remain required before public launch.
 
 See [the Mythblox game-design memo](../../docs/FIRST_GAME_GLASS_BRIDGE_CONCEPT.md) for earlier alternatives, including the spinner idea that was explicitly deferred.
