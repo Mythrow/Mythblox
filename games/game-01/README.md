@@ -1,6 +1,6 @@
 # Game 01 — Glass Bridge Voting Race (Prototype)
 
-**Status (2026-11-22):** Owner reports a **critical v0.18 regression:** after an illegal advance, players can continue walking to the finish and glass may appear not to break. **v0.19 server and installer fix are committed; Studio verification is pending.** Illegal steps now shatter the offending/supporting panels and cause the eliminated character to die and respawn; glass-contact checks supplement server position checks. Walking and jumping remain enabled for living racers, with no red/green tile hints. The larger feature/art roadmap and multiplayer, mobile and persistence testing remain open before any public launch.  
+**Status (2026-11-22):** Following a user-approved environmental/lobby improvement, **v0.20 Azure Coast Resort** adds a coherent teal/ivory/brass theme, a significantly larger social island, native clouds, distant scenery, default Baseplate cleanup, water/fall reset and two redesigned social lounges. GitHub server/client/one-paste installer are updated; **owner Roblox Studio visual and gameplay testing is pending**. The critical v0.19 illegal-crossing/shatter fix must also be verified in this new build. The game is an unnamed **unreleased prototype**, and substantial further content/custom art, mobile/multiplayer and data-persistence QA remain necessary before launch.  
 **Final game title:** Not chosen. `game-01` is an internal folder name only.  
 **Umbrella project:** Mythblox.
 
@@ -34,6 +34,22 @@ Every player chooses a number from a fixed row of **1–5**. The most popular ch
 | Reward | Win +25 coins, participation +5 coins |
 
 **Progress storage:** Wins and coins were session-only through v0.12. **v0.13 introduces DataStore persistence**, pending Roblox Studio and published-server verification. v0.14 adds a coin-only cosmetics stall (no Robux or paid items). Do not publicly launch or monetize before testing data recovery and purchases.
+
+## v0.20 — Azure Coast Resort: expanded lobby, world safety, cohesive theme (Studio test pending)
+
+**Owner approved** cleaning up visible template Baseplate/water escapes, adding sky/clouds and broader scenery, making the social lobby larger, and using one premium material/color family. The **Azure Coast Resort** aesthetic is a **theme, not the final public game name**. The [Azure Coast Theme Guide](AZURE_COAST_THEME.md) locks exact colors, materials and area layout.
+
+- **One visual language:** ivory and limestone architecture, ocean teal/deep teal storefronts and metal framing, champagne brass inlays, evergreen coastal foliage, soft seafoam glass, limited muted coral cosmetics accents. Client vote/shop/score HUD now uses the same palette. SAFE/BLOCKED voting-result cards still use green/red; the purchasable glass tints remain unchanged.
+- **Expanded social island:** hub grass is now **186 × 124** studs (was 130 × 91), with a **56 × 39** stone arrival plaza (was 26 × 23). Original spawn, shop stalls, cosmetics prompt, JOIN platform, bridge lanes and spectator walkways keep their functional positions. A new back fountain approach and side-gallery paths lead to **two teal shade pergolas**, benches, planters, tall resort lamps, a photo arch and trophy-garden feature.
+- **Sky and depth:** built-in Roblox `Clouds` under Terrain, calibrated Atmosphere/daylight, a larger noncolliding teal ocean, subtle shimmer strips and six far-away decorative islands. Built-in material textures include Limestone, Rock, LeafyGrass, Metal, WoodPlanks and Glass. No unlicensed external assets or paid texture packs were added.
+- **No visible template floor:** the Edit-mode installer and server runtime remove **only a directly parented, large, low stock `Baseplate` part** and the already-targeted unused default spawn marker. Custom user map components are not broadly deleted.
+- **No walking on water / under the map:** ocean and distant islands are noncolliding. The expanded island has matching resort edging and invisible perimeter barriers, with openings for the existing left/right spectator promenade. A large invisible fall plane plus independent root-height check causes an actual player death/respawn after falling beneath the platforms.
+- **Gameplay stays the same:** players may walk/jump normally, but illegal bridge advancement must still shatter glass and eliminate them. The v0.19 fix was carried forward unchanged; bridge-tile colors do not reveal safe steps. No DataStore names, products, coins, wins, vote phases, match geometry or rewards were changed.
+- **Not a finished custom-art package:** stronger stylized Roblox **built-in material textures and scripted detailing** are implemented. Imported bespoke meshes/PBR texture maps, final game title and a larger set of approved gameplay features remain future work.
+
+**Install/test:** Use the [latest raw Command Bar installer](INSTALL_STUDIO_COMMAND_BAR.luau) in Studio **Edit mode**, with Play stopped. Check `v0.20 VERIFIED` and the `v0.20` HUD. First confirm **v0.19 elimination actually works**, then examine the social plaza, clouds, default-floor removal, sea escape prevention, shops and spectator paths. See [TEST_PLAN.md](TEST_PLAN.md).
+
+**Status:** Committed to GitHub; no Roblox Studio v0.20 execution or screenshot has been verified.
 
 ## v0.19 — fix illegal bridge crossing / no-fall regression (Studio test pending)
 
@@ -351,6 +367,6 @@ See the [pre-launch roadmap](PRELAUNCH_ROADMAP.md). Cosmetic stall, sound effect
 
 ## Next step
 
-**Test the v0.19 regression fix first**: when a player advances illegally, the attempted and supporting glass must shatter and the eliminated character must return to the lobby, not keep running to the finish. Verify that legal walking/jumping still work. Then resume the v0.18 visual checks and 2–8-player/mobile/persistence testing; significant features and custom art are still required before launch.
+**Test v0.20 in Roblox Studio:** first verify v0.19's illegal-advance glass breaking/respawn fix, then check the removed default Baseplate, no walkable water/under-map access, lobby pathways, working cosmetics/leaderboard and the Azure Coast cloud/stone/teal/brass visual presentation. Provide screenshots and any Output errors. Continue multiplayer, mobile and persistence QA; major feature and custom-art work remains before public release.
 
 See [the Mythblox game-design memo](../../docs/FIRST_GAME_GLASS_BRIDGE_CONCEPT.md) for earlier alternatives, including the spinner idea that was explicitly deferred.
