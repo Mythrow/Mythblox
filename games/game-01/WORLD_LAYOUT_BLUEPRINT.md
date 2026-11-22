@@ -1,8 +1,18 @@
 # Game 01 — Mini-Game Island / Spectator Arena Blueprint
 
-**Status (2026-11-22):** The approved social island is implemented. Following owner review of v0.10 screenshots, **v0.11 updates the finish, barrier alignment, one-sided compact leaderboard, and visible layered island edge**. The updated installer exists; **Roblox Studio testing remains outstanding**. Coordinates in this document are initial planning targets, while current script positions are authoritative.  
+**Status (2026-11-22):** **v0.29** has a single whole-row front auto-join/spectator deck, no side viewing promenades, and continuous visible collidable fencing. Earlier v0.5/v0.11 layout notes remain below for history and must not be treated as current placement instructions. Studio/mobile QA pending.  
 **Game title:** Unnamed (Game 01 is only the internal development label).  
 **References:** Three Roblox game screenshots supplied by the owner in the conversation (2026-11-21), showing bright social hubs, green island terrain, colorful blocky scenery, decorative paths/fences, shop/leaderboard landmarks, and clear game-viewing areas. **Copy the design vocabulary, not their exact map, asset artwork, logos, or UI.**
+
+## Current built layout supersedes early v0.5 plans — v0.29 (2026-11-22)
+
+**The remainder of this file documents historical planning targets; use this section and the authoritative server source for the current geometry.** Earlier text below referring to a Join button, E prompt, small ready pad, side promenades or open side fence entrances is obsolete.
+
+- The single front deck is **90 × 24 studs**, centered at **(0,24.05,-22)**. The entire row is a server-checked JOIN zone; enter and remain until the countdown reaches zero. No manual JOIN input is offered. It serves as a spectator deck during matches.
+- Removed the former left/right **95-stud** viewing walks and all rail/connector structures that extended alongside the race to near the finish.
+- Closed the front corners with translucent collidable glass panels matching the center race barrier. West, east and rear edges have additional visible collidable glass inside the invisible safety limits; major masonry rails and posts are solid.
+- Both interactive shop kiosks and the main arrival plaza remain at their existing positions. A small independent **Coins/Wins** HUD appears on both desktop and mobile. 1-player published practice is reward-free; 2–8-player matches keep normal rewards.
+- Actual Roblox Studio/mobile acceptance tests, particularly full-width joining, exit-before-zero, corner collision and glass-lane containment, remain outstanding.
 
 ## 1. One-sentence design goal
 
