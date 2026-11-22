@@ -1,4 +1,4 @@
--- Mythblox game-01: glass bridge race v0.17 (server)
+-- Mythblox game-01: glass bridge race v0.18 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -8,7 +8,7 @@ local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
 local DataStoreService = game:GetService("DataStoreService")
 local HttpService = game:GetService("HttpService")
-local BUILD_VERSION = "v0.17"
+local BUILD_VERSION = "v0.18"
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -25,6 +25,10 @@ local SETTINGS = {
 	BridgeY = 24,
 	WalkSpeed = 19,
 	StudioSoloPractice = true,
+	-- Change either ID to a different animation the experience may use.
+	-- R15 and R6 animations are different assets/rig types.
+	VictoryDanceR15 = "rbxassetid://507771019",
+	VictoryDanceR6 = "rbxassetid://182435998",
 }
 
 -- Bright, classic Roblox palette. Visuals do not change gameplay permissions.
@@ -682,19 +686,16 @@ local function lobbyTeleport(player)
 	end
 end
 
-local function setWalking(player, canMove)
+-- Never freeze or suppress player locomotion during JOIN/VOTE/REVEAL/MOVE.
+-- The server still validates bridge advancement by tile, phase and range.
+local function keepMovementEnabled(player)
 	local character = player.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-	local root = character and character:FindFirstChild("HumanoidRootPart")
 	if humanoid then
-		humanoid.WalkSpeed = canMove and SETTINGS.WalkSpeed or 0
-		humanoid.JumpPower = 0
-		humanoid.JumpHeight = 0
-		humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
-	end
-	if not canMove and root then
-		local vel = root.AssemblyLinearVelocity
-		root.AssemblyLinearVelocity = Vector3.new(0, vel.Y, 0)
+		humanoid.WalkSpeed = SETTINGS.WalkSpeed
+		humanoid.JumpPower = 50
+		humanoid.JumpHeight = 7.2
+		humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
 	end
 end
 
@@ -782,7 +783,7 @@ local function startWinnerDances(winners)
 				local animation = Instance.new("Animation")
 				animation.Name = "MythbloxVictoryDance"
 				animation.AnimationId = humanoid.RigType == Enum.HumanoidRigType.R15
-					and "rbxassetid://507771019" or "rbxassetid://182435998"
+					and SETTINGS.VictoryDanceR15 or SETTINGS.VictoryDanceR6
 				local ok, trackOrError = pcall(function()
 					local track = animator:LoadAnimation(animation)
 					track.Priority = Enum.AnimationPriority.Action
@@ -850,7 +851,7 @@ local function shatter(tile, dramatic)
 			local shard = Instance.new("Part")
 			shard.Name = "GlassFragment"
 			shard.Size = Vector3.new(0.45, 0.18, 0.75)
-			shard.Color = GLASS
+			shard.Color = tile.Color
 			shard.Material = Enum.Material.Glass
 			shard.Transparency = 0.18
 			shard.CanCollide = false
@@ -869,7 +870,7 @@ local function shatter(tile, dramatic)
 	end
 	tile.CanCollide = false
 	tile.CanTouch = false
-	tile.Color = RED
+	-- Never flash a whole tile red: glass fades/shatters in its current tint.
 	TweenService:Create(tile, TweenInfo.new(0.3), {Transparency = 1}):Play()
 end
 
@@ -879,7 +880,7 @@ local function eliminate(player, reason, tileToBreak)
 	info.alive = false
 	info.elimination = reason
 	info.allowed = 0
-	setWalking(player, false)
+	keepMovementEnabled(player)
 	if tileToBreak then shatter(tileToBreak, true) end
 	-- Remove their supporting panel too, so an invalid step always causes a visible fall.
 	local standingTile = lanes[info.lane].tiles[info.index]
@@ -897,35 +898,16 @@ local function crack(player)
 	if info.cracks >= SETTINGS.MaxCracks then
 		eliminate(player, "three cracks", currentTile)
 	else
-		currentTile.Color = info.cracks == 1 and AMBER or RED
+		-- Damage is indicated by crack geometry and particles, not a red/green
+		-- repaint of the entire panel.
 		showCrackLines(currentTile, info.cracks)
 		glassBurst(currentTile, AMBER, 6)
 	end
 end
 
-local function paintAllowedTiles()
-	for player, info in pairs(active) do
-		if info.alive then
-			local lane = lanes[info.lane]
-			local current = lane.tiles[info.index]
-			if current and current.CanCollide then
-				current.Color = info.cracks == 0 and glassColorFor(player) or (info.cracks == 1 and AMBER or RED)
-			end
-			if phase == "MOVE" then
-				local from = info.startIndex + 1
-				for i = from, math.min(info.startIndex + info.allowed, SETTINGS.BridgeLength) do
-					if lane.tiles[i] and lane.tiles[i].CanCollide then
-						lane.tiles[i].Color = GREEN
-					end
-				end
-				local nextUnsafe = info.startIndex + info.allowed + 1
-				if nextUnsafe <= SETTINGS.BridgeLength and lane.tiles[nextUnsafe].CanCollide then
-					lane.tiles[nextUnsafe].Color = RED
-				end
-			end
-		end
-	end
-end
+-- Neutral glass never changes color to disclose the permitted step path.
+-- The compact HUD and the private result determine GO/STAY, while the
+-- server enforces legal forward movement after vote reveal.
 
 local function publicRoster()
 	local roster = {}
@@ -1538,7 +1520,7 @@ local function teleportToLane(player, lane)
 			end
 		end)
 	end
-	setWalking(player, false)
+	keepMovementEnabled(player)
 	return root
 end
 
@@ -1709,7 +1691,7 @@ end
 local function finishMovePhase()
 	for player, info in pairs(active) do
 		if info.alive then
-			setWalking(player, false)
+			keepMovementEnabled(player)
 			if info.allowed > 0 then
 				if info.index <= info.startIndex then
 					eliminate(player, "did not leave the old tile", lanes[info.lane].tiles[info.startIndex])
@@ -1773,7 +1755,7 @@ while true do
 		message = "Secretly choose 1–5 steps. Most popular picks crack!"
 		for _, info in pairs(active) do info.vote = nil end
 		for player, info in pairs(active) do
-			if info.alive then setWalking(player, false) end
+			if info.alive then keepMovementEnabled(player) end
 		end
 		countdown(SETTINGS.VoteSeconds, false)
 
@@ -1784,7 +1766,6 @@ while true do
 			for i = 1, 5 do if unsafe[i] then table.insert(s, tostring(i)) end end
 			return #s > 0 and table.concat(s, ", ") or "none"
 		end)() .. ". Watch your glass!"
-		paintAllowedTiles()
 		countdown(SETTINGS.RevealSeconds, false)
 
 		winners = finishersOrSurvivor()
@@ -1795,10 +1776,9 @@ while true do
 		for player, info in pairs(active) do
 			if info.alive then
 				-- Players who must STAY may still walk; stepping onto red glass is the joke.
-				setWalking(player, true)
+				keepMovementEnabled(player)
 			end
 		end
-		paintAllowedTiles()
 		countdown(SETTINGS.MoveSeconds, true)
 		finishMovePhase()
 		winners = finishersOrSurvivor()
