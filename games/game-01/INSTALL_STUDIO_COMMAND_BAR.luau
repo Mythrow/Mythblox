@@ -5,7 +5,7 @@
 assert(not game:GetService("RunService"):IsRunning(), "Stop the test session before installing.")
 
 local SERVER_SOURCE = [====[
--- Mythblox game-01: glass bridge race v0.19 (server)
+-- Mythblox game-01: Azure Coast Resort v0.20 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -15,7 +15,7 @@ local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
 local DataStoreService = game:GetService("DataStoreService")
 local HttpService = game:GetService("HttpService")
-local BUILD_VERSION = "v0.19"
+local BUILD_VERSION = "v0.20"
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -38,8 +38,22 @@ local SETTINGS = {
 	VictoryDanceR6 = "rbxassetid://182435998",
 }
 
--- Coastal jewel-tone / brushed-metal palette. Colors are cosmetic only;
--- players' legal moves are NOT advertised by green/red bridge surfaces.
+-- AZURE COAST RESORT theme: ivory limestone, sea-glass teal, deep navy,
+-- champagne brass and coastal evergreen. One coherent art direction for
+-- paths, buildings, bridges, signs, seating, fencing and the distant world.
+-- The approved purchased glass colors remain personal and independent.
+local THEME = {
+	Ivory = Color3.fromRGB(243, 235, 216),
+	Limestone = Color3.fromRGB(221, 209, 182),
+	Sandstone = Color3.fromRGB(193, 177, 146),
+	Teal = Color3.fromRGB(33, 116, 125),
+	DeepTeal = Color3.fromRGB(20, 65, 79),
+	Brass = Color3.fromRGB(198, 160, 92),
+	Evergreen = Color3.fromRGB(66, 130, 98),
+	Foam = Color3.fromRGB(199, 235, 232),
+	Coral = Color3.fromRGB(207, 129, 109),
+	Stone = Color3.fromRGB(123, 134, 139),
+}
 local GLASS = Color3.fromRGB(142, 219, 238)
 -- Existing purchased glass colors remain exactly as saved in the catalog.
 local SKIN_CATALOG = {
@@ -59,17 +73,17 @@ local AMBER = Color3.fromRGB(255, 206, 75)
 -- Premium sunny-coastal lighting using supported Roblox lighting effects.
 -- No external or guessed PBR asset IDs: built-in 2022 materials already use
 -- high-quality engine texture/roughness detail. Add custom maps later if needed.
-Lighting.ClockTime = 14.4
-Lighting.Brightness = 2.45
+Lighting.ClockTime = 13.8
+Lighting.Brightness = 2.4
 Lighting.GlobalShadows = true
 Lighting.ShadowSoftness = 0.48
 Lighting.EnvironmentDiffuseScale = 0.7
 Lighting.EnvironmentSpecularScale = 0.82
-Lighting.Ambient = Color3.fromRGB(156, 171, 199)
-Lighting.OutdoorAmbient = Color3.fromRGB(206, 216, 236)
-Lighting.ColorShift_Top = Color3.fromRGB(255, 237, 215)
-Lighting.FogColor = Color3.fromRGB(193, 223, 238)
-Lighting.FogEnd = 1700
+Lighting.Ambient = Color3.fromRGB(160, 183, 193)
+Lighting.OutdoorAmbient = Color3.fromRGB(218, 226, 219)
+Lighting.ColorShift_Top = Color3.fromRGB(255, 241, 219)
+Lighting.FogColor = Color3.fromRGB(203, 231, 230)
+Lighting.FogEnd = 1600
 
 local function getWorldLightingEffect(className, name)
 	local effect = Lighting:FindFirstChild(name)
@@ -85,16 +99,16 @@ end
 local atmosphere = getWorldLightingEffect("Atmosphere", "MythbloxCoastalAtmosphere")
 atmosphere.Density = 0.27
 atmosphere.Offset = 0.05
-atmosphere.Color = Color3.fromRGB(218, 237, 249)
-atmosphere.Decay = Color3.fromRGB(142, 172, 203)
-atmosphere.Glare = 0.11
-atmosphere.Haze = 0.75
+atmosphere.Color = Color3.fromRGB(226, 241, 238)
+atmosphere.Decay = Color3.fromRGB(143, 184, 184)
+atmosphere.Glare = 0.08
+atmosphere.Haze = 0.82
 
 local grade = getWorldLightingEffect("ColorCorrectionEffect", "MythbloxWarmColorGrade")
 grade.Brightness = 0.01
 grade.Contrast = 0.08
 grade.Saturation = 0.09
-grade.TintColor = Color3.fromRGB(255, 249, 240)
+grade.TintColor = Color3.fromRGB(255, 252, 243)
 grade.Enabled = true
 
 local bloom = getWorldLightingEffect("BloomEffect", "MythbloxSoftBloom")
@@ -107,6 +121,25 @@ local sunRays = getWorldLightingEffect("SunRaysEffect", "MythbloxSunRays")
 sunRays.Intensity = 0.035
 sunRays.Spread = 0.85
 sunRays.Enabled = true
+
+-- Dynamic clouds belong to Workspace.Terrain (not Lighting).
+-- Reuse an existing Clouds instance instead of stacking cloud layers.
+local terrain = workspace.Terrain
+local clouds = terrain:FindFirstChildOfClass("Clouds")
+if not clouds then
+	clouds = Instance.new("Clouds")
+	clouds.Parent = terrain
+end
+clouds.Name = "MythbloxAzureCoastClouds"
+clouds.Cover = 0.37
+clouds.Density = 0.44
+clouds.Color = Color3.fromRGB(252, 250, 243)
+clouds.Enabled = true
+terrain.WaterColor = THEME.Teal
+terrain.WaterTransparency = 0.36
+terrain.WaterReflectance = 0.18
+terrain.WaterWaveSize = 0.14
+terrain.WaterWaveSpeed = 8
 
 -- Remove only the stock Baseplate SpawnLocation: its star icon is visible
 -- beneath the arena's lava even though our players use the elevated lobby.
@@ -128,6 +161,24 @@ local function removeBaseplateSpawn()
 	end
 end
 removeBaseplateSpawn()
+
+-- The template Baseplate is still visible beneath the noncolliding ocean in
+-- earlier versions. Delete ONLY the large, low, named stock Baseplate.
+local function removeTemplateBaseplate()
+	local removed = 0
+	for _, candidate in ipairs(workspace:GetChildren()) do
+		if candidate:IsA("BasePart") and string.lower(candidate.Name) == "baseplate"
+			and candidate.Size.X >= 150 and candidate.Size.Z >= 150
+			and candidate.Position.Y + candidate.Size.Y * 0.5 < SETTINGS.BridgeY - 5 then
+			candidate:Destroy()
+			removed += 1
+		end
+	end
+	if removed > 0 then
+		print("[Mythblox WORLD] Removed " .. removed .. " template Baseplate part(s).")
+	end
+end
+removeTemplateBaseplate()
 
 local oldWorld = workspace:FindFirstChild("MythbloxGame01")
 if oldWorld then oldWorld:Destroy() end
@@ -190,8 +241,9 @@ local function textSign(parent, message, yOffset, width)
 	board.CanTouch = false
 	board.Size = Vector3.new(math.clamp((width or 220) / 21, 8, 16), 2.35, 0.45)
 	board.Position = parent.Position + Vector3.new(0, yOffset or 3, 0)
-	board.Material = Enum.Material.SmoothPlastic
-	board.Color = Color3.fromRGB(250, 251, 255)
+	board.Material = Enum.Material.Metal
+	board.Color = THEME.DeepTeal
+	board.Reflectance = 0.08
 	board.Parent = parent.Parent or world
 
 	local function face(side, name)
@@ -212,7 +264,7 @@ local function textSign(parent, message, yOffset, width)
 		label.Position = UDim2.fromScale(0.04, subheading and 0.12 or 0.08)
 		label.Size = UDim2.fromScale(0.92, subheading and 0.51 or 0.84)
 		label.BackgroundTransparency = 1
-		label.TextColor3 = Color3.fromRGB(33, 92, 150)
+		label.TextColor3 = THEME.Ivory
 		label.TextScaled = false
 		label.TextSize = subheading and 44 or (parent.Name == "SharedPlatformSign" and 37 or 54)
 		label.TextWrapped = false
@@ -229,7 +281,7 @@ local function textSign(parent, message, yOffset, width)
 			subtitle.Position = UDim2.fromScale(0.04, 0.64)
 			subtitle.Size = UDim2.fromScale(0.92, 0.25)
 			subtitle.BackgroundTransparency = 1
-			subtitle.TextColor3 = Color3.fromRGB(112, 137, 165)
+			subtitle.TextColor3 = THEME.Brass
 			subtitle.TextScaled = false
 			subtitle.TextSize = 26
 			subtitle.TextWrapped = false
@@ -258,14 +310,14 @@ local hub = Instance.new("Model")
 hub.Name = "HubIsland"
 hub.Parent = world
 
-local GRASS = Color3.fromRGB(91, 174, 128)
-local CREAM = Color3.fromRGB(232, 225, 209)
-local WOOD = Color3.fromRGB(123, 89, 66)
-local ROOF_BLUE = Color3.fromRGB(53, 125, 176)
-local ROOF_PINK = Color3.fromRGB(192, 110, 160)
-local WHITE = Color3.fromRGB(248, 247, 244)
-local METAL_TRIM = Color3.fromRGB(186, 157, 103)
-local DEEP_NAVY = Color3.fromRGB(38, 77, 107)
+local GRASS = THEME.Evergreen
+local CREAM = THEME.Ivory
+local WOOD = Color3.fromRGB(143, 111, 86)
+local ROOF_BLUE = THEME.Teal
+local ROOF_PINK = THEME.Coral
+local WHITE = THEME.Ivory
+local METAL_TRIM = THEME.Brass
+local DEEP_NAVY = THEME.DeepTeal
 
 local function decorative(name, size, position, color, material)
 	return part(name, size, position, color, material or Enum.Material.SmoothPlastic, hub)
@@ -284,26 +336,82 @@ end
 -- Layered terrain gives the island a proper visible edge from the bridge.
 -- These are behind the spectator rails and do not alter the match.
 local islandSoil = decorative(
-	"IslandSoil", Vector3.new(125, 12, 87),
-	Vector3.new(0, 16, -59), Color3.fromRGB(139, 115, 91), Enum.Material.Ground
+	"IslandSoil", Vector3.new(182, 12, 120),
+	Vector3.new(0, 16, -71), THEME.Sandstone, Enum.Material.Ground
 )
 local islandStone = decorative(
-	"IslandStoneBase", Vector3.new(120, 4, 83),
-	Vector3.new(0, 8, -59), Color3.fromRGB(137, 143, 153), Enum.Material.Granite
+	"IslandStoneBase", Vector3.new(179, 4, 117),
+	Vector3.new(0, 8, -71), THEME.Stone, Enum.Material.Rock
 )
-local ground = decorative("HubGrassIsland", Vector3.new(130, 4, 91), Vector3.new(0, 22, -59), GRASS, Enum.Material.Grass)
-local plaza = decorative("SpawnPlaza", Vector3.new(26, 0.4, 23), Vector3.new(0, 24.2, -76), CREAM, Enum.Material.Marble)
-local path = decorative("MainWalkPath", Vector3.new(11, 0.25, 36), Vector3.new(0, 24.14, -53), CREAM, Enum.Material.Pavement)
+local ground = decorative("HubGrassIsland", Vector3.new(186, 4, 124), Vector3.new(0, 22, -71), GRASS, Enum.Material.Grass)
+local plaza = decorative("SpawnPlaza", Vector3.new(56, 0.4, 39), Vector3.new(0, 24.2, -83), CREAM, Enum.Material.Limestone)
+local path = decorative("MainWalkPath", Vector3.new(13, 0.25, 39), Vector3.new(0, 24.14, -51.5), CREAM, Enum.Material.Pavement)
 local spurLeft = decorative("LeftShopPath", Vector3.new(27, 0.22, 7), Vector3.new(-19, 24.13, -48), CREAM, Enum.Material.Pavement)
 local spurRight = decorative("RightShopPath", Vector3.new(27, 0.22, 7), Vector3.new(19, 24.13, -48), CREAM, Enum.Material.Pavement)
+-- Additional social/gallery paths stay behind the original game-facing deck.
+for _, side in ipairs({-1, 1}) do
+	decorative("WestEastLoungePath", Vector3.new(57, 0.20, 6),
+		Vector3.new(side * 56, 24.1, -88), CREAM, Enum.Material.Limestone)
+	decorative("LoungeReturnPath", Vector3.new(7, 0.20, 25),
+		Vector3.new(side * 67, 24.1, -75), CREAM, Enum.Material.Limestone)
+end
+-- Pale ocean-stone inlays divide the oversized plaza into smaller elegant bays.
+for _, x in ipairs({-27, 27}) do
+	detail("PlazaEdgeChampagne", Vector3.new(0.17, 0.045, 38),
+		Vector3.new(x, 24.42, -83), METAL_TRIM)
+end
+for _, z in ipairs({-101, -66}) do
+	detail("PlazaBorderChampagne", Vector3.new(54, 0.045, 0.17),
+		Vector3.new(0, 24.42, z), METAL_TRIM)
+end
 
 -- Inlaid gold guide strips are thin, noncolliding and stop at the join deck.
-for _, x in ipairs({-5.05, 5.05}) do
-	detail("PromenadeInlay", Vector3.new(0.13, 0.04, 34), Vector3.new(x, 24.3, -52.5), METAL_TRIM)
+for _, x in ipairs({-6.0, 6.0}) do
+	detail("PromenadeInlay", Vector3.new(0.13, 0.04, 38),
+		Vector3.new(x, 24.3, -51.5), METAL_TRIM)
 end
-for _, z in ipairs({-86, -65.5}) do
-	detail("SpawnPlazaInlay", Vector3.new(23, 0.035, 0.14), Vector3.new(0, 24.42, z), METAL_TRIM)
+for _, z in ipairs({-97, -75}) do
+	detail("SpawnPlazaInlay", Vector3.new(48, 0.035, 0.14),
+		Vector3.new(0, 24.43, z), THEME.Sandstone, Enum.Material.Limestone)
 end
+
+-- A tall, invisible safety perimeter prevents walking off the expanded hub.
+-- It does NOT change WalkSpeed, jump power, or a player's free movement within
+-- the island. It leaves both side-spectator promenade entrances open.
+local function invisibleBoundary(name, size, position)
+	local wall = part(name, size, position, DEEP_NAVY, Enum.Material.SmoothPlastic, hub)
+	wall.Transparency = 1
+	wall.CanCollide = true
+	wall.CanTouch = false
+	wall.CastShadow = false
+	return wall
+end
+invisibleBoundary("HubWestSafetyLimit", Vector3.new(1.5, 19, 124), Vector3.new(-93.2, 33, -71))
+invisibleBoundary("HubEastSafetyLimit", Vector3.new(1.5, 19, 124), Vector3.new(93.2, 33, -71))
+invisibleBoundary("HubBackSafetyLimit", Vector3.new(186, 19, 1.5), Vector3.new(0, 33, -133.2))
+for _, side in ipairs({-1, 1}) do
+	invisibleBoundary("HubFrontSafetyLimit", Vector3.new(35, 19, 1.5),
+		Vector3.new(side * 75.5, 33, -9.1))
+end
+-- Matching ivory, teal and brass visual rails sit INSIDE the invisible limit.
+for _, side in ipairs({-1, 1}) do
+	for _, z in ipairs({-122, -103, -84, -65, -46, -27}) do
+		detail("CoastPerimeterPier", Vector3.new(1.15, 4.6, 1.15),
+			Vector3.new(side * 90, 26.3, z), THEME.Limestone, Enum.Material.Limestone)
+		detail("PerimeterPostCap", Vector3.new(1.5, 0.18, 1.5),
+			Vector3.new(side * 90, 28.72, z), METAL_TRIM)
+	end
+	detail("CoastPerimeterTealRail", Vector3.new(0.28, 0.25, 114),
+		Vector3.new(side * 90, 27.6, -75), DEEP_NAVY)
+end
+for x = -81, 81, 18 do
+	detail("BackPromenadePier", Vector3.new(1.15, 4.6, 1.15),
+		Vector3.new(x, 26.3, -129.8), THEME.Limestone, Enum.Material.Limestone)
+	detail("BackPierCap", Vector3.new(1.4, 0.18, 1.4),
+		Vector3.new(x, 28.72, -129.8), METAL_TRIM)
+end
+detail("BackPromenadeBrassRail", Vector3.new(180, 0.25, 0.28),
+	Vector3.new(0, 27.6, -129.8), DEEP_NAVY)
 
 -- The platform is BOTH ready and spectator space. It persists for the whole
 -- server session; we change its message, never create a second front deck.
@@ -426,9 +534,9 @@ local function makeStall(name, x, z, roofColor, line1, line2)
 	group.Name = name
 	group.Parent = hub
 	part("DisplayFloor", Vector3.new(17, 0.6, 14), Vector3.new(x, 24.4, z),
-		Color3.fromRGB(224, 217, 197), Enum.Material.Marble, group)
+		THEME.Limestone, Enum.Material.Limestone, group)
 	part("BackWall", Vector3.new(17, 8, 1), Vector3.new(x, 28.4, z + 6),
-		WOOD, Enum.Material.WoodPlanks, group)
+		THEME.DeepTeal, Enum.Material.Metal, group)
 	detail("StallWallInlay", Vector3.new(13.8, 0.18, 0.11),
 		Vector3.new(x, 29.7, z + 5.43), METAL_TRIM, Enum.Material.Metal, group)
 	detail("StallCounter", Vector3.new(11.6, 0.42, 1.8),
@@ -606,34 +714,180 @@ local function makeTree(x, z, height)
 		end
 	end
 end
+-- Azure Coast greenery is organized around lounge edges, not across paths.
 for _, spot in ipairs({
-	{-56, -88, 9}, {-56, -53, 10}, {-56, -24, 8},
-	{56, -88, 9}, {56, -53, 10}, {56, -24, 8}
+	{-84, -117, 9}, {-84, -55, 10}, {-79, -29, 8},
+	{84, -117, 9}, {84, -55, 10}, {79, -29, 8},
+	{-54, -116, 8}, {54, -116, 8},
 }) do
 	makeTree(spot[1], spot[2], spot[3])
 end
-for _, spot in ipairs({{-49,-92},{-43,-92},{45,-92},{50,-93},{-50,-39},{50,-39}}) do
-	local bush = decorative("HubBush", Vector3.new(5, 3, 5),
-		Vector3.new(spot[1], 25.5, spot[2]), Color3.fromRGB(76, 158, 106), Enum.Material.LeafyGrass)
+for _, spot in ipairs({
+	{-78, -106}, {-79, -40}, {-49, -108},
+	{78, -106}, {79, -40}, {49, -108},
+}) do
+	local bush = decorative("CoastalFernCluster", Vector3.new(5, 3.4, 5),
+		Vector3.new(spot[1], 25.65, spot[2]), THEME.Evergreen, Enum.Material.LeafyGrass)
 	bush.Shape = Enum.PartType.Ball
 	bush.CanCollide = false
 	bush.CanTouch = false
 	bush.CanQuery = false
 end
+
+-- A landscaped central arrival courtyard, behind the original spawn. Its
+-- focal point is decorative and cannot obstruct the actual race path.
+decorative("FountainApproach", Vector3.new(10, 0.17, 19),
+	Vector3.new(0, 24.11, -109), CREAM, Enum.Material.Limestone)
+local function horizontalCylinder(item)
+	item.Shape = Enum.PartType.Cylinder
+	item.CFrame = CFrame.new(item.Position) * CFrame.Angles(0, 0, math.pi / 2)
+	return item
+end
+local basin = horizontalCylinder(decorative("CentralResortFountainBasin",
+	Vector3.new(0.95, 16, 16), Vector3.new(0, 24.8, -118),
+	THEME.Limestone, Enum.Material.Limestone))
+local waterMirror = horizontalCylinder(detail("FountainStillWater",
+	Vector3.new(0.13, 13, 13), Vector3.new(0, 25.36, -118),
+	THEME.Foam, Enum.Material.Glass))
+waterMirror.Transparency = 0.22
+waterMirror.Reflectance = 0.14
+local pedestal = horizontalCylinder(detail("FountainCrystalPedestal",
+	Vector3.new(2.3, 4.5, 4.5), Vector3.new(0, 26.5, -118),
+	THEME.Brass, Enum.Material.Metal))
+local crystal = detail("FountainSeaGlassSculpture", Vector3.new(3.5, 5.7, 3.5),
+	Vector3.new(0, 29.3, -118), THEME.Foam, Enum.Material.Glass)
+crystal.Shape = Enum.PartType.Ball
+crystal.Transparency = 0.12
+crystal.Reflectance = 0.18
+local sparkle = Instance.new("PointLight")
+sparkle.Name = "FountainGlow"
+sparkle.Color = THEME.Foam
+sparkle.Range = 13
+sparkle.Brightness = 0.32
+sparkle.Shadows = false
+sparkle.Parent = crystal
 for _, side in ipairs({-1, 1}) do
-	for _, z in ipairs({-89, -74, -59, -44}) do
-		local post = decorative("IslandEdgeFencePost", Vector3.new(1.5, 5, 1.5),
-			Vector3.new(side * 63, 26.5, z), DEEP_NAVY, Enum.Material.Metal)
-		detail("IslandPostCap", Vector3.new(2, 0.21, 2),
-			Vector3.new(side * 63, 29.13, z), METAL_TRIM)
+	detail("FountainStoneSideSeat", Vector3.new(5, 0.55, 2.2),
+		Vector3.new(side * 13, 25.0, -118), THEME.Limestone, Enum.Material.Limestone)
+end
+
+-- Lounge furniture is built from matching limestone, teak and teal rather
+-- than bare multicolored primitive placeholders.
+local function coastBench(x, z)
+	detail("ResortTeakSeat", Vector3.new(8.3, 0.55, 2.3),
+		Vector3.new(x, 25.65, z), WOOD, Enum.Material.WoodPlanks)
+	detail("ResortTeakBack", Vector3.new(8.3, 2, 0.46),
+		Vector3.new(x, 26.65, z + 1), WOOD, Enum.Material.WoodPlanks)
+	for _, side in ipairs({-1, 1}) do
+		detail("ResortBenchLeg", Vector3.new(0.6, 1.4, 2),
+			Vector3.new(x + side * 3.4, 24.8, z),
+			THEME.DeepTeal, Enum.Material.Metal)
 	end
 end
+for _, side in ipairs({-1, 1}) do
+	coastBench(side * 42, -99)
+	coastBench(side * 53, -71)
+	coastBench(side * 75, -95)
+end
+
+local function planter(x, z)
+	detail("CoastCeramicPlanter", Vector3.new(4.5, 2.7, 4.5),
+		Vector3.new(x, 25.65, z), THEME.Ivory, Enum.Material.Limestone)
+	local foliage = detail("CoastShrub", Vector3.new(5.1, 4.2, 5.1),
+		Vector3.new(x, 28.15, z), THEME.Evergreen, Enum.Material.LeafyGrass)
+	foliage.Shape = Enum.PartType.Ball
+end
+for _, pair in ipairs({
+	{-32, -102}, {32, -102}, {-33, -65}, {33, -65},
+	{-72, -113}, {72, -113}, {-74, -52}, {74, -52}
+}) do planter(pair[1], pair[2]) end
+
+-- Miniature shaded sitting lounges flank the gallery at x=+-67; all props
+-- are noncolliding to avoid changing social-lobby traversal or shopping.
+for _, side in ipairs({-1, 1}) do
+	local x = side * 68
+	local z = -71
+	for _, dx in ipairs({-8, 8}) do
+		for _, dz in ipairs({-7, 7}) do
+			detail("CoastPergolaColumn", Vector3.new(0.85, 7.2, 0.85),
+				Vector3.new(x + dx, 28.1, z + dz), THEME.Limestone, Enum.Material.Limestone)
+		end
+	end
+	detail("CoastPergolaRoof", Vector3.new(18.3, 0.55, 16),
+		Vector3.new(x, 31.95, z), THEME.DeepTeal, Enum.Material.Metal)
+	for _, slatX in ipairs({-6, -3, 0, 3, 6}) do
+		detail("PergolaChampagneSlat", Vector3.new(0.2, 0.1, 15.5),
+			Vector3.new(x + slatX, 32.27, z), THEME.Brass)
+	end
+	coastBench(x, -70)
+	local lantern = detail("PergolaHangingLantern", Vector3.new(1.4, 1.4, 1.4),
+		Vector3.new(x, 30.7, z - 4), THEME.Foam, Enum.Material.Glass)
+	local light = Instance.new("PointLight")
+	light.Name = "LoungeAmbientLight"
+	light.Color = Color3.fromRGB(255, 228, 183)
+	light.Brightness = 0.22
+	light.Range = 12
+	light.Shadows = false
+	light.Parent = lantern
+end
+
+-- Lamps guide players naturally from the expanded plaza to JOIN without
+-- screenspace arrows or intrusive floating titles.
+local function resortLamp(x, z)
+	detail("ResortLampPedestal", Vector3.new(2.0, 0.7, 2.0),
+		Vector3.new(x, 24.65, z), THEME.Limestone, Enum.Material.Limestone)
+	detail("ResortLampColumn", Vector3.new(0.5, 7.3, 0.5),
+		Vector3.new(x, 28.4, z), THEME.DeepTeal, Enum.Material.Metal)
+	local lamp = detail("ResortLantern", Vector3.new(1.5, 1.6, 1.5),
+		Vector3.new(x, 32.8, z), THEME.Foam, Enum.Material.Glass)
+	detail("LanternChampagneCap", Vector3.new(1.8, 0.2, 1.8),
+		Vector3.new(x, 33.67, z), THEME.Brass)
+	local glow = Instance.new("PointLight")
+	glow.Name = "AzureCoastLampLight"
+	glow.Color = Color3.fromRGB(255, 234, 198)
+	glow.Range = 15
+	glow.Brightness = 0.23
+	glow.Shadows = false
+	glow.Parent = lamp
+end
+for _, pair in ipairs({
+	{-34, -83}, {34, -83},
+	{-12, -64}, {12, -64},
+	{-12, -34}, {12, -34},
+	{-79, -91}, {79, -91},
+}) do resortLamp(pair[1], pair[2]) end
+
+-- Two small scenic attractions give the wider island a reason to explore:
+-- a photo frame facing the ocean and a compact trophy-sculpture courtyard.
+local photoX, photoZ = 70, -110
+for _, side in ipairs({-1, 1}) do
+	detail("PhotoArchColumn", Vector3.new(1.5, 11, 1.5),
+		Vector3.new(photoX + side * 6, 29.5, photoZ),
+		THEME.DeepTeal, Enum.Material.Metal)
+end
+detail("PhotoArchHeader", Vector3.new(14.2, 1.25, 1.6),
+	Vector3.new(photoX, 35.3, photoZ), THEME.Brass)
+local photoAnchor = detail("CoastPhotoSpotSignAnchor", Vector3.new(0.5, 0.5, 0.5),
+	Vector3.new(photoX, 32.4, photoZ - 1), THEME.DeepTeal)
+textSign(photoAnchor, "PHOTO SPOT | AZURE COAST", 1.0, 210)
+
+local trophyX, trophyZ = -67, -110
+local trophyStand = horizontalCylinder(detail("AzureTrophyPedestal",
+	Vector3.new(1.6, 7, 7), Vector3.new(trophyX, 25.3, trophyZ),
+	THEME.Limestone, Enum.Material.Limestone))
+local trophy = detail("AzureTrophySculpture", Vector3.new(3.4, 6, 3.4),
+	Vector3.new(trophyX, 29.0, trophyZ), THEME.Brass)
+trophy.Shape = Enum.PartType.Ball
+trophy.Reflectance = 0.17
+local trophyAnchor = detail("TrophyCourtyardSignAnchor", Vector3.new(0.5, 0.5, 0.5),
+	Vector3.new(trophyX, 33.3, trophyZ - 1.5), THEME.DeepTeal)
+textSign(trophyAnchor, "TROPHY GARDEN | SOCIAL PLAZA", 0.3, 230)
 
 -- Calm sea backdrop covers the template's empty gray baseplate when viewed
 -- from the arena; unlike the grass island it has no collision.
 local ocean = part(
-	"OceanBackdrop", Vector3.new(820, 1.5, 820),
-	Vector3.new(0, 0.6, 58), Color3.fromRGB(76, 163, 199), Enum.Material.SmoothPlastic
+	"OceanBackdrop", Vector3.new(1200, 1.5, 1200),
+	Vector3.new(0, 0.6, 58), Color3.fromRGB(57, 148, 157), Enum.Material.SmoothPlastic
 )
 ocean.CanCollide = false
 ocean.CanTouch = false
@@ -647,8 +901,38 @@ for i = 1, 32 do
 	local x = -145 + column * 95 + (i % 3) * 7
 	local z = -128 + band * 58
 	local shimmer = detail("OceanSunGlint", Vector3.new(10 + i % 5, 0.025, 0.3),
-		Vector3.new(x, 1.39, z), Color3.fromRGB(209, 241, 253), Enum.Material.SmoothPlastic, world)
+		Vector3.new(x, 1.39, z), THEME.Foam, Enum.Material.SmoothPlastic, world)
 	shimmer.Transparency = 0.65
+end
+
+-- Layered, low-poly destination silhouettes frame the horizon. These
+-- noncolliding islands are visual-only and cannot become a second playfield.
+for _, loc in ipairs({
+	{-290, -120, 1.15}, {-245, 180, 0.8}, {-355, 235, 0.7},
+	{290, -90, 1.1}, {255, 205, 0.85}, {365, 255, 0.65},
+}) do
+	local dx, dz, scale = loc[1], loc[2], loc[3]
+	local rock = detail("AzureCoastDistantCliff",
+		Vector3.new(62 * scale, 20 * scale, 50 * scale),
+		Vector3.new(dx, 4 + 3 * scale, dz),
+		THEME.Stone, Enum.Material.Rock, world)
+	rock.Shape = Enum.PartType.Ball
+	local cap = detail("DistantIslandEvergreen",
+		Vector3.new(54 * scale, 8 * scale, 44 * scale),
+		Vector3.new(dx, 13 * scale, dz), THEME.Evergreen,
+		Enum.Material.Grass, world)
+	cap.Shape = Enum.PartType.Ball
+	for _, side in ipairs({-1, 1}) do
+		local palm = detail("DistantTreeTrunk",
+			Vector3.new(1.7 * scale, 11 * scale, 1.7 * scale),
+			Vector3.new(dx + side * 12 * scale, 18 * scale, dz),
+			WOOD, Enum.Material.Wood, world)
+		local canopy = detail("DistantTreeCrown",
+			Vector3.new(13 * scale, 8 * scale, 13 * scale),
+			Vector3.new(dx + side * 12 * scale, 25 * scale, dz),
+			THEME.Evergreen, Enum.Material.LeafyGrass, world)
+		canopy.Shape = Enum.PartType.Ball
+	end
 end
 
 -- Roblox's built-in CrackedLava has physically textured dark crust rather
@@ -674,6 +958,41 @@ lava.Touched:Connect(function(hit)
 	local character = hit:FindFirstAncestorOfClass("Model")
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 	if humanoid then humanoid.Health = 0 end
+end)
+
+-- Ocean and skyline are decorative. Anyone falling below the suspended
+-- island/bridges is returned to the actual lobby spawn rather than being
+-- allowed to roam on old template parts or below the map.
+local fallReset = part("WorldFallReset", Vector3.new(1300, 1.5, 1300),
+	Vector3.new(0, 10.5, 0), THEME.DeepTeal, Enum.Material.SmoothPlastic, world)
+fallReset.CanCollide = false
+fallReset.CanTouch = true
+fallReset.CanQuery = false
+fallReset.Transparency = 1
+fallReset.CastShadow = false
+fallReset.Touched:Connect(function(hit)
+	local character = hit:FindFirstAncestorOfClass("Model")
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if humanoid and humanoid.Health > 0 and Players:GetPlayerFromCharacter(character) then
+		humanoid.Health = 0
+	end
+end)
+-- Touch events can be missed at high fall speeds or under lag. Independently
+-- verify root height every quarter second across JOIN/VOTE/REVEAL/MOVE.
+local fallCheckElapsed = 0
+RunService.Heartbeat:Connect(function(dt)
+	fallCheckElapsed += dt
+	if fallCheckElapsed < 0.25 then return end
+	fallCheckElapsed = 0
+	for _, player in ipairs(Players:GetPlayers()) do
+		local character = player.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		if root and humanoid and humanoid.Health > 0
+			and root.Position.Y < SETTINGS.BridgeY - 13 then
+			humanoid.Health = 0
+		end
+	end
 end)
 
 -- Glass lanes do not exist in the lobby. We build exactly one per ready
@@ -2049,13 +2368,13 @@ end
 ]====]
 
 local CLIENT_SOURCE = [====[
--- Mythblox Game 01 · safe free-movement validation v0.19
+-- Mythblox Game 01 · Azure Coast Resort UI v0.20
 -- Presentation only. The server still owns votes, movement, cracks, winners and coins.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
-local BUILD_VERSION = "v0.19"
+local BUILD_VERSION = "v0.20"
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local network = ReplicatedStorage:WaitForChild("MythbloxGame01")
@@ -2090,19 +2409,20 @@ playerGui.ChildAdded:Connect(function(child)
 	end
 end)
 
--- Bright white panels + colorful blue/green buttons, readable against daylight.
+-- AZURE COAST UI: same ivory, deep teal and champagne metal as the lobby.
+-- Green/red are reserved for genuine voting outcomes and warnings.
 local COLOR = {
-	Ink = Color3.fromRGB(255, 255, 255),         -- cards
-	InkBright = Color3.fromRGB(231, 244, 255),   -- alternate rows and tracks
-	Text = Color3.fromRGB(29, 63, 103),          -- dark text on bright cards
-	Muted = Color3.fromRGB(90, 119, 151),
-	Blue = Color3.fromRGB(41, 137, 242),
-	Green = Color3.fromRGB(35, 180, 100),
-	Red = Color3.fromRGB(224, 73, 83),
-	Gold = Color3.fromRGB(255, 198, 63),
-	Purple = Color3.fromRGB(35, 112, 211),       -- blue accent, kept variable name
-	Border = Color3.fromRGB(179, 218, 247),
-	White = Color3.fromRGB(255, 255, 255),
+	Ink = Color3.fromRGB(243, 235, 216),
+	InkBright = Color3.fromRGB(224, 215, 192),
+	Text = Color3.fromRGB(20, 65, 79),
+	Muted = Color3.fromRGB(91, 111, 111),
+	Blue = Color3.fromRGB(33, 116, 125),
+	Green = Color3.fromRGB(39, 158, 100),
+	Red = Color3.fromRGB(199, 67, 81),
+	Gold = Color3.fromRGB(198, 160, 92),
+	Purple = Color3.fromRGB(20, 91, 104),
+	Border = Color3.fromRGB(196, 164, 111),
+	White = Color3.fromRGB(250, 248, 239),
 }
 
 local function addCorner(parent, radius)
@@ -2133,10 +2453,10 @@ local function panel(name)
 	addStroke(frame, COLOR.Border, 1)
 	-- A soft vertical color grade adds depth without relying on a texture ID.
 	local gradient = Instance.new("UIGradient")
-	gradient.Name = "PearlCardFinish"
+	gradient.Name = "AzureCoastLimestoneCard"
 	gradient.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-		ColorSequenceKeypoint.new(1, Color3.fromRGB(235, 246, 253)),
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 250, 233)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(229, 220, 193)),
 	})
 	gradient.Rotation = 90
 	gradient.Parent = frame
@@ -2267,7 +2587,7 @@ local function showFeedback(message, isGood)
 end
 
 -- Join prompt: does not cover touch movement controls during a match.
-local join = button(gui, "JoinButton", "JOIN BRIDGE RACE", COLOR.Green)
+local join = button(gui, "JoinButton", "JOIN BRIDGE RACE", COLOR.Blue)
 join.AnchorPoint = Vector2.new(0.5, 1)
 join.TextSize = 21
 join.MouseButton1Click:Connect(function()
@@ -2323,10 +2643,10 @@ end
 -- Results appear in the compact top status strip instead of a centered
 -- modal. The arena and other players remain visible when a match ends.
 
--- v0.19: Secret selections are never displayed to others while voting.
+-- v0.20: Secret selections are never displayed to others while voting.
 -- ONLY during the five-second REVEAL do five non-clickable results cards
 -- show every numbered choice, picking players' avatars, totals, and safety.
--- The existing blue voting buttons remain PRIVATE selection controls.
+-- The existing teal voting buttons remain PRIVATE selection controls.
 local reveal = panel("RevealPanel")
 reveal.AnchorPoint = Vector2.new(0.5, 0)
 reveal.Position = UDim2.new(0.5, 0, 0, 103)
@@ -2690,7 +3010,7 @@ local function update(state)
 	if phase == "JOIN" or phase == "VOTE" then
 		lastTurnRendered = -1
 	end
-	phaseText.Text = ("v0.19 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
+	phaseText.Text = ("v0.20 · ROUND %d · %s"):format(state.turn or 0, phaseNames[phase] or phase)
 	clockText.Text = tostring(state.time or 0) .. "s"
 	clockText.TextColor3 = phase == "VOTE" and (state.time or 0) <= 2 and COLOR.Red or COLOR.Purple
 	description.Text = state.message or ""
@@ -2700,7 +3020,7 @@ local function update(state)
 	if voting.Visible then shop.Visible = false end
 
 	if phase == "JOIN" then
-		phaseText.Text = "v0.19 · NEXT MATCH"
+		phaseText.Text = "v0.20 · NEXT MATCH"
 		description.Text = state.queued and "You're queued for the next race."
 			or "Join at the gold pad or use the button below."
 		ownStats.Text = ("%d/%d PLAYERS READY"):format(state.ready or 0, state.capacity or 8)
@@ -2719,7 +3039,7 @@ local function update(state)
 	if phase == "RESULTS" then
 		-- Server sends winner/draw text in state.message; show it only in
 		-- the small status panel and avoid blocking the camera.
-		phaseText.Text = "v0.19 · ROUND OVER"
+		phaseText.Text = "v0.20 · ROUND OVER"
 		ownStats.Text = "NEXT MATCH STARTS SOON"
 	end
 
@@ -2768,7 +3088,7 @@ stateEvent.OnClientEvent:Connect(update)
 command:FireServer("Sync")
 ]====]
 
--- Diagnostic/cleanup installer: v0.19
+-- Diagnostic/cleanup installer: v0.20
 -- Remove known legacy copies from services used by previous Mythblox builds.
 -- This intentionally does NOT remove scripts belonging to other games.
 -- Permanently remove the UNUSED default Roblox Baseplate spawn while in
@@ -2786,6 +3106,21 @@ for _, obj in ipairs(workspace:GetDescendants()) do
 	end
 end
 print("[Mythblox INSTALL] Removed " .. defaultSpawnsRemoved .. " unused Baseplate spawn(s).")
+
+-- v0.20: the actual stock baseplate (not only its spawn marker) is a giant
+-- low-altitude part that remains visible through the decorative ocean.
+-- Remove ONLY a low, large, directly parented part named Baseplate.
+local baseplatesRemoved = 0
+for _, candidate in ipairs(workspace:GetChildren()) do
+	if candidate:IsA("BasePart") and string.lower(candidate.Name) == "baseplate"
+		and candidate.Size.X >= 150 and candidate.Size.Z >= 150
+		and candidate.Position.Y + candidate.Size.Y * 0.5 < 19 then
+		candidate:Destroy()
+		baseplatesRemoved += 1
+	end
+end
+print("[Mythblox INSTALL] Removed " .. baseplatesRemoved .. " unused template Baseplate part(s).")
+
 
 local SERVER_FOLDER = game:GetService("ServerScriptService")
 local STARTER_PLAYER_SCRIPTS = game:GetService("StarterPlayer"):WaitForChild("StarterPlayerScripts")
@@ -2854,12 +3189,12 @@ for _, child in ipairs(game:GetDescendants()) do
 	end
 end
 
-print("[Mythblox INSTALL] v0.19 VERIFIED: 2 scripts installed and Source checked.")
-print("[Mythblox INSTALL] Server: " .. liveServer:GetFullName() .. " | Build v0.19")
-print("[Mythblox INSTALL] Client: " .. liveClient:GetFullName() .. " | Build v0.19")
+print("[Mythblox INSTALL] v0.20 VERIFIED: 2 scripts installed and Source checked.")
+print("[Mythblox INSTALL] Server: " .. liveServer:GetFullName() .. " | Build v0.20")
+print("[Mythblox INSTALL] Client: " .. liveClient:GetFullName() .. " | Build v0.20")
 print("[Mythblox INSTALL] Cleaned " .. #removed .. " previous Mythblox script/UI objects.")
 print("[Mythblox INSTALL] Disabled " .. #disabledLegacy .. " other old game scripts found by source signature.")
 if #suspicious > 0 then
 	warn("[Mythblox INSTALL] Other Mythblox scripts still exist: " .. table.concat(suspicious, "; "))
 end
-print("[Mythblox INSTALL] NOW START A FRESH PLAY SESSION. Confirm the top HUD visibly says v0.19, and check Output for SERVER RUNNING v0.19 and CLIENT RUNNING v0.19.")
+print("[Mythblox INSTALL] NOW START A FRESH PLAY SESSION. Confirm the top HUD visibly says v0.20, and check Output for SERVER RUNNING v0.20 and CLIENT RUNNING v0.20.")
