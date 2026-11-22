@@ -31,11 +31,12 @@ local SETTINGS = {
 	VictoryDanceR6 = "rbxassetid://182435998",
 }
 
--- Bright, classic Roblox palette. Visuals do not change gameplay permissions.
+-- Coastal jewel-tone / brushed-metal palette. Colors are cosmetic only;
+-- players' legal moves are NOT advertised by green/red bridge surfaces.
 local GREEN = Color3.fromRGB(51, 220, 105)
 local RED = Color3.fromRGB(255, 87, 87)
-local GLASS = Color3.fromRGB(138, 222, 248)
--- Purely visual glass tints: these never replace the GREEN/RED hazard signals.
+local GLASS = Color3.fromRGB(142, 219, 238)
+-- Existing purchased glass colors remain exactly as saved in the catalog.
 local SKIN_CATALOG = {
 	{ id = "classic", title = "Classic Blue", price = 0, color = GLASS },
 	{ id = "rose", title = "Candy Pink", price = 20, color = Color3.fromRGB(252, 164, 220) },
@@ -52,13 +53,57 @@ end
 local AMBER = Color3.fromRGB(255, 206, 75)
 local VIOLET = Color3.fromRGB(65, 173, 253) -- sky-blue accent, variable kept for compat.
 
--- Sunny daytime instead of the previous dark neon/dusk atmosphere.
-Lighting.ClockTime = 13.5
-Lighting.Brightness = 3
-Lighting.Ambient = Color3.fromRGB(194, 211, 235)
-Lighting.OutdoorAmbient = Color3.fromRGB(216, 229, 247)
-Lighting.FogColor = Color3.fromRGB(198, 230, 255)
-Lighting.FogEnd = 1400
+-- Premium sunny-coastal lighting using supported Roblox lighting effects.
+-- No external or guessed PBR asset IDs: built-in 2022 materials already use
+-- high-quality engine texture/roughness detail. Add custom maps later if needed.
+Lighting.ClockTime = 14.4
+Lighting.Brightness = 2.45
+Lighting.GlobalShadows = true
+Lighting.ShadowSoftness = 0.48
+Lighting.EnvironmentDiffuseScale = 0.7
+Lighting.EnvironmentSpecularScale = 0.82
+Lighting.Ambient = Color3.fromRGB(156, 171, 199)
+Lighting.OutdoorAmbient = Color3.fromRGB(206, 216, 236)
+Lighting.ColorShift_Top = Color3.fromRGB(255, 237, 215)
+Lighting.FogColor = Color3.fromRGB(193, 223, 238)
+Lighting.FogEnd = 1700
+
+local function getWorldLightingEffect(className, name)
+	local effect = Lighting:FindFirstChild(name)
+	if effect and not effect:IsA(className) then effect:Destroy(); effect = nil end
+	if not effect then
+		effect = Instance.new(className)
+		effect.Name = name
+		effect.Parent = Lighting
+	end
+	return effect
+end
+
+local atmosphere = getWorldLightingEffect("Atmosphere", "MythbloxCoastalAtmosphere")
+atmosphere.Density = 0.27
+atmosphere.Offset = 0.05
+atmosphere.Color = Color3.fromRGB(218, 237, 249)
+atmosphere.Decay = Color3.fromRGB(142, 172, 203)
+atmosphere.Glare = 0.11
+atmosphere.Haze = 0.75
+
+local grade = getWorldLightingEffect("ColorCorrectionEffect", "MythbloxWarmColorGrade")
+grade.Brightness = 0.01
+grade.Contrast = 0.08
+grade.Saturation = 0.09
+grade.TintColor = Color3.fromRGB(255, 249, 240)
+grade.Enabled = true
+
+local bloom = getWorldLightingEffect("BloomEffect", "MythbloxSoftBloom")
+bloom.Intensity = 0.18
+bloom.Size = 24
+bloom.Threshold = 1.25
+bloom.Enabled = true
+
+local sunRays = getWorldLightingEffect("SunRaysEffect", "MythbloxSunRays")
+sunRays.Intensity = 0.035
+sunRays.Spread = 0.85
+sunRays.Enabled = true
 
 -- Remove only the stock Baseplate SpawnLocation: its star icon is visible
 -- beneath the arena's lava even though our players use the elevated lobby.
@@ -115,6 +160,11 @@ local function part(name, size, position, color, material, parent)
 	p.Anchored = true
 	p.Color = color
 	p.Material = material
+	if material == Enum.Material.Glass then
+		p.Reflectance = 0.065
+	elseif material == Enum.Material.Metal then
+		p.Reflectance = 0.12
+	end
 	p.TopSurface = Enum.SurfaceType.Smooth
 	p.BottomSurface = Enum.SurfaceType.Smooth
 	p.Parent = parent or world
@@ -205,15 +255,27 @@ local hub = Instance.new("Model")
 hub.Name = "HubIsland"
 hub.Parent = world
 
-local GRASS = Color3.fromRGB(101, 204, 91)
-local CREAM = Color3.fromRGB(246, 226, 171)
-local WOOD = Color3.fromRGB(170, 111, 58)
-local ROOF_BLUE = Color3.fromRGB(52, 157, 244)
-local ROOF_PINK = Color3.fromRGB(252, 107, 150)
-local WHITE = Color3.fromRGB(253, 251, 238)
+local GRASS = Color3.fromRGB(91, 174, 128)
+local CREAM = Color3.fromRGB(232, 225, 209)
+local WOOD = Color3.fromRGB(123, 89, 66)
+local ROOF_BLUE = Color3.fromRGB(53, 125, 176)
+local ROOF_PINK = Color3.fromRGB(192, 110, 160)
+local WHITE = Color3.fromRGB(248, 247, 244)
+local METAL_TRIM = Color3.fromRGB(186, 157, 103)
+local DEEP_NAVY = Color3.fromRGB(38, 77, 107)
 
 local function decorative(name, size, position, color, material)
 	return part(name, size, position, color, material or Enum.Material.SmoothPlastic, hub)
+end
+
+-- Visual-only architectural detail: non-solid, non-touching, non-queryable.
+local function detail(name, size, position, color, material, parent)
+	local item = part(name, size, position, color, material or Enum.Material.Metal, parent or hub)
+	item.CanCollide = false
+	item.CanTouch = false
+	item.CanQuery = false
+	item.CastShadow = false
+	return item
 end
 
 -- Layered terrain gives the island a proper visible edge from the bridge.
