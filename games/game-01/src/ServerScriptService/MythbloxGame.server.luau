@@ -1,4 +1,4 @@
--- Mythblox game-01: Soft Earth Coast v0.31 (server)
+-- Mythblox game-01: Soft Earth Coast v0.32 (server)
 -- The server owns votes, movement permissions, cracks, results and rewards.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -8,7 +8,7 @@ local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
 local DataStoreService = game:GetService("DataStoreService")
 local HttpService = game:GetService("HttpService")
-local BUILD_VERSION = "v0.31"
+local BUILD_VERSION = "v0.32"
 
 local SETTINGS = {
 	MaxPlayers = 8,
@@ -41,7 +41,7 @@ local THEME = {
 	Ivory = Color3.fromRGB(239, 230, 214),       -- #EFE6D6 warm cream
 	Limestone = Color3.fromRGB(217, 200, 174),   -- #D9C8AE oat beige, small accents
 	Sandstone = Color3.fromRGB(201, 179, 148),   -- #C9B394 soft sand
-	-- v0.31: richer matte colors specifically for large, light-catching
+	-- v0.32: richer matte colors specifically for large, light-catching
 	-- floors, platforms and planters; not a dark filter over the game.
 	PlazaStone = Color3.fromRGB(184, 173, 154),   -- weathered oat
 	DeckStone = Color3.fromRGB(176, 167, 150),    -- shaded stone
@@ -68,7 +68,7 @@ local SKIN_CATALOG = {
 local SKIN_BY_ID = {}
 for _, item in ipairs(SKIN_CATALOG) do SKIN_BY_ID[item.id] = item end
 
--- v0.31: Persist lightweight tutorial and accessibility/audio preferences in
+-- v0.32: Persist lightweight tutorial and accessibility/audio preferences in
 -- the EXISTING player record; do not create separate stores or grant currency.
 local UI_DEFAULTS = {
 	tutorialSeen = false,
@@ -95,7 +95,7 @@ local function glassColorFor(player)
 	return skin and skin.color or GLASS
 end
 local AMBER = Color3.fromRGB(255, 206, 75)
--- v0.31: neutral, soft coastal daylight. Let the deliberately warm
+-- v0.32: neutral, soft coastal daylight. Let the deliberately warm
 -- OAT/WOOD/TERRACOTTA materials carry the earth tones without a yellow
 -- filter across the sky, character, greenery, water, or every surface.
 -- Keep lighting gentle on mobile and preserve the matte material response.
@@ -160,7 +160,7 @@ if not clouds then
 	clouds.Parent = terrain
 end
 clouds.Name = "MythbloxAzureCoastClouds"
--- v0.31: visibly fuller soft coastal cloud cover, not a solid white sky.
+-- v0.32: visibly fuller soft coastal cloud cover, not a solid white sky.
 clouds.Cover = 0.72
 clouds.Density = 0.54
 clouds.Color = Color3.fromRGB(238, 242, 242)
@@ -404,7 +404,7 @@ for _, side in ipairs({-1, 1}) do
 	decorative("LoungeReturnPath", Vector3.new(7, 0.20, 22.5),
 		Vector3.new(side * 67, 24.1, -73.75), THEME.WalkStone, Enum.Material.Pavement)
 end
--- v0.31: Simplified embedded paving joints. The prior two sets of
+-- v0.32: Simplified embedded paving joints. The prior two sets of
 -- champagne/gold strips sat at slightly different elevations, and the
 -- central-path inlays continued under the raised plaza. Those generated
 -- bright slivers, doubled corners and clipped lines in close-up views.
@@ -415,7 +415,7 @@ for _, x in ipairs({-27.65, 27.65}) do
 		Vector3.new(x, 24.407, -83), THEME.Terracotta, Enum.Material.Wood)
 end
 
--- v0.31: OPEN timber-and-stone fencing, rather than sheets of glass
+-- v0.32: OPEN timber-and-stone fencing, rather than sheets of glass
 -- around the outer edge. Keep one see-through glass pane at the CENTRAL
 -- spectator deck only. Tall invisible collision blockers immediately beyond
 -- the fence prevent jumping out; walking/jumping inside remains untouched.
@@ -757,7 +757,7 @@ cosmeticsPrompt.RequiresLineOfSight = false
 cosmeticsPrompt.MaxActivationDistance = 12
 cosmeticsPrompt.Parent = cosmeticsDesk
 
--- v0.31: The giant blank BACK of the leaderboard and a nearby lamp
+-- v0.32: The giant blank BACK of the leaderboard and a nearby lamp
 -- previously overlapped at the plaza edge. Keep the board completely
 -- outside the main plaza and make BOTH faces readable at normal scale.
 local boardPost = decorative(
@@ -1622,6 +1622,8 @@ local function eliminate(player, reason, tileToBreak)
 	info.alive = false
 	info.elimination = reason
 	info.allowed = 0
+	-- Do not retain the last private choice after elimination/respawn.
+	info.vote = nil
 	-- The attempted step and the last supporting glass must actually break.
 	-- Do not recolor intact glass or reveal which other panels are safe.
 	if tileToBreak then shatter(tileToBreak, true) end
@@ -1678,7 +1680,8 @@ local function publicRoster()
 			position = info.index,
 			cracks = info.cracks,
 			alive = info.alive,
-			vote = phase == "VOTE" and nil or info.vote,
+			-- Never republish eliminated racers' old vote choices.
+			vote = phase == "REVEAL" and info.alive and info.vote or nil,
 		})
 	end
 	table.sort(roster, function(a, b)
@@ -1689,10 +1692,15 @@ end
 
 local function snapshot(player)
 	local mine = active[player]
+	-- A public round may keep revealing while a racer is already dead.
+	-- The server sends vote details only to players who are currently
+	-- alive and participating, never to eliminated/respawned racers.
+	local canReveal = phase == "REVEAL" and mine ~= nil and mine.alive == true
 	return {
 		phase = phase,
 		time = secondsLeft,
 		turn = turnNumber,
+		matchSerial = roundSerial,
 		ready = numberReady(),
 		capacity = SETTINGS.MaxPlayers,
 		queued = queue[player] == true,
@@ -1711,14 +1719,16 @@ local function snapshot(player)
 			position = mine.index,
 			cracks = mine.cracks,
 			alive = mine.alive,
-			vote = mine.vote,
+			vote = mine.alive and mine.vote or nil,
 			allowed = mine.allowed,
 			start = mine.startIndex,
 			elimination = mine.elimination,
 		} or nil,
-		unsafe = unsafe,
-		voteCounts = phase == "VOTE" and {} or voteCounts,
-		voteOutcomes = phase == "VOTE" and {} or voteOutcomes,
+		-- Clear reveal payload outside the five-second REVEAL phase, and
+		-- immediately for eliminated racers. No stale results on respawn.
+		unsafe = canReveal and unsafe or {},
+		voteCounts = canReveal and voteCounts or {},
+		voteOutcomes = canReveal and voteOutcomes or {},
 		roster = publicRoster(),
 		message = message,
 	}
@@ -2677,7 +2687,7 @@ local function scoreMatch(winners, participants)
 			awardProgress(player, awarded[player] and 1 or 0, awarded[player] and 25 or 5)
 		end
 	end
-	-- v0.31: Save match rewards immediately after a round finishes, while
+	-- v0.32: Save match rewards immediately after a round finishes, while
 	-- retaining autosave, exit and shutdown fallback attempts.
 	-- saveProfile uses stable reward-batch IDs and per-player write locks
 	-- so overlapping attempts do not double-award a completed round.
